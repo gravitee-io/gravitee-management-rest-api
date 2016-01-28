@@ -47,7 +47,7 @@ echo.
 echo **************************************************
 echo *
 echo * WARNING ...
-echo * JAVA_HOME must be set before starting OpenESB 
+echo * JAVA_HOME must be set before starting Gravitee 
 echo * Please check Java documentation to do it 
 echo *
 echo **************************************************
