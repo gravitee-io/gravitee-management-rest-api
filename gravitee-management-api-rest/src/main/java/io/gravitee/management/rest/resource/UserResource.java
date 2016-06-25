@@ -25,7 +25,9 @@ import io.gravitee.management.service.exceptions.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -55,7 +57,13 @@ public class UserResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response user() {
-        final Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getClass().isAssignableFrom(OAuth2Authentication.class)) {
+            return Response.ok(convert(((OAuth2Authentication) authentication).getUserAuthentication()), MediaType.APPLICATION_JSON).build();
+        }
+
+        final Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             final String username = ((UserDetails) principal).getUsername();
             try {
@@ -96,5 +104,11 @@ public class UserResource extends AbstractResource {
     public Response logout() {
         response.addCookie(jwtCookieGenerator.generate(null));
         return Response.ok().build();
+    }
+
+    private UserDetails convert(Authentication userAuthentication) {
+        return new UserDetails(userAuthentication.getName(),
+                                                    userAuthentication.getCredentials().toString(),
+                                                    userAuthentication.getAuthorities());
     }
 }

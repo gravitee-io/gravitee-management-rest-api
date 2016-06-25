@@ -16,59 +16,82 @@
 package io.gravitee.management.security.config.oauth2;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
-import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
 
 /**
- * 
- * @author Titouan COMPIEGNE
- *
+ * @author Titouan COMPIEGNE (titouan.compiegne at gravitee.io)
+ * @author GraviteeSource Team
  */
 @Configuration
 @Profile("oauth2")
 @EnableWebSecurity
 @EnableResourceServer
 public class OAuth2SecurityConfigurerAdapter extends ResourceServerConfigurerAdapter {
-	
-	private static final String RESOURCE_ID = "openid";
-	
-	@Value("${oauth.endpoint.check_token}")
-	private String oauthEndpointCheckToken;
-	
-	@Value("{oauth.client.id}")
-	private String oauthClientId;
-	
-	@Value("{oauth.client.secret}")
-	private String oauthClientSecret;
-	
-	@Autowired
-	private ResourceServerTokenServices tokenServices;
-	
-	@Override
-	public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-		resources.tokenServices(tokenServices).resourceId(RESOURCE_ID);
-	}
-	
-	@Override
-	public void configure(HttpSecurity http) throws Exception {
-		http.authorizeRequests().antMatchers("/**").access("#oauth2.hasScope('read')");	
-	}
-	
-	@Bean
-	public RemoteTokenServices remoteTokenServices() {
-		RemoteTokenServices s = new RemoteTokenServices();
-		s.setCheckTokenEndpointUrl(oauthEndpointCheckToken);
-		s.setClientId(oauthClientId);
-		s.setClientSecret(oauthClientSecret);
-		return s;
-	}
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Override
+    public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
+        resources
+            .tokenServices(remoteTokenServices())
+            .resourceId(null)
+            .eventPublisher(new DefaultAuthenticationEventPublisher(applicationEventPublisher));
+    }
+
+    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS, "**").permitAll()
+                .antMatchers(HttpMethod.GET, "/user/**").permitAll()
+                // API requests
+                .antMatchers(HttpMethod.GET, "/apis/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/apis/**").hasAnyAuthority("ADMIN", "API_PUBLISHER")
+                .antMatchers(HttpMethod.PUT, "/apis/**").hasAnyAuthority("ADMIN", "API_PUBLISHER")
+                .antMatchers(HttpMethod.DELETE, "/apis/**").hasAnyAuthority("ADMIN", "API_PUBLISHER")
+                // Application requests
+                .antMatchers(HttpMethod.POST, "/applications/**").hasAnyAuthority("ADMIN", "API_CONSUMER")
+                .antMatchers(HttpMethod.PUT, "/applications/**").hasAnyAuthority("ADMIN", "API_CONSUMER")
+                .antMatchers(HttpMethod.DELETE, "/applications/**").hasAnyAuthority("ADMIN", "API_CONSUMER")
+                // Instance requests
+                .antMatchers(HttpMethod.GET, "/instances/**").hasAuthority("ADMIN")
+                .anyRequest().authenticated()
+            .and()
+                .httpBasic()
+                    .disable()
+                .csrf()
+                    .disable();
+    }
+
+    @Bean
+    public AccessTokenConverter accessTokenConverter() {
+        return new OAuth2AccessTokenConverter();
+    }
+
+    @Bean
+    public RemoteTokenServices remoteTokenServices() {
+        RemoteTokenServices s = new RemoteTokenServices();
+        s.setAccessTokenConverter(accessTokenConverter());
+        s.setCheckTokenEndpointUrl(environment.getProperty("security.oauth.endpoint.check_token"));
+        s.setClientId(environment.getProperty("security.oauth.client.id"));
+        s.setClientSecret(environment.getProperty("security.oauth.client.secret"));
+        return s;
+    }
 }

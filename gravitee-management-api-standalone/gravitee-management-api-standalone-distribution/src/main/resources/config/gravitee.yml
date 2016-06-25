@@ -154,6 +154,16 @@ security:
 #        GRAVITEE-ADMINS: ADMIN,
 #        GRAVITEE-USERS: USER,
 #      }
+# OAuth2 security configuration
+#  type: oauth2
+  # Token validation endpoint on the authorization server
+#  oauth.endpoint.check_token: http://oauth-host/oauth/check_token
+  # Authorization credentials to access secure validation end point
+#  oauth.client.id: resource-client-id
+#  oauth.client.secret: resource-client-secret
+  # Default Gravitee.io administrators, you can declare multiple adminisatrators using comma separator
+#  oauth.administrators: admin
+
 
 # SMTP configuration used to send mails
 email:
