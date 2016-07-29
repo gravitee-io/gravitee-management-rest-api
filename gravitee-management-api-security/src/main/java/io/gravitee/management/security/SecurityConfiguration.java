@@ -24,9 +24,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.authentication.configurers.GlobalAuthenticationConfigurerAdapter;
 
 /**
- * 
- * @author Titouan COMPIEGNE
- *
+ * @author Titouan COMPIEGNE (titouan.compiegne at gravitee.io)
+ * @author GraviteeSource Team
  */
 @Configuration
 @Import({BasicSecurityConfigurerAdapter.class, OAuth2SecurityConfigurerAdapter.class})
