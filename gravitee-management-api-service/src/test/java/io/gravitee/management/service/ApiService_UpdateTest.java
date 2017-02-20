@@ -19,11 +19,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import io.gravitee.definition.jackson.datatype.GraviteeMapper;
+import io.gravitee.definition.model.Endpoint;
 import io.gravitee.definition.model.Proxy;
 import io.gravitee.management.model.ApiEntity;
 import io.gravitee.management.model.MembershipType;
 import io.gravitee.management.model.UpdateApiEntity;
 import io.gravitee.management.service.exceptions.ApiContextPathAlreadyExistsException;
+import io.gravitee.management.service.exceptions.ApiEndpointAlreadyExistsException;
 import io.gravitee.management.service.exceptions.ApiNotFoundException;
 import io.gravitee.management.service.exceptions.TechnicalManagementException;
 import io.gravitee.management.service.impl.ApiServiceImpl;
@@ -42,15 +44,13 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Azize Elamrani (azize dot elamrani at gmail dot com)
@@ -203,5 +203,24 @@ public class ApiService_UpdateTest {
                 .thenReturn(Collections.singleton(po2));
 
         apiService.update(API_ID, existingApi);
+    }
+
+    @Test(expected = ApiEndpointAlreadyExistsException.class)
+    public void shouldNotUpdateBecauseOfDuplicateEndpoint() throws TechnicalException {
+        when(apiRepository.findById(API_ID)).thenReturn(Optional.of(api));
+        final Proxy proxy = mock(Proxy.class);
+        when(proxy.getContextPath()).thenReturn("/context");
+        final Endpoint endpoint = mock(Endpoint.class);
+        when(endpoint.getName()).thenReturn("default");
+        when(proxy.getEndpoints()).thenReturn(Arrays.asList(endpoint, endpoint));
+        when(existingApi.getProxy()).thenReturn(proxy);
+
+        try {
+            final ApiEntity apiEntity = apiService.update(API_ID, existingApi);
+            fail("should throw ApiEndpointAlreadyExistsException");
+        } catch (ApiEndpointAlreadyExistsException e) {
+            verify(apiRepository, never()).update(any());
+            throw e;
+        }
     }
 }

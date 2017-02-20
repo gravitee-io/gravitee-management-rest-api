@@ -199,6 +199,18 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
         }
     }
 
+    private void checkEndpoints(List<Endpoint> endpoints) throws ApiEndpointAlreadyExistsException {
+        if (endpoints != null && endpoints.size() > 1) {
+            ArrayList<String> endpointNames = new ArrayList<>();
+            endpoints.forEach(endpoint -> {
+                if (endpointNames.contains(endpoint.getName())) {
+                    throw new ApiEndpointAlreadyExistsException(endpoint.getName());
+                }
+                endpointNames.add(endpoint.getName());
+            });
+        }
+    }
+
     @Override
     public ApiEntity findById(String apiId) {
         try {
@@ -302,6 +314,8 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
 
             // Check if context path is unique
             checkContextPath(updateApiEntity.getProxy().getContextPath(), apiId);
+            // Check if endpoint names are unique
+            checkEndpoints(updateApiEntity.getProxy().getEndpoints());
 
             Api apiToUpdate = optApiToUpdate.get();
             Api api = convert(apiId, updateApiEntity);
