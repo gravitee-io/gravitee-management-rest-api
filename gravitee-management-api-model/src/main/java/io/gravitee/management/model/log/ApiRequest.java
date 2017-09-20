@@ -58,8 +58,6 @@ public class ApiRequest {
 
     private String localAddress;
 
-    private String remoteAddress;
-
     private String endpoint;
 
     private String tenant;
@@ -75,6 +73,8 @@ public class ApiRequest {
     private String message;
 
     private String gateway;
+
+    private String remoteAddress;
 
     public String getId() {
         return id;
@@ -275,6 +275,8 @@ public class ApiRequest {
     public void setGateway(String gateway) {
         this.gateway = gateway;
     }
+
+
 
     @Override
     public boolean equals(Object o) {

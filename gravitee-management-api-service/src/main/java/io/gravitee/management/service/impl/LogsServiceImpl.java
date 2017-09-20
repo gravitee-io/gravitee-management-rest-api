@@ -253,6 +253,7 @@ public class LogsServiceImpl implements LogsService {
         req.setResponseTime(request.getResponseTime());
         req.setStatus(request.getStatus());
         req.setTimestamp(request.getTimestamp());
+        req.setRemoteAddress(request.getRemoteAddress());
         return req;
     }
 
