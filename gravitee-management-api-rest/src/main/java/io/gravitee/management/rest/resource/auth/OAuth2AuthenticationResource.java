@@ -15,6 +15,8 @@
  */
 package io.gravitee.management.rest.resource.auth;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.management.idp.api.authentication.UserDetails;
@@ -135,9 +137,13 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
     private Response processUser(String userInfo)  throws IOException {
 
-        Map<String, Object> userInfosAsMap = getEntity(userInfo);
+        ReadContext userInfoPath = JsonPath.parse(userInfo);
 
-        String username = (String) userInfosAsMap.get(serverConfiguration.getUserMapping().getEmail());
+        String username = null;
+        String emailMap = serverConfiguration.getUserMapping().getEmail();
+        if (emailMap != null) {
+            username = userInfoPath.read(emailMap);
+        }
 
         if (username == null) {
             throw new BadRequestException("No public email linked to your account");
@@ -155,14 +161,24 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
             final NewExternalUserEntity newUser = new NewExternalUserEntity();
             newUser.setUsername(username);
             newUser.setSource(AuthenticationSource.OAUTH2.getName());
-            newUser.setSourceId((String) userInfosAsMap.get(serverConfiguration.getUserMapping().getId()));
-            newUser.setLastname((String) userInfosAsMap.get(serverConfiguration.getUserMapping().getLastname()));
-            newUser.setFirstname((String) userInfosAsMap.get(serverConfiguration.getUserMapping().getFirstname()));
+
+            String idMap = serverConfiguration.getUserMapping().getId();
+            if (idMap != null) {
+                newUser.setSourceId(userInfoPath.read(idMap));
+            }
+            String lastNameMap = serverConfiguration.getUserMapping().getLastname();
+            if (lastNameMap != null) {
+                newUser.setLastname(userInfoPath.read(lastNameMap));
+            }
+            String firstNameMap = serverConfiguration.getUserMapping().getFirstname();
+            if (firstNameMap != null) {
+                newUser.setFirstname(userInfoPath.read(firstNameMap));
+            }
             newUser.setEmail(username);
 
             List<ExpressionMapping> mappings = serverConfiguration.getGroupsMapping();
 
-            if(mappings.isEmpty()) {
+            if (mappings.isEmpty()) {
                 userService.create(newUser, true);
             } else {
                 //can fail if a group in config does not exist in gravitee --> HTTP 500
@@ -177,8 +193,10 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         // User refresh
         UpdateUserEntity user = new UpdateUserEntity();
         user.setUsername(username);
-        user.setPicture((String) userInfosAsMap.get(serverConfiguration.getUserMapping().getPicture()));
-
+        String pictureMap = serverConfiguration.getUserMapping().getPicture();
+        if (pictureMap != null) {
+            user.setPicture(userInfoPath.read(pictureMap));
+        }
         userService.update(user);
 
         return connectUser(username);
