@@ -21,11 +21,13 @@ import io.gravitee.management.model.MemberEntity;
 import io.gravitee.management.model.permissions.ApplicationPermission;
 import io.gravitee.management.model.permissions.RolePermission;
 import io.gravitee.management.model.permissions.RolePermissionAction;
+import io.gravitee.management.rest.model.RoleEntity;
 import io.gravitee.management.rest.security.Permission;
 import io.gravitee.management.rest.security.Permissions;
 import io.gravitee.management.service.ApplicationService;
 import io.gravitee.management.service.MembershipService;
 import io.gravitee.management.service.UserService;
+import io.gravitee.management.service.exceptions.RoleNotFoundException;
 import io.gravitee.management.service.exceptions.SinglePrimaryOwnerException;
 import io.gravitee.management.service.exceptions.UserNotFoundException;
 import io.gravitee.repository.management.model.MembershipReferenceType;
@@ -161,6 +163,30 @@ public class ApplicationMembersResource  extends AbstractResource {
         }
 
         membershipService.deleteMember(MembershipReferenceType.APPLICATION, application, username);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("transfer_ownership")
+    @ApiOperation(value = "Transfer the ownership of the APPLICATION",
+            notes = "User must have the TRANSFER_OWNERSHIP permission to use this service")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Ownership has been transferred successfully"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    @Permissions({
+            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.UPDATE)
+    })
+    public Response transferOwnership(@PathParam("application") String application, @NotNull @QueryParam("user") String username, RoleEntity role) {
+        io.gravitee.management.model.RoleEntity newPORole = null;
+        if (role!=null && role.getName()!=null) {
+            try {
+                newPORole = roleService.findById(RoleScope.APPLICATION, role.getName());
+            } catch (RoleNotFoundException re) {
+                //it doesn't matter
+            }
+        }
+        applicationService.findById(application);
+        membershipService.transferApplicationOwnership(application, username, newPORole);
         return Response.ok().build();
     }
 }

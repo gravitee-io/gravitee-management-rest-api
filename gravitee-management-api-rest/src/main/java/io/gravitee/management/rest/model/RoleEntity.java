@@ -13,36 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.model.permissions;
+package io.gravitee.management.rest.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com) 
  * @author GraviteeSource Team
  */
-public enum ApplicationPermission implements Permission {
-    DEFINITION(  "DEFINITION",   1000),
-    MEMBER(      "MEMBER",       1100),
-    ANALYTICS(   "ANALYTICS",    1200),
-    LOG(         "LOG",          1300),
-    SUBSCRIPTION("SUBSCRIPTION", 1400);
+public class RoleEntity {
+    @JsonProperty("role")
+    private String name;
 
-    String name;
-    int mask;
-
-    ApplicationPermission(String name, int mask) {
-        this.name = name;
-        this.mask = mask;
-    }
-
-    @Override
     public String getName() {
         return name;
     }
 
-    @Override
-    public int getMask() {
-        return mask;
+    public void setName(String name) {
+        this.name = name;
     }
-
 }

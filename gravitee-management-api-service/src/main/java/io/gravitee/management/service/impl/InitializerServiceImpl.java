@@ -15,14 +15,14 @@
  */
 package io.gravitee.management.service.impl;
 
-import io.gravitee.management.model.MetadataEntity;
-import io.gravitee.management.model.MetadataFormat;
-import io.gravitee.management.model.NewMetadataEntity;
-import io.gravitee.management.model.NewRoleEntity;
+import io.gravitee.management.model.*;
 import io.gravitee.management.model.permissions.*;
 import io.gravitee.management.service.InitializerService;
 import io.gravitee.management.service.MetadataService;
 import io.gravitee.management.service.RoleService;
+import io.gravitee.management.service.ViewService;
+import io.gravitee.repository.management.api.ViewRepository;
+import io.gravitee.repository.management.model.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.gravitee.management.model.permissions.RolePermissionAction.*;
 import static io.gravitee.management.model.permissions.RoleScope.*;
@@ -50,6 +51,8 @@ public class InitializerServiceImpl extends io.gravitee.common.service.AbstractS
     private RoleService roleService;
     @Autowired
     private MetadataService metadataService;
+    @Autowired
+    private ViewService viewService;
 
     @Override
     protected String name() {
@@ -155,6 +158,7 @@ public class InitializerServiceImpl extends io.gravitee.common.service.AbstractS
             perms.put(ApiPermission.AUDIT.getName(), new char[]{CREATE.getId(), READ.getId(), UPDATE.getId(), DELETE.getId()});
             perms.put(ApiPermission.RATING.getName(), new char[]{CREATE.getId(), READ.getId(), UPDATE.getId(), DELETE.getId()});
             perms.put(ApiPermission.RATING_ANSWER.getName(), new char[]{CREATE.getId(), READ.getId(), UPDATE.getId(), DELETE.getId()});
+            perms.put(ApiPermission.DISCOVERY.getName(), new char[]{CREATE.getId(), READ.getId(), UPDATE.getId(), DELETE.getId()});
             roleService.create(new NewRoleEntity(
                     "OWNER",
                     "API Role. Created by Gravitee.io.",
@@ -192,7 +196,16 @@ public class InitializerServiceImpl extends io.gravitee.common.service.AbstractS
                     false,
                     perms
             ));
+        }
 
+        // Initialize default view
+        Optional<ViewEntity> optionalAllView = viewService.findAll().
+                stream().
+                filter(v -> v.getId().equals(View.ALL_ID)).
+                findFirst();
+        if(!optionalAllView.isPresent()) {
+            logger.info("Create default View");
+            viewService.createDefaultView();
         }
         roleService.createOrUpdateSystemRoles();
     }

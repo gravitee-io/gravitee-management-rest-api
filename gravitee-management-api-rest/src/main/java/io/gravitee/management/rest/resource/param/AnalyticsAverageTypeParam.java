@@ -13,36 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.model.permissions;
+package io.gravitee.management.rest.resource.param;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com) 
+ * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum ApplicationPermission implements Permission {
-    DEFINITION(  "DEFINITION",   1000),
-    MEMBER(      "MEMBER",       1100),
-    ANALYTICS(   "ANALYTICS",    1200),
-    LOG(         "LOG",          1300),
-    SUBSCRIPTION("SUBSCRIPTION", 1400);
+public class AnalyticsAverageTypeParam extends AbstractParam<AnalyticsAverageTypeParam.AnalyticsAverageType> {
 
-    String name;
-    int mask;
+    public enum AnalyticsAverageType {
+        AVAILABILITY,
+        RESPONSE_TIME
+    }
 
-    ApplicationPermission(String name, int mask) {
-        this.name = name;
-        this.mask = mask;
+    public AnalyticsAverageTypeParam(String param) {
+        super(param);
     }
 
     @Override
-    public String getName() {
-        return name;
+    protected AnalyticsAverageType parse(String param) {
+        if (param != null) {
+            return AnalyticsAverageType.valueOf(param.toUpperCase());
+        }
+        return null;
     }
-
-    @Override
-    public int getMask() {
-        return mask;
-    }
-
 }

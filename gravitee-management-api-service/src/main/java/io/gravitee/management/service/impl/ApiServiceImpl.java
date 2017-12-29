@@ -22,12 +22,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.utils.UUID;
-import io.gravitee.definition.model.Endpoint;
 import io.gravitee.definition.model.Path;
 import io.gravitee.definition.model.Proxy;
+import io.gravitee.definition.model.endpoint.HttpEndpoint;
 import io.gravitee.management.model.*;
 import io.gravitee.management.model.EventType;
+import io.gravitee.management.model.PageType;
+import io.gravitee.management.model.documentation.PageQuery;
 import io.gravitee.management.model.permissions.SystemRole;
+import io.gravitee.management.model.plan.PlanQuery;
 import io.gravitee.management.service.*;
 import io.gravitee.management.service.exceptions.*;
 import io.gravitee.management.service.processor.ApiSynchronizationProcessor;
@@ -49,10 +52,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.gravitee.repository.management.model.Api.AuditEvent.API_CREATED;
-import static io.gravitee.repository.management.model.Api.AuditEvent.API_DELETED;
-import static io.gravitee.repository.management.model.Api.AuditEvent.API_UPDATED;
-import static io.gravitee.repository.management.model.Application.AuditEvent.APPLICATION_CREATED;
+import static io.gravitee.repository.management.model.Api.AuditEvent.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -118,7 +118,7 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
         Proxy proxy = new Proxy();
         proxy.setContextPath(newApiEntity.getContextPath());
         proxy.setEndpoints(new LinkedHashSet<>());
-        proxy.getEndpoints().add(new Endpoint("default", newApiEntity.getEndpoint()));
+        proxy.getEndpoints().add(new HttpEndpoint("default", newApiEntity.getEndpoint()));
         apiEntity.setProxy(proxy);
 
         List<String> declaredPaths = (newApiEntity.getPaths() != null) ? newApiEntity.getPaths() : new ArrayList<>();
@@ -733,26 +733,53 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
                 }
                 //transfer ownership if necessary
                 if (memberAsPrimaryOwner != null && !username.equals(memberAsPrimaryOwner)) {
-                    membershipService.transferApiOwnership(createdOrUpdatedApiEntity.getId(), memberAsPrimaryOwner);
+                    membershipService.transferApiOwnership(createdOrUpdatedApiEntity.getId(), memberAsPrimaryOwner, null);
                 }
             }
-
-            //
 
             //Pages
             final JsonNode pagesDefinition = jsonNode.path("pages");
             if (pagesDefinition != null && pagesDefinition.isArray()) {
                 for (final JsonNode pageNode : pagesDefinition) {
-                    pageService.createApiPage(createdOrUpdatedApiEntity.getId(), objectMapper.readValue(pageNode.toString(), NewPageEntity.class));
+                    PageQuery query = new PageQuery.Builder().
+                            api(createdOrUpdatedApiEntity.getId()).
+                            name(pageNode.get("name").asText()).
+                            type(PageType.valueOf(pageNode.get("type").asText())).
+                            build();
+                    List<PageEntity> pageEntities = pageService.search(query);
+                    if (pageEntities == null || pageEntities.isEmpty()) {
+                        pageService.createApiPage(createdOrUpdatedApiEntity.getId(), objectMapper.readValue(pageNode.toString(), NewPageEntity.class));
+                    } else if (pageEntities.size() == 1) {
+                        UpdatePageEntity updatePageEntity = objectMapper.readValue(pageNode.toString(), UpdatePageEntity.class);
+                        pageService.update(pageEntities.get(0).getId(), updatePageEntity);
+                    } else {
+                        LOGGER.error("Not able to identify the page to update: {}. Too much page with the same name", pageNode.get("name").asText());
+                        throw new TechnicalManagementException("Not able to identify the page to update: " + pageNode.get("name").asText() + ". Too much page with the same name");
+                    }
                 }
             }
+
             //Plans
             final JsonNode plansDefinition = jsonNode.path("plans");
             if (plansDefinition != null && plansDefinition.isArray()) {
                 for (JsonNode planNode : plansDefinition) {
-                    NewPlanEntity newPlanEntity = objectMapper.readValue(planNode.toString(), NewPlanEntity.class);
-                    newPlanEntity.setApi(createdOrUpdatedApiEntity.getId());
-                    planService.create(newPlanEntity);
+                    PlanQuery query = new PlanQuery.Builder().
+                            api(createdOrUpdatedApiEntity.getId()).
+                            name(planNode.get("name").asText()).
+                            type(PlanType.valueOf(planNode.get("type").asText())).
+                            build();
+                    List<PlanEntity> planEntities = planService.search(query);
+                    if (planEntities == null || planEntities.isEmpty()) {
+                        NewPlanEntity newPlanEntity = objectMapper.readValue(planNode.toString(), NewPlanEntity.class);
+                        newPlanEntity.setApi(createdOrUpdatedApiEntity.getId());
+                        planService.create(newPlanEntity);
+                    } else if (planEntities.size() == 1) {
+                        UpdatePlanEntity updatePlanEntity = objectMapper.readValue(planNode.toString(), UpdatePlanEntity.class);
+                        planService.update(updatePlanEntity);
+                    } else {
+                        LOGGER.error("Not able to identify the plan to update: {}. Too much plan with the same name", planNode.get("name").asText());
+                        throw new TechnicalManagementException("Not able to identify the plan to update: " + planNode.get("name").asText() + ". Too much plan with the same name");
+                    }
                 }
             }
             return createdOrUpdatedApiEntity;

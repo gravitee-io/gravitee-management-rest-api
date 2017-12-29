@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.management.model.permissions.SystemRole.PRIMARY_OWNER;
 import static io.gravitee.repository.management.model.Membership.AuditEvent.*;
 import static io.gravitee.repository.management.model.MembershipReferenceType.API;
+import static io.gravitee.repository.management.model.MembershipReferenceType.APPLICATION;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
@@ -260,17 +261,26 @@ public class MembershipServiceImpl extends AbstractService implements Membership
     }
 
     @Override
-    public void transferApiOwnership(String apiId, String username) {
-        RoleEntity defaultRole = roleService.findDefaultRoleByScopes(RoleScope.API).get(0);
+    public void transferApiOwnership(String apiId, String username, RoleEntity newPrimaryOwnerRole) {
+        this.transferOwnership(API, RoleScope.API, apiId, username, newPrimaryOwnerRole);
+    }
+
+    @Override
+    public void transferApplicationOwnership(String applicationId, String username, RoleEntity newPrimaryOwnerRole) {
+        this.transferOwnership(APPLICATION, RoleScope.APPLICATION, applicationId, username, newPrimaryOwnerRole);
+    }
+
+    private void transferOwnership(MembershipReferenceType membershipReferenceType, RoleScope roleScope, String itemId, String username, RoleEntity newPrimaryOwnerRole) {
+        final RoleEntity newRole = (newPrimaryOwnerRole != null) ? newPrimaryOwnerRole : roleService.findDefaultRoleByScopes(roleScope).get(0);
 
         // Set the new primary owner
-        this.addOrUpdateMember(API, apiId, username, RoleScope.API, PRIMARY_OWNER.name());
+        this.addOrUpdateMember(membershipReferenceType, itemId, username, roleScope, PRIMARY_OWNER.name());
 
         // Update the role for previous primary_owner
-        this.getMembers(API, apiId, RoleScope.API, PRIMARY_OWNER.name())
+        this.getMembers(membershipReferenceType, itemId, roleScope, PRIMARY_OWNER.name())
                 .stream()
                 .filter(memberEntity -> ! memberEntity.getUsername().equals(username))
-                .forEach(m -> this.addOrUpdateMember(API, apiId, m.getUsername(), RoleScope.API, defaultRole.getName()));
+                .forEach(m -> this.addOrUpdateMember(membershipReferenceType, itemId, m.getUsername(), roleScope, newRole.getName()));
     }
 
     @Override
