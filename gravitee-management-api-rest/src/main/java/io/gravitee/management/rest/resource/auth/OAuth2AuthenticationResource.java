@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import io.gravitee.management.model.UpdateUserEntity;
 import io.gravitee.management.rest.resource.auth.oauth2.AuthorizationServerConfigurationParser;
 import io.gravitee.management.rest.resource.auth.oauth2.ExpressionMapping;
 import io.gravitee.management.rest.resource.auth.oauth2.ServerConfiguration;
+import io.gravitee.management.rest.resource.auth.oauth2.UserMapping;
 import io.gravitee.management.security.authentication.AuthenticationProvider;
 import io.gravitee.management.service.GroupService;
 import io.gravitee.management.service.MembershipService;
@@ -68,6 +69,14 @@ import java.util.*;
 public class OAuth2AuthenticationResource extends AbstractAuthenticationResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2AuthenticationResource.class);
+
+    static class UserProfile{
+        public static final String ID="id";
+        public static final String FIRSTNAME="firstName";
+        public static final String LASTNAME="lastName";
+        public static final String PICTURE="picture";
+        public static final String EMAIL="email";
+    }
 
     @Inject
     @Named("oauth2")
@@ -133,19 +142,10 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
     }
 
     private Response processUser(String userInfo) throws IOException {
+        HashMap<String, String> attrs = getUserProfileAttrs(userInfo);
+        List<ExpressionMapping> mappings = serverConfiguration.getGroupsMapping();
 
-        ReadContext userInfoPath = JsonPath.parse(userInfo);
-
-        String username = null;
-        String emailMap = serverConfiguration.getUserMapping().getEmail();
-        if (emailMap != null) {
-            try {
-                username = userInfoPath.read(emailMap);
-            } catch (PathNotFoundException e) {
-                LOGGER.error("Using json-path: \"{}\", no fields are located in {}", emailMap, userInfo);
-            }
-        }
-
+        String username = attrs.get(UserProfile.EMAIL);
         if (username == null) {
             throw new BadRequestException("No public email linked to your account");
         }
@@ -157,66 +157,70 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
         try {
             userService.findByName(username, false);
+            // User refresh
+            UpdateUserEntity user = new UpdateUserEntity();
+            user.setUsername(username);
+            user.setLastname(attrs.get(UserProfile.LASTNAME));
+            user.setFirstname(attrs.get(UserProfile.FIRSTNAME));
+            user.setPicture(attrs.get(UserProfile.PICTURE));
+            userService.update(user);
         } catch (UserNotFoundException unfe) {
-
             final NewExternalUserEntity newUser = new NewExternalUserEntity();
             newUser.setUsername(username);
-            newUser.setSource(AuthenticationSource.OAUTH2.getName());
-
-            String idMap = serverConfiguration.getUserMapping().getId();
-            if (idMap != null) {
-                try {
-                    newUser.setSourceId(userInfoPath.read(idMap));
-                } catch (PathNotFoundException e) {
-                    LOGGER.error("Using json-path: \"{}\", no fields are located in {}", idMap, userInfo);
-                }
-            }
-            String lastNameMap = serverConfiguration.getUserMapping().getLastname();
-            if (lastNameMap != null) {
-                try {
-                    newUser.setLastname(userInfoPath.read(lastNameMap));
-                } catch (PathNotFoundException e) {
-                    LOGGER.error("Using json-path: \"{}\", no fields are located in {}", lastNameMap, userInfo);
-                }
-            }
-            String firstNameMap = serverConfiguration.getUserMapping().getFirstname();
-            if (firstNameMap != null) {
-                try {
-                    newUser.setFirstname(userInfoPath.read(firstNameMap));
-                } catch (PathNotFoundException e) {
-                    LOGGER.error("Using json-path: \"{}\", no fields are located in {}", firstNameMap, userInfo);
-                }
-            }
             newUser.setEmail(username);
+            newUser.setSource(AuthenticationSource.OAUTH2.getName());
+            newUser.setSourceId(attrs.get(UserProfile.ID));
+            newUser.setLastname(attrs.get(UserProfile.LASTNAME));
+            newUser.setFirstname(attrs.get(UserProfile.FIRSTNAME));
+            newUser.setPicture(attrs.get(UserProfile.PICTURE));
 
-            List<ExpressionMapping> mappings = serverConfiguration.getGroupsMapping();
+            userService.create(newUser, true);
 
-            if (mappings.isEmpty()) {
-                userService.create(newUser, true);
-            } else {
+            if (!mappings.isEmpty()) {
                 //can fail if a group in config does not exist in gravitee --> HTTP 500
                 Set<GroupEntity> groupsToAdd = getGroupsToAddUser(username, mappings, userInfo);
-
-                userService.create(newUser, true);
-
                 addUserToApiAndAppGroupsWithDefaultRole(newUser, groupsToAdd);
             }
+        } finally {
+            //todo:addUserToApiAndAppGroupsWithDefaultRole
         }
-
-        // User refresh
-        UpdateUserEntity user = new UpdateUserEntity();
-        user.setUsername(username);
-        String pictureMap = serverConfiguration.getUserMapping().getPicture();
-        if (pictureMap != null) {
-            try {
-                user.setPicture(userInfoPath.read(pictureMap));
-            } catch (PathNotFoundException e) {
-                LOGGER.error("Using json-path: \"{}\", no fields are located in {}", pictureMap, userInfo);
-            }
-        }
-        userService.update(user);
 
         return connectUser(username);
+    }
+
+    private HashMap<String, String> getUserProfileAttrs(String userInfo) {
+        ReadContext userInfoPath = JsonPath.parse(userInfo);
+        HashMap<String, String> map = new HashMap<>();
+
+        UserMapping userMapping = serverConfiguration.getUserMapping();
+        String emailMap = userMapping.getEmail();
+        String idMap = userMapping.getId();
+        String lastNameMap = userMapping.getLastname();
+        String firstNameMap = userMapping.getFirstname();
+        String pictureMap = userMapping.getPicture();
+
+        Hashtable<String, String> hashtable = new Hashtable<>();
+
+        hashtable.put(UserProfile.EMAIL, emailMap);
+        hashtable.put(UserProfile.ID, idMap);
+        hashtable.put(UserProfile.LASTNAME, lastNameMap);
+        hashtable.put(UserProfile.FIRSTNAME, firstNameMap);
+        hashtable.put(UserProfile.PICTURE, pictureMap);
+
+        for (Map.Entry<String, String> entry : hashtable.entrySet()) {
+            String field = entry.getKey();
+            String mapping = entry.getValue();
+
+            if (mapping != null) {
+                try {
+                    map.put(field, userInfoPath.read(mapping));
+                } catch (PathNotFoundException e) {
+                    LOGGER.error("Using json-path: \"{}\", no fields are located in {}", mapping, userInfo);
+                }
+            }
+        }
+
+        return map;
     }
 
     private void addUserToApiAndAppGroupsWithDefaultRole(NewExternalUserEntity newUser, Collection<GroupEntity> groupsToAdd) {
