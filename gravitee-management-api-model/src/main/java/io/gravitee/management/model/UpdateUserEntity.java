@@ -32,6 +32,8 @@ public class UpdateUserEntity {
 
 	private String firstname;
 
+	private String lastname;
+
 	public String getFirstname() {
 		return firstname;
 	}
@@ -40,8 +42,6 @@ public class UpdateUserEntity {
 		this.firstname = firstname;
 	}
 
-	private String lastname;
-
 	public String getLastname() {
 		return lastname;
 	}
@@ -49,7 +49,6 @@ public class UpdateUserEntity {
 	public void setLastname(String lastname) {
 		this.lastname = lastname;
 	}
-
 	/**
 	 * The user picture
 	 */
@@ -89,6 +88,9 @@ public class UpdateUserEntity {
 	public String toString() {
 		return "UpdateUserEntity{" +
 				"username='" + username + '\'' +
+				", picture='" + picture + '\'' +
+				", firstname='" + firstname + '\'' +
+				", lastname='" + lastname + '\'' +
 				'}';
 	}
 }

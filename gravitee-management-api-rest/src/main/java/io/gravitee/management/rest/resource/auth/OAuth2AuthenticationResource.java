@@ -70,12 +70,12 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2AuthenticationResource.class);
 
-    static class UserProfile{
-        public static final String ID="id";
-        public static final String FIRSTNAME="firstName";
-        public static final String LASTNAME="lastName";
-        public static final String PICTURE="picture";
-        public static final String EMAIL="email";
+    static class UserProfile {
+        public static final String ID = "id";
+        public static final String FIRSTNAME = "firstName";
+        public static final String LASTNAME = "lastName";
+        public static final String PICTURE = "picture";
+        public static final String EMAIL = "email";
     }
 
     @Inject
@@ -157,33 +157,52 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
         try {
             userService.findByName(username, false);
-            // User refresh
-            UpdateUserEntity user = new UpdateUserEntity();
-            user.setUsername(username);
-            user.setLastname(attrs.get(UserProfile.LASTNAME));
-            user.setFirstname(attrs.get(UserProfile.FIRSTNAME));
-            user.setPicture(attrs.get(UserProfile.PICTURE));
-            userService.update(user);
         } catch (UserNotFoundException unfe) {
             final NewExternalUserEntity newUser = new NewExternalUserEntity();
             newUser.setUsername(username);
             newUser.setEmail(username);
             newUser.setSource(AuthenticationSource.OAUTH2.getName());
-            newUser.setSourceId(attrs.get(UserProfile.ID));
-            newUser.setLastname(attrs.get(UserProfile.LASTNAME));
-            newUser.setFirstname(attrs.get(UserProfile.FIRSTNAME));
-            newUser.setPicture(attrs.get(UserProfile.PICTURE));
 
-            userService.create(newUser, true);
+            if (attrs.get(UserProfile.ID) != null) {
+                newUser.setSourceId(attrs.get(UserProfile.ID));
+            }
+            if (attrs.get(UserProfile.LASTNAME) != null) {
+                newUser.setLastname(attrs.get(UserProfile.LASTNAME));
+            }
+            if (attrs.get(UserProfile.FIRSTNAME) != null) {
+                newUser.setFirstname(attrs.get(UserProfile.FIRSTNAME));
+            }
+            if (attrs.get(UserProfile.PICTURE) != null) {
+                newUser.setPicture(attrs.get(UserProfile.PICTURE));
+            }
 
             if (!mappings.isEmpty()) {
                 //can fail if a group in config does not exist in gravitee --> HTTP 500
                 Set<GroupEntity> groupsToAdd = getGroupsToAddUser(username, mappings, userInfo);
+
+                userService.create(newUser, true);
+
                 addUserToApiAndAppGroupsWithDefaultRole(newUser, groupsToAdd);
+            }else{
+                userService.create(newUser, true);
             }
-        } finally {
-            //todo:addUserToApiAndAppGroupsWithDefaultRole
         }
+
+        // User refresh
+        UpdateUserEntity user = new UpdateUserEntity();
+        user.setUsername(username);
+
+        if (attrs.get(UserProfile.LASTNAME) != null) {
+            user.setLastname(attrs.get(UserProfile.LASTNAME));
+        }
+        if (attrs.get(UserProfile.FIRSTNAME) != null) {
+            user.setFirstname(attrs.get(UserProfile.FIRSTNAME));
+        }
+        if (attrs.get(UserProfile.PICTURE) != null) {
+            user.setPicture(attrs.get(UserProfile.PICTURE));
+        }
+
+        userService.update(user);
 
         return connectUser(username);
     }
