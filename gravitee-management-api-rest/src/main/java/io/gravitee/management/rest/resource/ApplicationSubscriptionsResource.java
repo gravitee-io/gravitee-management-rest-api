@@ -38,7 +38,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -76,8 +75,11 @@ public class ApplicationSubscriptionsResource {
     public Response createSubscription(
             @PathParam("application") String application,
             @ApiParam(name = "plan", required = true)
-            @NotNull @QueryParam("plan") String plan) {
-        Subscription subscription = convert(subscriptionService.create(plan, application));
+            @NotNull @QueryParam("plan") String plan,
+            NewSubscriptionEntity newSubscriptionEntity) {
+        newSubscriptionEntity.setApplication(application);
+        newSubscriptionEntity.setPlan(plan);
+        Subscription subscription = convert(subscriptionService.create(newSubscriptionEntity));
         return Response
                 .created(URI.create("/applications/" + application + "/subscriptions/" + subscription.getId()))
                 .entity(subscription)
@@ -204,6 +206,7 @@ public class ApplicationSubscriptionsResource {
         subscription.setProcessedAt(subscriptionEntity.getProcessedAt());
         subscription.setProcessedBy(subscriptionEntity.getProcessedBy());
         subscription.setReason(subscriptionEntity.getReason());
+        subscription.setRequest(subscriptionEntity.getRequest());
         subscription.setStatus(subscriptionEntity.getStatus());
         subscription.setSubscribedBy(subscriptionEntity.getSubscribedBy());
 
