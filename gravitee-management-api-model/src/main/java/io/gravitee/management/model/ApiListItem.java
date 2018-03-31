@@ -18,10 +18,7 @@ package io.gravitee.management.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.common.component.Lifecycle;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -68,6 +65,10 @@ public class ApiListItem {
     private Double rate;
 
     private int numberOfRatings;
+
+    private Map<String, String> metadata;
+
+    private Double availability;
 
     public String getId() {
         return id;
@@ -204,6 +205,14 @@ public class ApiListItem {
     public void setNumberOfRatings(int numberOfRatings) {
         this.numberOfRatings = numberOfRatings;
     }
+
+    public Map<String, String> getMetaData() { return metadata;}
+
+    public void setMetadata(Map<String, String> metadata) { this.metadata = metadata;}
+
+    public Double getAvailability() { return availability;}
+
+    public void setAvailability(Double availability) { this.availability = availability;}
 
     @Override
     public boolean equals(Object o) {

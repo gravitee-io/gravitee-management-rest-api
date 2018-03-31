@@ -22,6 +22,8 @@ import io.gravitee.management.model.healthcheck.ApiMetrics;
 import io.gravitee.management.model.healthcheck.Log;
 import io.gravitee.management.model.healthcheck.SearchLogResponse;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -29,6 +31,8 @@ import io.gravitee.management.model.healthcheck.SearchLogResponse;
 public interface HealthCheckService {
 
     ApiMetrics getAvailability(String api, String field);
+
+    Map<String, Double> getAllApiAvailability(String field, String period);
 
     ApiMetrics getResponseTime(String api, String field);
 

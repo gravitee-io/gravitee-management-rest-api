@@ -63,6 +63,7 @@ import static io.gravitee.repository.management.model.Api.AuditEvent.*;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author Azize ELAMRANI (azize at graviteesource.com)
  * @author GraviteeSource Team
+ * @author Guillaume GILLON
  */
 @Component
 public class ApiServiceImpl extends TransactionalService implements ApiService {

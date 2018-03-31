@@ -48,8 +48,10 @@ import io.gravitee.repository.healthcheck.query.responsetime.AverageResponseTime
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -166,6 +168,38 @@ public class HealthCheckServiceImpl implements HealthCheckService {
                             .build());
 
             return convert(apiEntity, response.getEndpointAvailabilities(), field);
+        } catch (Exception ex) {
+            logger.error("An unexpected error occurs while searching for health data.", ex);
+            return null;
+        }
+    }
+
+    @Override
+    public Map<String, Double> getAllApiAvailability(String field, String period) { logger.debug("Run health availability query for All API");
+
+        try {
+            Map<String, Double> toReturn = null;
+
+            Set<ApiEntity> apiEntities = apiService.findAll();
+
+
+            AvailabilityResponse response = healthCheckRepository.query(
+                    QueryBuilders.availability()
+                            .field(AvailabilityQuery.Field.valueOf(field))
+                            .build());
+
+
+            ApiMetrics apiMetrics = convert(null, response.getEndpointAvailabilities(), field);
+
+            Map<String, Map> buckets = apiMetrics.getBuckets();
+            toReturn = buckets.entrySet().stream().collect(Collectors.toMap(
+                    p -> p.getKey(),
+                    p -> {
+                        Map<String, Double> availabilities = (Map<String, Double>) p.getValue();
+                        return availabilities.get(period);
+                    }));
+
+            return toReturn;
         } catch (Exception ex) {
             logger.error("An unexpected error occurs while searching for health data.", ex);
             return null;

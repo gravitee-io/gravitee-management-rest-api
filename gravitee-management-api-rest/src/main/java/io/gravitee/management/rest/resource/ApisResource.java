@@ -25,8 +25,11 @@ import io.gravitee.management.rest.security.Permission;
 import io.gravitee.management.rest.security.Permissions;
 import io.gravitee.management.service.*;
 import io.gravitee.management.service.exceptions.ApiAlreadyExistsException;
+
+import io.gravitee.management.service.impl.AvailabilityService;
 import io.gravitee.management.service.notification.ApiHook;
 import io.gravitee.management.service.notification.Hook;
+
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.model.View;
 import io.swagger.annotations.*;
@@ -41,14 +44,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
+ * @author Guillaume GILLON
  * @author GraviteeSource Team
  */
 @Path("/apis")
@@ -68,6 +72,12 @@ public class ApisResource extends AbstractResource {
     private TopApiService topApiService;
     @Inject
     private RatingService ratingService;
+
+    @Inject
+    private ApiMetadataService apiMetadataService;
+
+    @Inject
+    private AvailabilityService availabilityService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -243,6 +253,23 @@ public class ApisResource extends AbstractResource {
             apiItem.setRate(ratingSummary.getAverageRate());
             apiItem.setNumberOfRatings(ratingSummary.getNumberOfRatings());
         }
+
+        //Metadata
+        Map<String, String> mapMetaData = null;
+
+        List<ApiMetadataEntity> metaData = apiMetadataService.findAllByApi(api.getId());
+
+        if(metaData != null)
+            mapMetaData = metaData.stream()
+                    .filter(data -> data.getApiId() == null)
+                    .filter(data -> data.getValue() !=null && !data.getValue().isEmpty() )
+                    .collect(Collectors.toMap(ApiMetadataEntity::getKey,ApiMetadataEntity::getValue));
+
+
+        apiItem.setMetadata(mapMetaData);
+
+        //Availability
+        apiItem.setAvailability(availabilityService.getApiAvailability(api.getId()));
 
         return apiItem;
     }

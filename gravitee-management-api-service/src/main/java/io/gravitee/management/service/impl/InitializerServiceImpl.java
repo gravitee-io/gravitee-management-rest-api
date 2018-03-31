@@ -49,12 +49,16 @@ public class InitializerServiceImpl extends io.gravitee.common.service.AbstractS
     public static final String METADATA_EMAIL_SUPPORT_KEY = "email-support";
     public static final String DEFAULT_METADATA_EMAIL_SUPPORT = "support@change.me";
 
+    public static final String METADATA_PROJECT_NAME_KEY = "project-name";
+
     @Autowired
     private RoleService roleService;
     @Autowired
     private MetadataService metadataService;
     @Autowired
     private ViewService viewService;
+    @Autowired
+    private AvailabilityService availabilityService;
 
     @Override
     protected String name() {
@@ -74,6 +78,18 @@ public class InitializerServiceImpl extends io.gravitee.common.service.AbstractS
             metadata.setFormat(MetadataFormat.MAIL);
             metadata.setName("Email support");
             metadata.setValue(DEFAULT_METADATA_EMAIL_SUPPORT);
+            final MetadataEntity metadataEntity = metadataService.create(metadata);
+            logger.info("    Added default metadata for email support with success: {}", metadataEntity);
+        }
+
+        final MetadataEntity defaultProjectNameMetadata = metadataService.findDefaultByKey(METADATA_PROJECT_NAME_KEY);
+
+        if (defaultProjectNameMetadata == null) {
+            logger.info("    No default metadata for project name found. Add default one.");
+            final NewMetadataEntity metadata = new NewMetadataEntity();
+            metadata.setFormat(MetadataFormat.STRING);
+            metadata.setName("Project Name");
+            metadata.setValue("");
             final MetadataEntity metadataEntity = metadataService.create(metadata);
             logger.info("    Added default metadata for email support with success: {}", metadataEntity);
         }
@@ -212,6 +228,9 @@ public class InitializerServiceImpl extends io.gravitee.common.service.AbstractS
             viewService.createDefaultView();
         }
         roleService.createOrUpdateSystemRoles();
+
+        // HealthCheckScheduled
+        this.availabilityService.initialize();
     }
 }
 

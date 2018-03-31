@@ -19,12 +19,14 @@ import io.gravitee.management.rest.JerseySpringTest;
 import io.gravitee.management.security.authentication.AuthenticationProvider;
 import io.gravitee.management.security.authentication.AuthenticationProviderManager;
 import io.gravitee.management.service.*;
+import io.gravitee.management.service.impl.AvailabilityService;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -182,5 +184,17 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
         public TopApiService topApiService() {
             return mock(TopApiService.class);
         }
+
+        @Bean
+        public AvailabilityService availabilityService() {return mock(AvailabilityService.class);}
+
+        @Bean
+        public TaskScheduler taskScheduler() {return mock(TaskScheduler.class);}
+
+        @Bean
+        public HealthCheckService healthCheckService() {return mock(HealthCheckService.class);}
+
+        @Bean
+        public ApiMetadataService apiMetadataService() {return mock(ApiMetadataService.class);}
     }
 }

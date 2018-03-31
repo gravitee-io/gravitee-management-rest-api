@@ -268,7 +268,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     }
                 }
             }
-
             topHitsAnalytics.setMetadata(metadata);
         }
 
