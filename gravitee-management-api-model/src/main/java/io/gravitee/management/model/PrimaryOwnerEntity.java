@@ -27,9 +27,12 @@ public class PrimaryOwnerEntity {
 
     private final String displayName;
 
+    private final String username;
+
     public PrimaryOwnerEntity(UserEntity user) {
         this.id = user.getId();
         this.email = user.getEmail();
+        this.username = user.getUsername();
 
         if (user.getFirstname() == null || user.getLastname() == null) {
             this.displayName = user.getUsername();
@@ -48,5 +51,9 @@ public class PrimaryOwnerEntity {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getUsername() {
+        return username;
     }
 }
