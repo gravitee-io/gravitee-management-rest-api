@@ -62,6 +62,9 @@ public class JettyConfiguration {
     @Value("${jetty.accesslog.path:${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log}")
     private String accessLogPath;
 
+    @Value("${jetty.forwardedRequests:false}")
+    private boolean forwardedRequests;
+
     public String getHttpHost() {
       return httpHost;
     }
@@ -164,5 +167,13 @@ public class JettyConfiguration {
 
     public void setAccessLogPath(String accessLogPath) {
         this.accessLogPath = accessLogPath;
+    }
+
+    public boolean isForwardedRequests() {
+        return forwardedRequests;
+    }
+
+    public void setForwardedRequests(boolean forwardedRequests) {
+        this.forwardedRequests = forwardedRequests;
     }
 }

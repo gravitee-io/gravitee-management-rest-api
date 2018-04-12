@@ -70,6 +70,11 @@ public class JettyServerFactory implements FactoryBean<Server> {
         httpConfig.setSendServerVersion(false);
         httpConfig.setSendDateHeader(false);
 
+        // support x-forwarded Headers
+        if (jettyConfiguration.isForwardedRequests()) {
+            httpConfig.addCustomizer(new ForwardedRequestCustomizer());
+        }
+
         // Setup Jetty HTTP Connector
         ServerConnector http = new ServerConnector(server,
                 jettyConfiguration.getAcceptors(),

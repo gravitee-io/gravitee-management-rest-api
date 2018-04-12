@@ -29,6 +29,7 @@
 #  accesslog:
 #    enabled: true
 #    path: ${gravitee.home}/logs/gravitee_accesslog_yyyy_mm_dd.log
+#  forwardedRequests: false
 
 http:
   cors:
