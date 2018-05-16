@@ -97,6 +97,9 @@ public class PoliciesResource {
         item.setDescription(policy.getDescription());
         item.setVersion(policy.getVersion());
         item.setType(policy.getType());
+        item.setDeprecated(policy.isDeprecated());
+        item.setCategory(policy.getCategory());
+        item.setScopes(policy.getScopes());
 
         return item;
     }

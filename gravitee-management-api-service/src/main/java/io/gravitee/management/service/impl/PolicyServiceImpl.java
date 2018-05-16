@@ -18,20 +18,23 @@ package io.gravitee.management.service.impl;
 import io.gravitee.management.model.PluginEntity;
 import io.gravitee.management.model.PolicyDevelopmentEntity;
 import io.gravitee.management.model.PolicyEntity;
+import io.gravitee.management.model.PolicyType;
 import io.gravitee.management.service.PolicyService;
 import io.gravitee.management.service.exceptions.PolicyNotFoundException;
 import io.gravitee.management.service.exceptions.TechnicalManagementException;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.PolicyPluginManager;
+import io.gravitee.policy.api.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -104,6 +107,58 @@ public class PolicyServiceImpl extends TransactionalService implements PolicySer
             entity.setType(PolicyType.RESPONSE);
         }
         */
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(policyPlugin.policy().getClassLoader());
+
+            //set Type
+            for (Method method : policyPlugin.policy().getDeclaredMethods()) {
+                for (Annotation annotation : method.getAnnotations()) {
+                    if (!PolicyType.REQUEST_RESPONSE.equals(entity.getType())) {
+                        if (annotation.annotationType().equals(OnResponse.class) || annotation.annotationType().equals(OnResponseContent.class)) {
+                            if (PolicyType.REQUEST.equals(entity.getType())) {
+                                entity.setType(PolicyType.REQUEST_RESPONSE);
+                            } else {
+                                entity.setType(PolicyType.RESPONSE);
+                            }
+                        }
+
+                        if (annotation.annotationType().equals(OnRequest.class) || annotation.annotationType().equals(OnRequestContent.class)) {
+                            if (PolicyType.RESPONSE.equals(entity.getType())) {
+                                entity.setType(PolicyType.REQUEST_RESPONSE);
+                            } else {
+                                entity.setType(PolicyType.REQUEST);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //set Category and Scopes
+            Annotation[] policyAnnotations = policyPlugin.policy().getAnnotations();
+            if (policyAnnotations.length == 0) {
+                // set default values
+                entity.setCategory("OTHERS");
+                entity.setScopes(new String[]{"API"});
+            } else {
+                for (Annotation annotation : policyAnnotations) {
+                    if (annotation.annotationType().isAssignableFrom(Deprecated.class)) {
+                        entity.setDeprecated(true);
+                    } else if (annotation.annotationType().isAssignableFrom(Policy.class)) {
+                        Policy policy = (Policy) annotation;
+                        entity.setCategory(
+                                policy.category().name().isEmpty()
+                                        ? policy.category().value().name()
+                                        : policy.category().name());
+                        entity.setScopes(Arrays.stream(policy.scope().value()).map(Enum::toString).toArray(String[]::new));
+                    }
+                }
+            }
+        } finally {
+            Thread.currentThread().setContextClassLoader(classLoader);
+        }
 
         if (withPlugin) {
             // Plugin information

@@ -84,6 +84,11 @@
 			<artifactId>gravitee-plugin-fetcher</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>io.gravitee.policy</groupId>
+			<artifactId>gravitee-policy-api</artifactId>
+		</dependency>
+
 		<!-- Spring dependencies -->
 		<dependency>
 			<groupId>org.springframework</groupId>

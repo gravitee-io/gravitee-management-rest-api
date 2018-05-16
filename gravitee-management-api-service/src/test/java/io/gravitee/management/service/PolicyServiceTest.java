@@ -18,8 +18,13 @@ package io.gravitee.management.service;
 import io.gravitee.management.model.PolicyEntity;
 import io.gravitee.management.service.impl.PolicyServiceImpl;
 import io.gravitee.plugin.core.api.PluginManifest;
+import io.gravitee.plugin.core.api.PluginType;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.PolicyPluginManager;
+import io.gravitee.policy.api.ChainScope;
+import io.gravitee.policy.api.annotations.Category;
+import io.gravitee.policy.api.annotations.Policy;
+import io.gravitee.policy.api.annotations.Scope;
 import io.gravitee.repository.exceptions.TechnicalException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,11 +32,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -62,11 +68,44 @@ public class PolicyServiceTest {
         when(policyDefinition.id()).thenReturn(POLICY_ID);
         when(policyManager.findAll()).thenReturn(Collections.singletonList(policyDefinition));
         when(policyDefinition.manifest()).thenReturn(manifest);
+        when(policyDefinition.policy()).thenReturn(Object.class);
 //        when(plugin.manifest()).thenReturn(manifest);
 
         final Set<PolicyEntity> policies = policyService.findAll();
 
         assertNotNull(policies);
-        assertEquals(POLICY_ID, policies.iterator().next().getId());
+        PolicyEntity policyEntity = policies.iterator().next();
+        assertEquals(POLICY_ID, policyEntity.getId());
+        assertFalse(policyEntity.isDeprecated());
+        assertEquals("OTHERS", policyEntity.getCategory());
+        assertEquals("API", policyEntity.getScopes()[0]);
+    }
+
+    @Test
+    public void shouldFindById() throws TechnicalException {
+        when(policyManager.get(POLICY_ID)).thenReturn(policyDefinition);
+        when(policyDefinition.id()).thenReturn(POLICY_ID);
+        when(policyDefinition.manifest()).thenReturn(manifest);
+        when(policyDefinition.path()).thenReturn(mock(Path.class));
+        when(policyDefinition.type()).thenReturn(PluginType.POLICY);
+        when(policyDefinition.policy()).thenReturn(TestPolicy.class);
+
+        final PolicyEntity policyEntity = policyService.findById(POLICY_ID);
+
+        assertNotNull(policyEntity);
+        assertEquals(POLICY_ID, policyEntity.getId());
+        assertTrue(policyEntity.isDeprecated());
+        assertEquals("SECURITY", policyEntity.getCategory());
+        assertEquals("SECURITY", policyEntity.getScopes()[0]);
+        assertEquals("API", policyEntity.getScopes()[1]);
+    }
+
+    @Policy(
+            category = @Category(io.gravitee.policy.api.Category.SECURITY),
+            scope = @Scope({ChainScope.SECURITY, ChainScope.API})
+    )
+    @Deprecated
+    class TestPolicy {
+
     }
 }

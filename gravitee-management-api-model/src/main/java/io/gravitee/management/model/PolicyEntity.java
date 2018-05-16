@@ -52,6 +52,12 @@ public class PolicyEntity {
     @JsonProperty("dev")
     private PolicyDevelopmentEntity development;
 
+    private boolean deprecated;
+
+    private String[] scopes;
+
+    private String category;
+
     public String getDescription() {
         return description;
     }
@@ -108,6 +114,30 @@ public class PolicyEntity {
         this.development = development;
     }
 
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
+    }
+
+    public String[] getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(String[] scopes) {
+        this.scopes = scopes;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("PolicyEntity{");
@@ -115,6 +145,9 @@ public class PolicyEntity {
         sb.append(", name='").append(name).append('\'');
         sb.append(", version='").append(version).append('\'');
         sb.append(", type='").append(type).append('\'');
+        sb.append(", deprecated='").append(deprecated).append('\'');
+        sb.append(", scopes='").append(scopes).append('\'');
+        sb.append(", category='").append(category).append('\'');
         sb.append('}');
         return sb.toString();
     }
