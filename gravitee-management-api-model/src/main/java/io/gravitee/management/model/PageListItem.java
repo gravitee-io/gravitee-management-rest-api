@@ -22,6 +22,7 @@ import java.util.Objects;
 
 /**
  * @author David BRASSELY (brasseld at gmail.com)
+ * @author Guillaume GILLON 
  */
 public class PageListItem {
 
@@ -42,6 +43,8 @@ public class PageListItem {
     private PageConfigurationEntity configuration;
 
     private boolean homepage;
+
+    private List<PageListItem> pages;
 
     @JsonProperty("excluded_groups")
     private List<String> excludedGroups;
@@ -125,6 +128,10 @@ public class PageListItem {
     public void setExcludedGroups(List<String> excludedGroups) {
         this.excludedGroups = excludedGroups;
     }
+
+    public List<PageListItem> getPages() { return pages; }
+
+    public void setPages(List<PageListItem> pages) { this.pages = pages; }
 
     @Override
     public boolean equals(Object o) {

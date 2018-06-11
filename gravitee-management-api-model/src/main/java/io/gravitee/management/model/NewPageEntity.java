@@ -23,6 +23,7 @@ import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Guillaume GILLON 
  * @author GraviteeSource Team
  */
 public class NewPageEntity {
@@ -50,6 +51,8 @@ public class NewPageEntity {
 
 	@JsonProperty("excluded_groups")
 	private List<String> excludedGroups;
+
+	private String parentId;
 
 	public String getName() {
 		return name;
@@ -130,6 +133,10 @@ public class NewPageEntity {
 	public void setExcludedGroups(List<String> excludedGroups) {
 		this.excludedGroups = excludedGroups;
 	}
+
+	public String getParentId() { return parentId; }
+
+	public void setParentId(String parentId) { this.parentId = parentId; }
 
 	@Override
     public String toString() {
