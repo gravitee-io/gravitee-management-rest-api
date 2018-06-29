@@ -195,7 +195,12 @@
                 <artifactId>logback-core</artifactId>
                 <version>${logback.version}</version>
             </dependency>
-
+            <!-- Vert.x -->
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-rx-java2</artifactId>
+                <version>${vertx.version}</version>
+            </dependency>
             <!-- JWT -->
             <dependency>
                 <groupId>com.auth0</groupId>
