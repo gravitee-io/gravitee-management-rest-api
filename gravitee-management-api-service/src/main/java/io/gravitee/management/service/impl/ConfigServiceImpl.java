@@ -85,7 +85,7 @@ public class ConfigServiceImpl extends AbstractService implements ConfigService 
                             f.set(o, Integer.valueOf(getFirstValueOrDefault(values, parameterKey.value().defaultValue())));
                         } else if (List.class.isAssignableFrom(f.getType())) {
                             if (values == null || values.isEmpty()) {
-                                f.set(o, parameterKey.value().defaultValue());
+                                f.set(o, Collections.emptyList());
                             } else {
                                 f.set(o, values);
                             }
