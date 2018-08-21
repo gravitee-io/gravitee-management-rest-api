@@ -107,7 +107,11 @@ public class CurrentUserResource extends AbstractResource {
 
             List<GrantedAuthority> authorities = new ArrayList<>(details.getAuthorities());
 
-            UserDetails userDetails = new UserDetails(userEntity.getId(), details.getPassword(), authorities);
+            UserDetails userDetails = new UserDetails(
+                    userEntity.getId(),
+                    details.getPassword() == null ? "xxxxx" : details.getPassword(),
+                    authorities);
+
             userDetails.setId(userEntity.getId());
             userDetails.setFirstname(details.getFirstname());
             userDetails.setLastname(details.getLastname());
