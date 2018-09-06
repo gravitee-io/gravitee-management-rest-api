@@ -67,7 +67,7 @@ public class PageService_FindByApiTest {
         when(page1.getOrder()).thenReturn(1);
         when(page1.getType()).thenReturn(PageType.MARKDOWN);
         when(page2.getOrder()).thenReturn(2);
-        when(page2.getType()).thenReturn(PageType.RAML);
+        when(page2.getType()).thenReturn(PageType.SWAGGER);
         when(pageRepository.findApiPageByApiId(API_ID)).thenReturn(pages);
 
         final List<PageListItem> pageEntities = pageService.findApiPagesByApi(API_ID);

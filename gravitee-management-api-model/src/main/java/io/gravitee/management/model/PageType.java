@@ -24,7 +24,6 @@ package io.gravitee.management.model;
 public enum PageType {
 
 	MARKDOWN,
-	RAML,
 	SWAGGER,
 	FOLDER
 }

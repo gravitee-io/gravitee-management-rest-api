@@ -658,7 +658,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		if (isJson(page.getContent())) {
 			pageEntity.setContentType(MediaType.APPLICATION_JSON);
 		} else {
-			// Yaml or RAML format ?
+			// Yaml format ?
 			pageEntity.setContentType("text/yaml");
 		}
 
