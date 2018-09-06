@@ -19,6 +19,7 @@ import com.auth0.jwt.JWTVerifier;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.management.idp.api.authentication.UserDetails;
+import io.gravitee.management.security.cookies.JWTCookieGenerator;
 import io.gravitee.management.service.common.JWTHelper.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,9 +52,11 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
     private final JWTVerifier jwtVerifier;
+    private JWTCookieGenerator jwtCookieGenerator;
 
-    public JWTAuthenticationFilter(final String jwtSecret) {
+    public JWTAuthenticationFilter(final String jwtSecret, final JWTCookieGenerator jwtCookieGenerator) {
         this.jwtVerifier = new JWTVerifier(jwtSecret);
+        this.jwtCookieGenerator = jwtCookieGenerator;
     }
 
     @Override
@@ -110,7 +111,9 @@ public class JWTAuthenticationFilter extends GenericFilterBean {
                     } else {
                         LOGGER.error(errorMessage);
                     }
+                    res.addCookie(jwtCookieGenerator.generate(null));
                     res.sendError(HttpStatusCode.UNAUTHORIZED_401);
+                    return;
                 }
             } else {
                 LOGGER.debug("Authorization schema not found");
