@@ -32,6 +32,7 @@ import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
 
@@ -74,6 +75,7 @@ public class GraviteeApplication extends ResourceConfig {
         register(AuditResource.class);
         register(SearchResource.class);
         register(MessagesResource.class);
+        register(MultiPartFeature.class);
 
         // Dynamically register authentication endpoints
         register(new AuthenticationBinder(authenticationProviderManager));
