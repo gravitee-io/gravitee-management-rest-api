@@ -116,6 +116,7 @@ public class LdapIdentityLookup implements IdentityLookup, InitializingBean {
                             LDAP_ATTRIBUTE_GIVENNAME,
                             LDAP_ATTRIBUTE_SURNAME,
                             LDAP_ATTRIBUTE_MAIL,
+                            LDAP_ATTRIBUTE_COMMONNAME,
                             LDAP_ATTRIBUTE_DISPLAYNAME)
                     .filter(new AndFilter().and(classFilter).and(queryFilter));
 
@@ -146,7 +147,7 @@ public class LdapIdentityLookup implements IdentityLookup, InitializingBean {
                     identityReference.getReference(),
                     new String [] {
                             identifierAttribute, LDAP_ATTRIBUTE_GIVENNAME, LDAP_ATTRIBUTE_SURNAME,
-                            LDAP_ATTRIBUTE_MAIL, LDAP_ATTRIBUTE_DISPLAYNAME
+                            LDAP_ATTRIBUTE_MAIL, LDAP_ATTRIBUTE_COMMONNAME, LDAP_ATTRIBUTE_DISPLAYNAME
                     },
                     USER_CONTEXT_MAPPER);
         } catch (final NameNotFoundException nnfe) {
@@ -167,6 +168,9 @@ public class LdapIdentityLookup implements IdentityLookup, InitializingBean {
             user.setDisplayName(ctx.getStringAttribute(LDAP_ATTRIBUTE_DISPLAYNAME));
             user.setUsername(ctx.getStringAttribute(LdapIdentityLookup.this.identifierAttribute));
 
+            if (user.getDisplayName() == null) {
+                user.setDisplayName(ctx.getStringAttribute(LDAP_ATTRIBUTE_COMMONNAME));
+            }
             if (user.getDisplayName() == null) {
                 user.setDisplayName(user.getFirstname() + ' ' + user.getLastname());
             }
