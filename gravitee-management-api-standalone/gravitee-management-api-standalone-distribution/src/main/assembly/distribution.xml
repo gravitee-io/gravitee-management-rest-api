@@ -71,6 +71,14 @@
                 <include>*.*</include>
             </includes>
         </fileSet>
+
+        <fileSet>
+            <directory>src/main/assembly</directory>
+            <outputDirectory>/data</outputDirectory>
+            <excludes>
+                <exclude>*</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
 
     <dependencySets>
