@@ -20,15 +20,13 @@ import io.gravitee.common.component.Lifecycle;
 import io.gravitee.management.model.PrimaryOwnerEntity;
 import io.gravitee.management.model.Visibility;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
+ * @author Guillaume GILLON
  */
 public class ApiListItem {
 
@@ -60,6 +58,8 @@ public class ApiListItem {
 
     @JsonProperty(value = "context_path")
     private String contextPath;
+
+    private Map<String, String> metadata;
 
     private Set<String> views;
 
@@ -216,6 +216,10 @@ public class ApiListItem {
     public void setTags(Set<String> tags) {
         this.tags = tags;
     }
+
+    public Map<String, String> getMetaData() { return metadata;}
+
+    public void setMetadata(Map<String, String> metadata) { this.metadata = metadata;}
 
     @Override
     public boolean equals(Object o) {

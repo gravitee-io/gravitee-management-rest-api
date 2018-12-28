@@ -17,6 +17,7 @@ package io.gravitee.management.rest.resource;
 
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.management.model.ApiMetadataEntity;
 import io.gravitee.management.model.ImportSwaggerDescriptorEntity;
 import io.gravitee.management.model.RatingSummaryEntity;
 import io.gravitee.management.model.api.ApiEntity;
@@ -29,10 +30,7 @@ import io.gravitee.management.rest.resource.param.ApisParam;
 import io.gravitee.management.rest.resource.param.VerifyApiParam;
 import io.gravitee.management.rest.security.Permission;
 import io.gravitee.management.rest.security.Permissions;
-import io.gravitee.management.service.ApiService;
-import io.gravitee.management.service.RatingService;
-import io.gravitee.management.service.SwaggerService;
-import io.gravitee.management.service.TopApiService;
+import io.gravitee.management.service.*;
 import io.gravitee.management.service.exceptions.ApiAlreadyExistsException;
 import io.gravitee.management.service.notification.ApiHook;
 import io.gravitee.management.service.notification.Hook;
@@ -60,6 +58,7 @@ import static java.util.stream.Collectors.toList;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
+ * @author Guillaume GILLON
  */
 @Path("/apis")
 @Api(tags = {"API"})
@@ -78,6 +77,8 @@ public class ApisResource extends AbstractResource {
     private TopApiService topApiService;
     @Inject
     private RatingService ratingService;
+    @Inject
+    private ApiMetadataService apiMetadataService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -311,6 +312,20 @@ public class ApisResource extends AbstractResource {
             apiItem.setNumberOfRatings(ratingSummary.getNumberOfRatings());
         }
         apiItem.setTags(api.getTags());
+
+        //Metadata
+        Map<String, String> mapMetaData = null;
+
+        List<ApiMetadataEntity> metaData = apiMetadataService.findAllByApi(api.getId());
+
+        if(metaData != null)
+            mapMetaData = metaData.stream()
+                    .filter(data -> data.getApiId() == null)
+                    .filter(data -> data.getValue() != null && !data.getValue().isEmpty() )
+                    .collect(Collectors.toMap(ApiMetadataEntity::getKey,ApiMetadataEntity::getValue));
+
+
+        apiItem.setMetadata(mapMetaData);
 
         return apiItem;
     }

@@ -41,6 +41,7 @@ public class DefaultMetadataUpgrader implements Upgrader, Ordered {
 
     public static final String METADATA_EMAIL_SUPPORT_KEY = "email-support";
     public static final String DEFAULT_METADATA_EMAIL_SUPPORT = "support@change.me";
+    public static final String METADATA_PROJECT_NAME_KEY = "project-name";
 
     @Autowired
     private MetadataService metadataService;
@@ -58,6 +59,18 @@ public class DefaultMetadataUpgrader implements Upgrader, Ordered {
             metadata.setValue(DEFAULT_METADATA_EMAIL_SUPPORT);
             final MetadataEntity metadataEntity = metadataService.create(metadata);
             logger.info("    Added default metadata for email support with success: {}", metadataEntity);
+        }
+
+        final MetadataEntity defaultProjectNameMetadata = metadataService.findDefaultByKey(METADATA_PROJECT_NAME_KEY);
+
+        if (defaultProjectNameMetadata == null) {
+            logger.info("    No default metadata for project name found. Add default one.");
+            final NewMetadataEntity metadata = new NewMetadataEntity();
+            metadata.setFormat(MetadataFormat.STRING);
+            metadata.setName("Project Name");
+            metadata.setValue("");
+            final MetadataEntity metadataEntity = metadataService.create(metadata);
+            logger.info("    Added default metadata for project name with success: {}", metadataEntity);
         }
 
         return true;
