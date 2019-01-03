@@ -52,7 +52,7 @@
         <mail.version>1.4.7</mail.version>
         <freemarker.version>2.3.28</freemarker.version>
         <java-jwt.version>2.2.1</java-jwt.version>
-        <guava.version>20.0</guava.version>
+        <guava.version>24.1.1-jre</guava.version>
         <assertj-core.version>3.5.2</assertj-core.version>
         <jsonpath.version>2.3.0</jsonpath.version>
         <lucene.version>7.5.0</lucene.version>
