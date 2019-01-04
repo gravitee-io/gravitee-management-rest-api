@@ -45,6 +45,7 @@ import java.util.Collections;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Import(LdapIdentityLookupConfiguration.class)
@@ -67,21 +68,12 @@ public class LdapIdentityLookup implements IdentityLookup, InitializingBean {
     @Autowired
     private Environment environment;
 
-    private String identifierAttribute = "uid";
-
     private LdapName baseDn;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         String searchFilter = environment.getProperty("user-search-filter");
         LOGGER.debug("Looking for a LDAP user's identifier using search filter [{}]", searchFilter);
-
-        if (searchFilter != null) {
-            // Search filter can be uid={0} or mail={0}
-            identifierAttribute = searchFilter.split("=")[0];
-        }
-
-        LOGGER.info("User identifier is based on the [{}] attribute", identifierAttribute);
 
         // Base DN to search for users
         baseDn = LdapNameBuilder
@@ -145,7 +137,7 @@ public class LdapIdentityLookup implements IdentityLookup, InitializingBean {
             return ldapTemplate.lookup(
                     identityReference.getReference(),
                     new String [] {
-                            identifierAttribute, LDAP_ATTRIBUTE_GIVENNAME, LDAP_ATTRIBUTE_SURNAME,
+                            LDAP_ATTRIBUTE_GIVENNAME, LDAP_ATTRIBUTE_SURNAME,
                             LDAP_ATTRIBUTE_MAIL, LDAP_ATTRIBUTE_DISPLAYNAME
                     },
                     USER_CONTEXT_MAPPER);
@@ -165,7 +157,6 @@ public class LdapIdentityLookup implements IdentityLookup, InitializingBean {
             user.setLastname(ctx.getStringAttribute(LDAP_ATTRIBUTE_SURNAME));
             user.setEmail(ctx.getStringAttribute(LDAP_ATTRIBUTE_MAIL));
             user.setDisplayName(ctx.getStringAttribute(LDAP_ATTRIBUTE_DISPLAYNAME));
-            //user.setUsername(ctx.getStringAttribute(LdapIdentityLookup.this.identifierAttribute));
 
             if (user.getDisplayName() == null) {
                 user.setDisplayName(user.getFirstname() + ' ' + user.getLastname());

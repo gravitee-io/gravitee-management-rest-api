@@ -32,8 +32,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at gravitee.io)
- * @author David BRASSELY (david at gravitee.io)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UserDetailsContextPropertiesMapper implements UserDetailsContextMapper {
@@ -45,17 +46,6 @@ public class UserDetailsContextPropertiesMapper implements UserDetailsContextMap
 	private final static String LDAP_ATTRIBUTE_MAIL = "mail";
 
 	private Environment environment;
-
-	private String identifierAttribute = "uid";
-
-	public void afterPropertiesSet() throws Exception {
-		String searchFilter = environment.getProperty("user-search-filter");
-
-		if (searchFilter != null) {
-			// Search filter can be uid={0} or mail={0}
-			identifierAttribute = searchFilter.split("=")[0];
-		}
-	}
 
 	@Override
 	public UserDetails mapUserFromContext(DirContextOperations ctx, String username, Collection<? extends GrantedAuthority> authorities) {
@@ -73,7 +63,7 @@ public class UserDetailsContextPropertiesMapper implements UserDetailsContextMap
 
 		io.gravitee.management.idp.api.authentication.UserDetails userDetails =
 				new io.gravitee.management.idp.api.authentication.UserDetails(
-						ctx.getStringAttribute(identifierAttribute), "", mappedAuthorities);
+						ctx.getNameInNamespace(), "", mappedAuthorities);
 
 		userDetails.setFirstname(ctx.getStringAttribute(LDAP_ATTRIBUTE_FIRSTNAME));
 		userDetails.setLastname(ctx.getStringAttribute(LDAP_ATTRIBUTE_LASTNAME));
