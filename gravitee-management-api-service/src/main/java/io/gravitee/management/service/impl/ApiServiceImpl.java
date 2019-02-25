@@ -201,6 +201,8 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
             // Format context-path and check if context path is unique
             checkContextPath(api.getProxy().getContextPath());
 
+            checkEndpointsConstraints(api.getProxy().getGroups());
+
             addLoggingMaxDuration(api.getProxy().getLogging());
 
             Api repoApi = convert(id, api);
@@ -302,6 +304,29 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
                 });
         if (contextPathExists) {
             throw new ApiContextPathAlreadyExistsException(newSubContextPath);
+        }
+    }
+
+    private void checkEndpointsConstraints(Set<EndpointGroup> endpointGroups) {
+        if (endpointGroups != null) {
+            // endpoints (group) name must be unique
+            List<String> names = new ArrayList<>();
+            for (EndpointGroup endpointGroup : endpointGroups) {
+                if (names.contains(endpointGroup.getName())) {
+                    throw new ApiEndpointNameAlreadyExistsException(endpointGroup.getName());
+                } else {
+                    names.add(endpointGroup.getName());
+                    if (endpointGroup.getEndpoints() != null) {
+                        for (Endpoint endpoint : endpointGroup.getEndpoints()) {
+                            if (names.contains(endpoint.getName())) {
+                                throw new ApiEndpointNameAlreadyExistsException(endpoint.getName());
+                            } else {
+                                names.add(endpoint.getName());
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -455,7 +480,7 @@ public class ApiServiceImpl extends TransactionalService implements ApiService {
 
             // Check if context path is unique
             checkContextPath(updateApiEntity.getProxy().getContextPath(), apiId);
-
+            checkEndpointsConstraints(updateApiEntity.getProxy().getGroups());
             addLoggingMaxDuration(updateApiEntity.getProxy().getLogging());
 
             // check the existence of groups

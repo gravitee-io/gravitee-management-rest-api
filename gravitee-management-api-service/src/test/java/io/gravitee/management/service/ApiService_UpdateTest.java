@@ -19,11 +19,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import io.gravitee.definition.jackson.datatype.GraviteeMapper;
+import io.gravitee.definition.model.Endpoint;
+import io.gravitee.definition.model.EndpointGroup;
 import io.gravitee.definition.model.Proxy;
+import io.gravitee.definition.model.endpoint.HttpEndpoint;
 import io.gravitee.management.model.api.ApiEntity;
 import io.gravitee.management.model.api.UpdateApiEntity;
 import io.gravitee.management.model.permissions.SystemRole;
 import io.gravitee.management.service.exceptions.ApiContextPathAlreadyExistsException;
+import io.gravitee.management.service.exceptions.ApiEndpointNameAlreadyExistsException;
 import io.gravitee.management.service.exceptions.ApiNotFoundException;
 import io.gravitee.management.service.exceptions.TechnicalManagementException;
 import io.gravitee.management.service.impl.ApiServiceImpl;
@@ -47,7 +51,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.Optional;
 
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
@@ -177,6 +183,24 @@ public class ApiService_UpdateTest {
     @Test(expected = ApiContextPathAlreadyExistsException.class)
     public void shouldNotUpdateForUserBecauseSubContextPathExists2WithSlash() throws TechnicalException {
         testUpdateWithContextPath("/context", "/context/toto/");
+    }
+
+    @Test(expected = ApiEndpointNameAlreadyExistsException.class)
+    public void shouldNotUpdateBecauseDuplicateEndpointAndGroupNames() throws TechnicalException {
+        final Proxy proxy = mock(Proxy.class);
+        when(existingApi.getProxy()).thenReturn(proxy);
+        when(proxy.getContextPath()).thenReturn("/context");
+        Endpoint endpoint = new HttpEndpoint("duplicate", "target");
+        EndpointGroup endpointGroup = new EndpointGroup();
+        endpointGroup.setName("duplicate");
+        endpointGroup.setEndpoints(singleton(endpoint));
+        when(proxy.getGroups()).thenReturn(singleton(endpointGroup));
+
+        when(apiRepository.findById(API_ID)).thenReturn(Optional.of(api));
+
+        apiService.update(API_ID, existingApi);
+
+        fail("should throw exception");
     }
 
     private void testUpdateWithContextPath(String existingContextPath, String contextPathToCreate) throws TechnicalException {
