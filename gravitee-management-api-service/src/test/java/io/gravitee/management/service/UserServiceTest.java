@@ -264,7 +264,7 @@ public class UserServiceTest {
         RegisterUserEntity userEntity = new RegisterUserEntity();
         userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
 
-        userService.create(userEntity);
+        userService.finalizeRegistration(userEntity);
     }
 
     @Test(expected = TechnicalManagementException.class)
@@ -278,7 +278,7 @@ public class UserServiceTest {
         userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
         userEntity.setPassword(PASSWORD);
 
-        userService.create(userEntity);
+        userService.finalizeRegistration(userEntity);
 
     }
 
@@ -299,7 +299,7 @@ public class UserServiceTest {
         userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
         userEntity.setPassword(PASSWORD);
 
-        userService.create(userEntity);
+        userService.finalizeRegistration(userEntity);
 
         verify(userRepository).update(argThat(new ArgumentMatcher<User>() {
             public boolean matches(final Object argument) {
@@ -324,7 +324,7 @@ public class UserServiceTest {
 
         verify(userRepository, never()).findBySource(USER_SOURCE, USER_NAME);
 
-        userService.create(userEntity);
+        userService.finalizeRegistration(userEntity);
     }
 
     @Test
