@@ -39,6 +39,7 @@ public enum Key {
     PORTAL_APIS_SHOW_TAGS_IN_APIHEADER("portal.apis.apiheader.showtags.enabled", "false"),
     PORTAL_APIS_SHOW_VIEWS_IN_APIHEADER("portal.apis.apiheader.showviews.enabled", "false"),
     PORTAL_DASHBOARD_WIDGETS("portal.dashboard.widgets"),
+    PORTAL_SEARCH_DELAY("portal.search.delayInMs", "1500"),
 
     MANAGEMENT_TITLE("management.title", "Gravitee.io Management"),
 

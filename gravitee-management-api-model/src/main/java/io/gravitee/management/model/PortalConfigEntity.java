@@ -150,6 +150,8 @@ public class PortalConfigEntity {
         private Enabled devMode;
         @ParameterKey(Key.PORTAL_USERCREATION_ENABLED)
         private Enabled userCreation;
+        @ParameterKey(Key.PORTAL_SEARCH_DELAY)
+        private Integer searchDelayInMilliseconds;
 
         private PortalApis apis;
         private PortalAnalytics analytics;
@@ -249,6 +251,14 @@ public class PortalConfigEntity {
 
         public void setRating(PortalRating rating) {
             this.rating = rating;
+        }
+
+        public Integer getSearchDelayInMilliseconds() {
+            return searchDelayInMilliseconds;
+        }
+
+        public void setSearchDelayInMilliseconds(Integer searchDelayInMilliseconds) {
+            this.searchDelayInMilliseconds = searchDelayInMilliseconds;
         }
 
         public class PortalRating {
