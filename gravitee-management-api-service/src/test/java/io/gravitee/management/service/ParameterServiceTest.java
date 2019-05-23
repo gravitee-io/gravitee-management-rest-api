@@ -20,6 +20,8 @@ import io.gravitee.management.service.impl.ParameterServiceImpl;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ParameterRepository;
 import io.gravitee.repository.management.model.Parameter;
+import io.gravitee.repository.management.model.ParameterReferenceType;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -103,7 +105,7 @@ public class ParameterServiceTest {
         final Parameter parameter3 = new Parameter();
         parameter3.setKey(PORTAL_ANALYTICS_TRACKINGID.key());
 
-        when(parameterRepository.findAll(Arrays.asList(PORTAL_TOP_APIS.key(), PORTAL_ANALYTICS_ENABLED.key(), PORTAL_ANALYTICS_TRACKINGID.key())))
+        when(parameterRepository.findAllByReferenceIdAndReferenceType(Arrays.asList(PORTAL_TOP_APIS.key(), PORTAL_ANALYTICS_ENABLED.key(), PORTAL_ANALYTICS_TRACKINGID.key()), "DEFAULT", ParameterReferenceType.ENVIRONMENT))
                 .thenReturn(Arrays.asList(parameter1, parameter2, parameter3));
 
         final Map<String, List<String>> values = parameterService.findAll(Arrays.asList(p1key, p2key, p3key), value -> value, value -> !value.isEmpty());
@@ -117,6 +119,8 @@ public class ParameterServiceTest {
     public void shouldCreate() throws TechnicalException {
         final Parameter parameter = new Parameter();
         parameter.setKey(PORTAL_TOP_APIS.key());
+        parameter.setReferenceId("DEFAULT");
+        parameter.setReferenceType(ParameterReferenceType.ENVIRONMENT);
         parameter.setValue("api1");
 
         when(parameterRepository.findById(PORTAL_TOP_APIS.key())).thenReturn(empty());
@@ -137,6 +141,8 @@ public class ParameterServiceTest {
 
         final Parameter newParameter = new Parameter();
         newParameter.setKey(PORTAL_TOP_APIS.key());
+        newParameter.setReferenceId("DEFAULT");
+        newParameter.setReferenceType(ParameterReferenceType.ENVIRONMENT);
         newParameter.setValue("api2");
 
         when(parameterRepository.findById(PORTAL_TOP_APIS.key())).thenReturn(of(parameter));
@@ -153,6 +159,8 @@ public class ParameterServiceTest {
     public void shouldCreateMultipleValue() throws TechnicalException {
         final Parameter parameter = new Parameter();
         parameter.setKey(PORTAL_TOP_APIS.key());
+        parameter.setReferenceId("DEFAULT");
+        parameter.setReferenceType(ParameterReferenceType.ENVIRONMENT);
         parameter.setValue("api1");
 
         when(parameterRepository.findById(PORTAL_TOP_APIS.key())).thenReturn(empty());
@@ -169,10 +177,13 @@ public class ParameterServiceTest {
     public void shouldCreateMultipleValueWithExistingParameter() throws TechnicalException {
         final Parameter parameter = new Parameter();
         parameter.setKey(PORTAL_TOP_APIS.key());
+        
         parameter.setValue("api1");
 
         final Parameter newParameter = new Parameter();
         newParameter.setKey(PORTAL_TOP_APIS.key());
+        newParameter.setReferenceId("DEFAULT");
+        newParameter.setReferenceType(ParameterReferenceType.ENVIRONMENT);
         newParameter.setValue("api1;api1");
 
         when(parameterRepository.findById(PORTAL_TOP_APIS.key())).thenReturn(of(parameter));
@@ -189,10 +200,14 @@ public class ParameterServiceTest {
     public void shouldUpdateMultipleValue() throws TechnicalException {
         final Parameter parameter = new Parameter();
         parameter.setKey(PORTAL_TOP_APIS.key());
+        parameter.setReferenceId("DEFAULT");
+        parameter.setReferenceType(ParameterReferenceType.ENVIRONMENT);
         parameter.setValue("api1");
 
         final Parameter newParameter = new Parameter();
         newParameter.setKey(PORTAL_TOP_APIS.key());
+        newParameter.setReferenceId("DEFAULT");
+        newParameter.setReferenceType(ParameterReferenceType.ENVIRONMENT);
         newParameter.setValue("api1;api2;api2");
 
         when(parameterRepository.findById(PORTAL_TOP_APIS.key())).thenReturn(of(parameter));
