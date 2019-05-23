@@ -99,7 +99,7 @@ public class PlanService_CloseTest {
         when(subscription.getId()).thenReturn(SUBSCRIPTION_ID);
         when(subscription.getStatus()).thenReturn(SubscriptionStatus.ACCEPTED);
         when(subscriptionService.findByPlan(PLAN_ID)).thenReturn(Collections.singleton(subscription));
-        when(plan.getApis()).thenReturn(Collections.singleton("id"));
+        when(plan.getApi()).thenReturn("id");
         when(planRepository.findByApi(any())).thenReturn(Collections.emptySet());
 
         planService.close(PLAN_ID, USER);
@@ -120,7 +120,7 @@ public class PlanService_CloseTest {
         when(subscription.getId()).thenReturn(SUBSCRIPTION_ID);
         when(subscription.getStatus()).thenReturn(SubscriptionStatus.PENDING);
         when(subscriptionService.findByPlan(PLAN_ID)).thenReturn(Collections.singleton(subscription));
-        when(plan.getApis()).thenReturn(Collections.singleton("id"));
+        when(plan.getApi()).thenReturn("id");
         when(planRepository.findByApi(any())).thenReturn(Collections.emptySet());
 
         planService.close(PLAN_ID, USER);
@@ -140,7 +140,7 @@ public class PlanService_CloseTest {
         when(planRepository.update(plan)).thenAnswer(returnsFirstArg());
         when(subscription.getStatus()).thenReturn(SubscriptionStatus.CLOSED);
         when(subscriptionService.findByPlan(PLAN_ID)).thenReturn(Collections.singleton(subscription));
-        when(plan.getApis()).thenReturn(Collections.singleton("id"));
+        when(plan.getApi()).thenReturn("id");
         when(planRepository.findByApi(any())).thenReturn(Collections.emptySet());
 
         planService.close(PLAN_ID, USER);
