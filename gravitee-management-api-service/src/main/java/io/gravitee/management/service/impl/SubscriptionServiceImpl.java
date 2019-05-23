@@ -179,7 +179,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             List<Subscription> subscriptions = subscriptionRepository.search(
                     new SubscriptionCriteria.Builder()
                             .applications(Collections.singleton(application))
-                            .apis(planEntity.getApis())
+                            .apis(Collections.singleton(planEntity.getApi()))
                             .build());
 
             if (! subscriptions.isEmpty()) {
@@ -249,7 +249,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             subscription.setRequest(newSubscriptionEntity.getRequest());
             subscription.setSubscribedBy(getAuthenticatedUser().getUsername());
             subscription.setClientId(clientId);
-            String apiId = planEntity.getApis().iterator().next();
+            String apiId = planEntity.getApi();
             subscription.setApi(apiId);
             subscription = subscriptionRepository.create(subscription);
 
@@ -329,7 +329,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                 subscription = subscriptionRepository.update(subscription);
                 final PlanEntity plan = planService.findById(subscription.getPlan());
                 createAudit(
-                        plan.getApis().iterator().next(),
+                        plan.getApi(),
                         subscription.getApplication(),
                         SUBSCRIPTION_UPDATED,
                         subscription.getUpdatedAt(),
@@ -402,7 +402,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
 
             final ApplicationEntity application = applicationService.findById(subscription.getApplication());
             final PlanEntity plan = planService.findById(subscription.getPlan());
-            final String apiId = plan.getApis().iterator().next();
+            final String apiId = plan.getApi();
             final ApiModelEntity api = apiService.findByIdForTemplates(apiId);
             final PrimaryOwnerEntity owner = application.getPrimaryOwner();
             createAudit(
@@ -471,7 +471,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                 // Send an email to subscriber
                 final ApplicationEntity application = applicationService.findById(subscription.getApplication());
                 final PlanEntity plan = planService.findById(subscription.getPlan());
-                String apiId = plan.getApis().iterator().next();
+                String apiId = plan.getApi();
                 final ApiModelEntity api = apiService.findByIdForTemplates(apiId);
                 final PrimaryOwnerEntity owner = application.getPrimaryOwner();
                 final Map<String, Object> params = new NotificationParamsBuilder()
@@ -538,7 +538,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                 // Send an email to subscriber
                 final ApplicationEntity application = applicationService.findById(subscription.getApplication());
                 final PlanEntity plan = planService.findById(subscription.getPlan());
-                String apiId = plan.getApis().iterator().next();
+                String apiId = plan.getApi();
                 final ApiModelEntity api = apiService.findByIdForTemplates(apiId);
                 final PrimaryOwnerEntity owner = application.getPrimaryOwner();
                 final Map<String, Object> params = new NotificationParamsBuilder()
@@ -604,7 +604,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                 // Send an email to subscriber
                 final ApplicationEntity application = applicationService.findById(subscription.getApplication());
                 final PlanEntity plan = planService.findById(subscription.getPlan());
-                String apiId = plan.getApis().iterator().next();
+                String apiId = plan.getApi();
                 final ApiModelEntity api = apiService.findByIdForTemplates(apiId);
                 final PrimaryOwnerEntity owner = application.getPrimaryOwner();
                 final Map<String, Object> params = new NotificationParamsBuilder()
@@ -664,7 +664,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             // Delete subscription
             subscriptionRepository.delete(subscriptionId);
             createAudit(
-                    planService.findById(subscription.getPlan()).getApis().iterator().next(),
+                    planService.findById(subscription.getPlan()).getApi(),
                     subscription.getApplication(),
                     SUBSCRIPTION_DELETED,
                     subscription.getUpdatedAt(),
@@ -777,7 +777,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
 
             final ApplicationEntity application = applicationService.findById(subscription.getApplication());
             final PlanEntity plan = planService.findById(subscription.getPlan());
-            final String apiId = plan.getApis().iterator().next();
+            final String apiId = plan.getApi();
             final ApiModelEntity api = apiService.findByIdForTemplates(apiId);
             final PrimaryOwnerEntity owner = application.getPrimaryOwner();
             createAudit(
