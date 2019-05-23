@@ -15,23 +15,81 @@
  */
 package io.gravitee.management.service.impl;
 
+import static io.gravitee.repository.management.model.Audit.AuditProperties.PAGE;
+import static io.gravitee.repository.management.model.Page.AuditEvent.PAGE_CREATED;
+import static io.gravitee.repository.management.model.Page.AuditEvent.PAGE_DELETED;
+import static io.gravitee.repository.management.model.Page.AuditEvent.PAGE_UPDATED;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.utils.UUID;
-import io.gravitee.fetcher.api.*;
+import io.gravitee.fetcher.api.Fetcher;
+import io.gravitee.fetcher.api.FetcherConfiguration;
+import io.gravitee.fetcher.api.FetcherException;
+import io.gravitee.fetcher.api.FilepathAwareFetcherConfiguration;
+import io.gravitee.fetcher.api.FilesFetcher;
+import io.gravitee.fetcher.api.Resource;
 import io.gravitee.management.fetcher.FetcherConfigurationFactory;
-import io.gravitee.management.model.*;
+import io.gravitee.management.model.ApiModelEntity;
+import io.gravitee.management.model.ApiPageEntity;
+import io.gravitee.management.model.ImportPageEntity;
+import io.gravitee.management.model.MemberEntity;
+import io.gravitee.management.model.MetadataEntity;
+import io.gravitee.management.model.NewPageEntity;
+import io.gravitee.management.model.PageEntity;
+import io.gravitee.management.model.PageSourceEntity;
+import io.gravitee.management.model.PageType;
+import io.gravitee.management.model.UpdatePageEntity;
+import io.gravitee.management.model.Visibility;
 import io.gravitee.management.model.api.ApiEntity;
 import io.gravitee.management.model.descriptor.GraviteeDescriptorEntity;
 import io.gravitee.management.model.descriptor.GraviteeDescriptorPageEntity;
 import io.gravitee.management.model.documentation.PageQuery;
 import io.gravitee.management.model.permissions.ApiPermission;
 import io.gravitee.management.model.permissions.RolePermissionAction;
-import io.gravitee.management.service.*;
+import io.gravitee.management.service.ApiService;
+import io.gravitee.management.service.AuditService;
+import io.gravitee.management.service.GraviteeDescriptorService;
+import io.gravitee.management.service.MembershipService;
+import io.gravitee.management.service.MetadataService;
+import io.gravitee.management.service.PageService;
+import io.gravitee.management.service.RoleService;
+import io.gravitee.management.service.SwaggerService;
+import io.gravitee.management.service.common.GraviteeContext;
 import io.gravitee.management.service.exceptions.NoFetcherDefinedException;
 import io.gravitee.management.service.exceptions.PageFolderActionException;
 import io.gravitee.management.service.exceptions.PageNotFoundException;
@@ -45,27 +103,8 @@ import io.gravitee.repository.management.api.search.PageCriteria;
 import io.gravitee.repository.management.model.Audit;
 import io.gravitee.repository.management.model.MembershipReferenceType;
 import io.gravitee.repository.management.model.Page;
+import io.gravitee.repository.management.model.PageReferenceType;
 import io.gravitee.repository.management.model.PageSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static io.gravitee.repository.management.model.Audit.AuditProperties.PAGE;
-import static io.gravitee.repository.management.model.Page.AuditEvent.*;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -213,8 +252,13 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			}
 
 			page.setId(id);
-			page.setApi(apiId);
-
+			if(StringUtils.isEmpty(apiId)) {
+			    page.setReferenceId(GraviteeContext.getCurrentEnvironment());
+                page.setReferenceType(PageReferenceType.ENVIRONMENT);
+			} else {
+			    page.setReferenceId(apiId);
+			    page.setReferenceType(PageReferenceType.API);
+			}
 			// Set date fields
 			page.setCreatedAt(new Date());
 			page.setUpdatedAt(page.getCreatedAt());
@@ -243,10 +287,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
 	private void onlyOneHomepage(Page page) throws TechnicalException {
 		if(page.isHomepage()) {
-			Collection<Page> pages =
-					page.getApi() != null ?
-							pageRepository.search(new PageCriteria.Builder().api(page.getApi()).homepage(true).build()) :
-							pageRepository.search(new PageCriteria.Builder().homepage(true).build());
+			Collection<Page> pages = pageRepository.search(new PageCriteria.Builder().referenceId(page.getReferenceId()).referenceType(page.getReferenceType().name()).homepage(true).build());
 			pages.stream().
 					filter(i -> !i.getId().equals(page.getId())).
 					forEach(i -> {
@@ -298,7 +339,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			// Copy fields from existing values
 			page.setCreatedAt(pageToUpdate.getCreatedAt());
 			page.setType(pageToUpdate.getType());
-			page.setApi(pageToUpdate.getApi());
+			page.setReferenceId(pageToUpdate.getReferenceId());
 
 			onlyOneHomepage(page);
 			// if order change, reorder all pages
@@ -307,7 +348,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 				return null;
 			} else {
 				Page updatedPage = pageRepository.update(page);
-				createAuditLog(page.getApi(), PAGE_UPDATED, page.getUpdatedAt(), pageToUpdate, page);
+				createAuditLog(page.getReferenceId(), PAGE_UPDATED, page.getUpdatedAt(), pageToUpdate, page);
 
 				PageEntity pageEntity = convert(updatedPage);
 
@@ -590,7 +631,8 @@ public class PageServiceImpl extends TransactionalService implements PageService
 					List<Page> pages = pageRepository.search(
 							new PageCriteria.Builder()
 									.parent(parentId)
-									.api(apiId)
+									.referenceId(apiId)
+									.referenceType(PageReferenceType.API.name())
 									.name(pathElement)
 									.type(PageType.FOLDER.name())
 									.build());
@@ -618,7 +660,8 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		List<Page> pages = pageRepository.search(
 				new PageCriteria.Builder()
 						.parent(parentId)
-						.api(apiId)
+						.referenceId(apiId)
+                        .referenceType(PageReferenceType.API.name())
 						.name(newPageEntity.getName())
 						.type(newPageEntity.getType().name())
 						.build());
@@ -648,12 +691,13 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		try {
 			// root page exists ?
 			List<Page> searchResult = pageRepository.search(new PageCriteria.Builder()
-					.api(apiId)
+			        .referenceId(apiId)
+                    .referenceType(PageReferenceType.API.name())
 					.type(PageType.ROOT.name())
 					.build());
 
 			Page page = convert(rootPage);
-			page.setApi(apiId);
+			page.setReferenceId(apiId);
 			if (searchResult.isEmpty()) {
 				page.setId(UUID.toString(UUID.random()));
 				pageRepository.create(page);
@@ -677,7 +721,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 	}
 
 	private void reorderAndSavePages(final Page pageToReorder) throws TechnicalException {
-		PageCriteria.Builder q = new PageCriteria.Builder().api(pageToReorder.getApi());
+		PageCriteria.Builder q = new PageCriteria.Builder().referenceId(pageToReorder.getReferenceId()).referenceType(PageReferenceType.API.name());
 		if (pageToReorder.getParentId() == null) {
 			q.rootParent(Boolean.TRUE);
 		} else {
@@ -735,13 +779,14 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			// if the folder is not empty, throw exception
 			if (io.gravitee.repository.management.model.PageType.FOLDER.equals(page.getType()) &&
 					pageRepository.search(new PageCriteria.Builder()
-							.api(page.getApi())
+							.referenceId(page.getReferenceId())
+                            .referenceType(PageReferenceType.API.name())
 							.parent(page.getId()).build()).size() > 0 ) {
 				throw new TechnicalManagementException("Unable to remove the folder. It must be empty before being removed.");
 			}
 
 			pageRepository.delete(pageId);
-            createAuditLog(page.getApi(), PAGE_DELETED, new Date(), page, null);
+            createAuditLog(page.getReferenceId(), PAGE_DELETED, new Date(), page, null);
 
             // remove from search engine
 			searchEngineService.delete(convert(page), false);
@@ -755,7 +800,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 	public int findMaxApiPageOrderByApi(String apiName) {
 		try {
 			logger.debug("Find Max Order Page for api name : {}", apiName);
-			final Integer maxPageOrder = pageRepository.findMaxApiPageOrderByApiId(apiName);
+			final Integer maxPageOrder = pageRepository.findMaxPageReferenceIdAndReferenceTypeOrder(apiName, PageReferenceType.API);
 			return maxPageOrder == null ? 0 : maxPageOrder;
 		} catch (TechnicalException ex) {
 			logger.error("An error occured when searching max order page for api name [{}]", apiName, ex);
@@ -767,7 +812,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 	public int findMaxPortalPageOrder() {
 		try {
 			logger.debug("Find Max Order Portal Page");
-			final Integer maxPageOrder = pageRepository.findMaxPortalPageOrder();
+			final Integer maxPageOrder = pageRepository.findMaxPageReferenceIdAndReferenceTypeOrder(GraviteeContext.getCurrentEnvironment(), PageReferenceType.ENVIRONMENT);
 			return maxPageOrder == null ? 0 : maxPageOrder;
 		} catch (TechnicalException ex) {
 			logger.error("An error occured when searching max order portal page", ex);
@@ -822,7 +867,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			page.setLastContributor(contributor);
 
 			Page updatedPage = pageRepository.update(page);
-			createAuditLog(page.getApi(), PAGE_UPDATED, page.getUpdatedAt(), page, page);
+			createAuditLog(page.getReferenceId(), PAGE_UPDATED, page.getUpdatedAt(), page, page);
 			return convert(updatedPage);
 		} catch (TechnicalException ex) {
 			throw onUpdateFail(pageId, ex);
@@ -897,9 +942,9 @@ public class PageServiceImpl extends TransactionalService implements PageService
 	private PageEntity convert(Page page) {
 		PageEntity pageEntity;
 
-		if (page.getApi() != null) {
+		if (page.getReferenceId() != null) {
 			pageEntity = new ApiPageEntity();
-			((ApiPageEntity) pageEntity).setApi(page.getApi());
+			((ApiPageEntity) pageEntity).setApi(page.getReferenceId());
 		} else {
 			pageEntity = new PageEntity();
 		}
@@ -1077,7 +1122,8 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		final PageCriteria.Builder builder = new PageCriteria.Builder();
 		if (query != null) {
 			builder.homepage(query.getHomepage());
-			builder.api(query.getApi());
+			builder.referenceId(query.getApi());
+			builder.referenceType(PageReferenceType.API.name());
 			builder.name(query.getName());
 			builder.parent(query.getParent());
 			builder.published(query.getPublished());

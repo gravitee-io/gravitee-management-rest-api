@@ -33,6 +33,7 @@ import io.gravitee.management.service.search.SearchEngineService;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiRepository;
 import io.gravitee.repository.management.api.MembershipRepository;
+import io.gravitee.repository.management.api.search.ApiCriteria;
 import io.gravitee.repository.management.model.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -194,7 +195,7 @@ public class ApiService_UpdateTest {
         when(proxy.getContextPath()).thenReturn(contextPathToCreate);
         when(existingApi.getLifecycleState()).thenReturn(CREATED);
 
-        when(apiRepository.search(null)).thenReturn(singletonList(api));
+        when(apiRepository.search(new ApiCriteria.Builder().environment("DEFAULT").build())).thenReturn(singletonList(api));
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"" + existingContextPath + "\"}}");
 
         Membership po2 = new Membership("admin", API_ID2, MembershipReferenceType.API);
@@ -222,7 +223,7 @@ public class ApiService_UpdateTest {
         when(group.getName()).thenReturn("inva:lid");
         when(proxy.getGroups()).thenReturn(singleton(group));
 
-        when(apiRepository.search(null)).thenReturn(singletonList(api));
+        when(apiRepository.search(new ApiCriteria.Builder().environment("DEFAULT").build())).thenReturn(singletonList(api));
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"}}");
 
         apiService.update(API_ID, existingApi);
@@ -246,7 +247,7 @@ public class ApiService_UpdateTest {
         when(endpoint.getName()).thenReturn("inva:lid");
         when(group.getEndpoints()).thenReturn(singleton(endpoint));
 
-        when(apiRepository.search(null)).thenReturn(singletonList(api));
+        when(apiRepository.search(new ApiCriteria.Builder().environment("DEFAULT").build())).thenReturn(singletonList(api));
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"}}");
 
         apiService.update(API_ID, existingApi);
