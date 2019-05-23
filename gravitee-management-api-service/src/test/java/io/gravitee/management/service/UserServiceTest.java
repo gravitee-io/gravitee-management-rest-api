@@ -61,7 +61,8 @@ public class UserServiceTest {
     private static final String FIRST_NAME = "The";
     private static final String LAST_NAME = "User";
     private static final String PASSWORD = "gh2gyf8!zjfnz";
-    private static final String JWT_SECRET = "VERYSECURE";
+    private static final String JWT_SECRET = "VERYSECURE";;
+    private static final String ENVIRONMENT = "DEFAULT";
     private static final Set<UserRoleEntity> ROLES = Collections.singleton(new UserRoleEntity());
     static {
         UserRoleEntity r = ROLES.iterator().next();
@@ -110,7 +111,7 @@ public class UserServiceTest {
         when(user.getFirstname()).thenReturn(FIRST_NAME);
         when(user.getLastname()).thenReturn(LAST_NAME);
         when(user.getPassword()).thenReturn(PASSWORD);
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME)).thenReturn(of(user));
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ENVIRONMENT)).thenReturn(of(user));
 
         final UserEntity userEntity = userService.findBySource(USER_SOURCE, USER_NAME, false);
 
@@ -124,14 +125,14 @@ public class UserServiceTest {
 
     @Test(expected = UserNotFoundException.class)
     public void shouldNotFindByUsernameBecauseNotExists() throws TechnicalException {
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME)).thenReturn(Optional.empty());
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ENVIRONMENT)).thenReturn(Optional.empty());
 
         userService.findBySource(USER_SOURCE, USER_NAME, false);
     }
 
     @Test(expected = TechnicalManagementException.class)
     public void shouldNotFindByUsernameBecauseTechnicalException() throws TechnicalException {
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME)).thenThrow(TechnicalException.class);
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ENVIRONMENT)).thenThrow(TechnicalException.class);
 
         userService.findBySource(USER_SOURCE, USER_NAME, false);
     }
@@ -144,7 +145,7 @@ public class UserServiceTest {
         when(newUser.getSource()).thenReturn(USER_SOURCE);
         when(newUser.getSourceId()).thenReturn(USER_NAME);
 
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME)).thenReturn(Optional.empty());
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ENVIRONMENT)).thenReturn(Optional.empty());
 
         when(user.getId()).thenReturn(USER_NAME);
         when(user.getEmail()).thenReturn(EMAIL);
@@ -186,7 +187,7 @@ public class UserServiceTest {
 
     @Test(expected = UserAlreadyExistsException.class)
     public void shouldNotCreateBecauseExists() throws TechnicalException {
-        when(userRepository.findBySource(nullable(String.class), nullable(String.class))).thenReturn(of(new User()));
+        when(userRepository.findBySource(nullable(String.class), nullable(String.class), nullable(String.class))).thenReturn(of(new User()));
 
         userService.create(newUser, false);
 
@@ -301,7 +302,7 @@ public class UserServiceTest {
         userEntity.setToken(createJWT(System.currentTimeMillis()/1000 - 100));
         userEntity.setPassword(PASSWORD);
 
-        verify(userRepository, never()).findBySource(USER_SOURCE, USER_NAME);
+        verify(userRepository, never()).findBySource(USER_SOURCE, USER_NAME, ENVIRONMENT);
 
         userService.finalizeRegistration(userEntity);
     }
