@@ -534,6 +534,9 @@ public class SwaggerServiceImpl implements SwaggerService {
     }
 
     private Map<String, Object> getResponseFromSimpleRef(SwaggerParseResult swagger, String ref) {
+        if (ref == null) {
+            return emptyMap();
+        }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
         final Schema schema = swagger.getOpenAPI().getComponents().getSchemas().get(simpleRef);
 
@@ -541,14 +544,16 @@ public class SwaggerServiceImpl implements SwaggerService {
             return getResponseFromSimpleRef(swagger, ((ArraySchema) schema).getItems().get$ref());
         } else if (schema instanceof ComposedSchema) {
             final Map<String, Object> response = new HashMap<>();
-            ((ComposedSchema) schema).getAllOf().forEach(composedSchema -> {
-                if (composedSchema.get$ref() != null) {
-                    response.putAll(getResponseFromSimpleRef(swagger, composedSchema.get$ref()));
-                }
-                if (composedSchema.getProperties() != null) {
-                    response.putAll(getResponseProperties(swagger, composedSchema.getProperties()));
-                }
-            });
+            if (((ComposedSchema) schema).getAllOf() != null) {
+                ((ComposedSchema) schema).getAllOf().forEach(composedSchema -> {
+                    if (composedSchema.get$ref() != null) {
+                        response.putAll(getResponseFromSimpleRef(swagger, composedSchema.get$ref()));
+                    }
+                    if (composedSchema.getProperties() != null) {
+                        response.putAll(getResponseProperties(swagger, composedSchema.getProperties()));
+                    }
+                });
+            }
             return response;
         }
 
