@@ -386,6 +386,11 @@ public class SwaggerService_PrepareTest {
         assertEquals("itemValue", ((List) responseProperties.get("inlinedArrayValue")).get(0));
         assertEquals("itemValue", ((List) responseProperties.get("arrayValue")).get(0));
     }
+
+    @Test
+    public void shouldPrepareAPIFromSwaggerV3_0_1WithEnumExample() throws IOException {
+        final NewSwaggerApiEntity api = prepareInline("io/gravitee/management/service/mock/oai-3_0_1.yml", true);
+    }
     
     @Test
     public void shouldPrepareAPIFromSwaggerV3WithMonoServer() throws IOException {
@@ -412,7 +417,7 @@ public class SwaggerService_PrepareTest {
         assertEquals(1, api.getEndpoint().size());
         assertTrue(api.getEndpoint().contains("/"));
     }
-    
+
     @Test
     public void shouldPrepareAPIFromSwaggerV3WithVariablesInServer() throws IOException {
         final NewSwaggerApiEntity api = prepareInline("io/gravitee/management/service/mock/openapi-variables-in-server.yaml", true);

@@ -1,0 +1,534 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: 'JSON:API courses'
+  description: >-
+    A sample API that uses courses as an example to demonstrate representing
+    [JSON:API 1.0](http://jsonapi.org/format) in the OpenAPI 3.0 specification.
+    This was created by downloading and then editing http://jsonapi.org/schema.
+    The resources are from a Columbia University training example using Django REST Framework JSON API (DJA).
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0.html'
+servers:
+  - url: 'http://localhost:8000/v1'
+paths:
+  /courses/:
+    get:
+      description: Returns a collection of courses
+      operationId: find courses
+      parameters:
+        - name: sort
+          in: query
+          description: fields to sort by
+          required: false
+          style: form
+          schema:
+            type: string
+        - name: fields[courses]
+          in: query
+          description: "Sparse Fieldsets: return only the specified course fields"
+          required: false
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: course response
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/CourseCollection'
+  /courses/{id}/:
+    get:
+      description: Returns a single course
+      operationId: return course by id
+      parameters:
+        - name: id
+          in: path
+          description: ID of course to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: course response
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/CourseItem'
+  /courses/{id}/relationships/course_terms:
+    get:
+      description: Returns a single course's related terms
+      parameters:
+        - name: id
+          in: path
+          description: ID of course to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: course relationship response
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/relationships'
+  /courses_terms/:
+    get:
+      description: Returns a collection of course terms
+      operationId: find course terms
+      parameters:
+        - name: sort
+          in: query
+          description: fields to sort by
+          required: false
+          style: form
+          schema:
+            type: string
+        - name: fields[course_terms]
+          in: query
+          description: "Sparse Fieldsets: return only the specified course fields"
+          required: false
+          style: form
+          schema:
+            type: string
+      responses:
+        '200':
+          description: course term response
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/CourseTermCollection'
+  /course_terms/{id}/:
+    get:
+      description: Returns a single course term
+      operationId: return course term by id
+      parameters:
+        - name: id
+          in: path
+          description: ID of course term to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: course term response
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/CourseTermItem'
+  /course_terms/{id}/relationships/course:
+    get:
+      description: Returns a single term's related course
+      parameters:
+        - name: id
+          in: path
+          description: ID of term to fetch
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: course relationship response
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/relationships'
+components:
+  schemas:
+    CommonItem:
+      description: Attributes common to all our schemas.
+      type: object
+      properties:
+        effective_start_date:
+          type: string
+        effective_end_date:
+          type: string
+        last_mod_user_name:
+          type: string
+        last_mod_date:
+          type: string
+      required:
+        - last_mod_user_name
+        - last_mod_date
+    CourseCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/CourseItem'
+    CourseItem:
+      allOf:
+        - $ref: '#/components/schemas/resource'
+        - type: object
+          properties:
+            attributes:
+              $ref: '#/components/schemas/CourseSchema'
+            relationships:
+              $ref: '#/components/schemas/CourseRelationships'
+    CourseTermCollection:
+      type: array
+      items:
+        $ref: '#/components/schemas/CourseTermItem'
+    CourseTermItem:
+      allOf:
+        - $ref: '#/components/schemas/resource'
+        - type: object
+          properties:
+            attributes:
+              $ref: '#/components/schemas/CourseTermSchema'
+            relationships:
+              $ref: '#/components/schemas/CourseTermRelationships'
+    CourseSchema:
+      allOf:
+        - $ref: "#/components/schemas/CommonItem"
+        - $ref: "#/components/schemas/CourseAttributes"
+    CourseAttributes:
+      type: object
+      description: data model for Course
+      required:
+        - name
+      properties:
+        school_bulletin_prefix_code:
+          type: string
+          maxLength: 10
+        suffix_two:
+          type: string
+          maxLength: 2
+        subject_area_code:
+          type: string
+          maxLength: 10
+        course_number:
+          type: string
+          maxLength: 10
+        course_identifier:
+          type: string
+          maxLength: 10
+          uniqueItems: true
+        course_name:
+          type: string
+          maxLength: 80
+        course_description:
+          type: string
+    CourseRelationships:
+      type: object
+      properties:
+        course_terms:
+          $ref: "#/components/schemas/relationships"
+    # CourseTerm:
+    CourseTermSchema:
+      allOf:
+        - $ref: "#/components/schemas/CommonItem"
+        - $ref: "#/components/schemas/CourseTermAttributes"
+    CourseTermAttributes:
+      type: object
+      description: data model for CourseTerm
+      properties:
+        term_identifier:
+          type: string
+          maxLength: 10
+        audit_permitted_code:
+          type: integer
+          minimum: 0
+          default: 0
+        exam_credit_flag:
+          type: boolean
+          default: true
+    CourseTermRelationships:
+      type: object
+      properties:
+        courses:
+          $ref: "#/components/schemas/relationshipToOne"
+    # JSONAPI response summary:
+    JSONAPIresponse:
+      oneOf:
+        - $ref: '#/components/schemas/success'
+        - $ref: '#/components/schemas/failure'
+        - $ref: '#/components/schemas/info'
+    success:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/data'
+        included:
+          description: >-
+            To reduce the number of HTTP requests, servers **MAY** allow
+            responses that include related resources along with the requested
+            primary resources. Such responses are called "compound documents".
+          type: array
+          items:
+            $ref: '#/components/schemas/resource'
+          uniqueItems: true
+        meta:
+          $ref: '#/components/schemas/meta'
+        links:
+          description: Link members related to the primary data.
+          allOf:
+            - $ref: '#/components/schemas/links'
+            - $ref: '#/components/schemas/pagination'
+        jsonapi:
+          $ref: '#/components/schemas/jsonapi'
+      additionalProperties: false
+    failure:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/error'
+          uniqueItems: true
+        meta:
+          $ref: '#/components/schemas/meta'
+        jsonapi:
+          $ref: '#/components/schemas/jsonapi'
+        links:
+          $ref: '#/components/schemas/links'
+      additionalProperties: false
+    info:
+      type: object
+      required:
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/meta'
+        links:
+          $ref: '#/components/schemas/links'
+        jsonapi:
+          $ref: '#/components/schemas/jsonapi'
+      additionalProperties: false
+    meta:
+      description: >-
+        Non-standard meta-information that can not be represented as an
+        attribute or relationship.
+      type: object
+      additionalProperties: true
+    data:
+      description: >-
+        The document's "primary data" is a representation of the resource or
+        collection of resources targeted by a request.
+      oneOf:
+        - $ref: '#/components/schemas/resource'
+        - description: >-
+            An array of resource objects, an array of resource identifier
+            objects, or an empty array ([]), for requests that target resource
+            collections.
+          type: array
+          items:
+            $ref: '#/components/schemas/resource'
+          uniqueItems: true
+        - $ref: '#/components/schemas/nulltype'
+    resource:
+      description: '"Resource objects" appear in a JSON API document to represent resources.'
+      type: object
+      required:
+        - type
+        - id
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        attributes:
+          $ref: '#/components/schemas/attributes'
+        relationships:
+          $ref: '#/components/schemas/relationships'
+        links:
+          $ref: '#/components/schemas/links'
+        meta:
+          $ref: '#/components/schemas/meta'
+      additionalProperties: false
+    relationshipLinks:
+      description: >-
+        A resource object **MAY** contain references to other resource objects
+        ("relationships"). Relationships may be to-one or to-many. Relationships
+        can be specified by including a member in a resource's links object.
+      type: object
+      properties:
+        self:
+          description: >-
+            A `self` member, whose value is a URL for the relationship itself (a
+            "relationship URL"). This URL allows the client to directly
+            manipulate the relationship. For example, it would allow a client to
+            remove an `author` from an `article` without deleting the people
+            resource itself.
+          $ref: '#/components/schemas/link'
+        related:
+          $ref: '#/components/schemas/link'
+      additionalProperties: true
+    links:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/link'
+    link:
+      description: >-
+        A link **MUST** be represented as either: a string containing the link's
+        URL or a link object.
+      oneOf:
+        - description: A string containing the link's URL.
+          type: string
+          format: uri-reference
+        - type: object
+          required:
+            - href
+          properties:
+            href:
+              description: A string containing the link's URL.
+              type: string
+              format: uri-reference
+            meta:
+              $ref: '#/components/schemas/meta'
+    attributes:
+      description: >-
+        Members of the attributes object ("attributes") represent information
+        about the resource object in which it's defined.
+      type: object
+      properties:
+        '^(?!relationships$|links$|id$|type$)\w[-\w_]*$':
+          type: object
+          description: Attributes may contain any valid JSON value.
+      additionalProperties: false
+    relationships:
+      description: >-
+        Members of the relationships object ("relationships") represent
+        references from the resource object in which it's defined to other
+        resource objects.
+      type: object
+      properties:
+        '^(?!id$|type$)\w[-\w_]*$':
+          properties:
+            links:
+              $ref: '#/components/schemas/relationshipLinks'
+            data:
+              description: 'Member, whose value represents "resource linkage".'
+              oneOf:
+                - $ref: '#/components/schemas/relationshipToOne'
+                - $ref: '#/components/schemas/relationshipToMany'
+            meta:
+              $ref: '#/components/schemas/meta'
+          anyOf:
+            - required:
+                - data
+            - required:
+                - meta
+            - required:
+                - links
+          additionalProperties: false
+      additionalProperties: false
+    relationshipToOne:
+      description: >-
+        References to other resource objects in a to-one ("relationship").
+        Relationships can be specified by including a member in a resource's
+        links object.
+      anyOf:
+        - $ref: '#/components/schemas/empty'
+        - $ref: '#/components/schemas/linkage'
+    relationshipToMany:
+      description: >-
+        An array of objects each containing "type" and "id" members for to-many
+        relationships.
+      type: array
+      items:
+        $ref: '#/components/schemas/linkage'
+      uniqueItems: true
+    empty:
+      $ref: '#/components/schemas/nulltype'
+    linkage:
+      description: The "type" and "id" to non-empty members.
+      type: object
+      required:
+        - type
+        - id
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        meta:
+          $ref: '#/components/schemas/meta'
+      additionalProperties: false
+    pagination:
+      type: object
+      properties:
+        first:
+          description: The first page of data
+          oneOf:
+            - type: string
+              format: uri-reference
+            - $ref: '#/components/schemas/nulltype'
+        last:
+          description: The last page of data
+          oneOf:
+            - type: string
+              format: uri-reference
+            - $ref: '#/components/schemas/nulltype'
+        prev:
+          description: The previous page of data
+          oneOf:
+            - type: string
+              format: uri-reference
+            - $ref: '#/components/schemas/nulltype'
+        next:
+          description: The next page of data
+          oneOf:
+            - type: string
+              format: uri-reference
+            - $ref: '#/components/schemas/nulltype'
+    jsonapi:
+      description: An object describing the server's implementation
+      type: object
+      properties:
+        version:
+          type: string
+        meta:
+          $ref: '#/components/schemas/meta'
+      additionalProperties: false
+    error:
+      type: object
+      properties:
+        id:
+          description: A unique identifier for this particular occurrence of the problem.
+          type: string
+        links:
+          $ref: '#/components/schemas/links'
+        status:
+          description: >-
+            The HTTP status code applicable to this problem, expressed as a
+            string value.
+          type: string
+        code:
+          description: 'An application-specific error code, expressed as a string value.'
+          type: string
+        title:
+          description: >-
+            A short, human-readable summary of the problem. It **SHOULD NOT**
+            change from occurrence to occurrence of the problem, except for
+            purposes of localization.
+          type: string
+        detail:
+          description: >-
+            A human-readable explanation specific to this occurrence of the
+            problem.
+          type: string
+        source:
+          type: object
+          properties:
+            pointer:
+              description: >-
+                A JSON Pointer [RFC6901] to the associated entity in the request
+                document [e.g. "/data" for a primary data object, or
+                "/data/attributes/title" for a specific attribute].
+              type: string
+            parameter:
+              description: A string indicating which query parameter caused the error.
+              type: string
+        meta:
+          $ref: '#/components/schemas/meta'
+      additionalProperties: false
+    nulltype:
+      description: OAS doesn't allow the null type so use this.
+      type: object
+      nullable: true
+      default: null
