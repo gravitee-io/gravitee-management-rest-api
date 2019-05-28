@@ -390,6 +390,7 @@ public class SwaggerService_PrepareTest {
     @Test
     public void shouldPrepareAPIFromSwaggerV3_0_1WithEnumExample() throws IOException {
         final NewSwaggerApiEntity api = prepareInline("io/gravitee/management/service/mock/oai-3_0_1.yml", true);
+        assertEquals("v1", api.getVersion());
     }
     
     @Test

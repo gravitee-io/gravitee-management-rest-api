@@ -535,6 +535,9 @@ public class SwaggerServiceImpl implements SwaggerService {
     }
 
     private Map<String, Object> getResponseFromSimpleRef(SwaggerParseResult swagger, String ref) {
+        if (ref == null) {
+            return new HashMap<>();
+        }
         final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
         final Schema schema = swagger.getOpenAPI().getComponents().getSchemas().get(simpleRef);
 
@@ -549,7 +552,20 @@ public class SwaggerServiceImpl implements SwaggerService {
             }
         } else if (schema instanceof ComposedSchema) {
             final Map<String, Object> response = new HashMap<>();
-            ((ComposedSchema) schema).getAllOf().forEach(composedSchema -> {
+            final List<Schema> schemas = new ArrayList<>();
+            final List<Schema> allOf = ((ComposedSchema) schema).getAllOf();
+            if (allOf != null) {
+                schemas.addAll(allOf);
+            }
+            final List<Schema> anyOf = ((ComposedSchema) schema).getAnyOf();
+            if (anyOf != null) {
+                schemas.addAll(anyOf);
+            }
+            final List<Schema> oneOf = ((ComposedSchema) schema).getOneOf();
+            if (oneOf != null) {
+                schemas.addAll(oneOf);
+            }
+            schemas.forEach(composedSchema -> {
                 if (composedSchema.get$ref() != null) {
                     response.putAll(getResponseFromSimpleRef(swagger, composedSchema.get$ref()));
                 }
@@ -561,12 +577,15 @@ public class SwaggerServiceImpl implements SwaggerService {
         }
 
         if (schema == null || schema.getProperties() == null) {
-            return emptyMap();
+            return new HashMap<>();
         }
         return getResponseProperties(swagger, schema.getProperties());
     }
 
     private Map<String, Object> getResponseProperties(final SwaggerParseResult swagger, final Map<String, Schema> properties) {
+        if (properties == null) {
+            return new HashMap<>();
+        }
         return properties.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> {
             final String type = e.getValue().getType();
             if (type != null) {
@@ -588,6 +607,7 @@ public class SwaggerServiceImpl implements SwaggerService {
                 }
             } else {
                 final Map<String, Object> response = getResponseFromSimpleRef(swagger, e.getValue().get$ref());
+                response.putAll(getResponseProperties(swagger, e.getValue().getProperties()));
                 final Object array = response.get("array");
                 if (array != null) {
                     return array;
