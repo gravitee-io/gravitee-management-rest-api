@@ -347,6 +347,45 @@ public class SwaggerService_PrepareTest {
         assertEquals("string", getFields.getResponseType());
         assertNull(getFields.getResponseProperties());
     }
+
+    @Test
+    public void shouldPrepareAPIFromSwaggerV3WithEnumExample() throws IOException {
+        final NewSwaggerApiEntity api = prepareInline("io/gravitee/management/service/mock/enum-example.yml", true);
+        assertEquals("v1", api.getVersion());
+        assertEquals("Gravitee Import Mock Example", api.getName());
+        assertEquals("graviteeimportmockexample", api.getContextPath());
+        assertEquals(1, api.getEndpoint().size());
+        assertTrue(api.getEndpoint().contains("/"));
+        assertEquals(1, api.getPaths().size());
+        final SwaggerPath swaggerPath = api.getPaths().get(0);
+        assertEquals("/", swaggerPath.getPath());
+
+        final List<SwaggerVerb> swaggerVerbs = swaggerPath.getVerbs();
+        assertNotNull(swaggerVerbs);
+        assertEquals(1, swaggerVerbs.size());
+        final SwaggerVerb getRoot = swaggerVerbs.iterator().next();
+        assertEquals("getRoot", getRoot.getDescription());
+        assertEquals("GET", getRoot.getVerb());
+        assertEquals("200", getRoot.getResponseStatus());
+        assertNotNull(getRoot.getResponseType());
+        assertNotNull(getRoot.getResponseProperties());
+        assertNull(getRoot.getResponseExample());
+        final Map responseProperties = getRoot.getResponseProperties();
+        assertEquals(10, responseProperties.size());
+        assertEquals("string", responseProperties.get("optionalValue"));
+        assertEquals("string", responseProperties.get("stringValue"));
+        assertEquals("exampleValue", responseProperties.get("stringExampleValue"));
+        assertEquals("value1", responseProperties.get("enumValue"));
+        assertEquals(123, responseProperties.get("integerExampleValue"));
+        assertEquals("string", ((Map) responseProperties.get("inlinedObjectValue")).get("nestedOptionalValue"));
+        assertEquals("string", ((Map) responseProperties.get("inlinedObjectValue")).get("nestedStringValue"));
+        assertEquals("nestedExampleValue", ((Map) responseProperties.get("inlinedObjectValue")).get("nestedStringExampleValue"));
+        assertEquals("string", ((Map) responseProperties.get("objectValue")).get("nestedOptionalValue"));
+        assertEquals("string", ((Map) responseProperties.get("objectValue")).get("nestedStringValue"));
+        assertEquals("nestedExampleValue", ((Map) responseProperties.get("objectValue")).get("nestedStringExampleValue"));
+        assertEquals("itemValue", ((List) responseProperties.get("inlinedArrayValue")).get(0));
+        assertEquals("itemValue", ((List) responseProperties.get("arrayValue")).get(0));
+    }
     
     @Test
     public void shouldPrepareAPIFromSwaggerV3WithMonoServer() throws IOException {

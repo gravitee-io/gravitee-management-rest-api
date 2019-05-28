@@ -68,6 +68,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 
@@ -538,7 +539,14 @@ public class SwaggerServiceImpl implements SwaggerService {
         final Schema schema = swagger.getOpenAPI().getComponents().getSchemas().get(simpleRef);
 
         if (schema instanceof ArraySchema) {
-            return getResponseFromSimpleRef(swagger, ((ArraySchema) schema).getItems().get$ref());
+            final Schema<?> items = ((ArraySchema) schema).getItems();
+            if (items.get$ref() != null) {
+                return getResponseFromSimpleRef(swagger, items.get$ref());
+            } else {
+                final Map<String, Object> response = new HashMap<>();
+                response.put(schema.getType(), singletonList(items.getExample()));
+                return response;
+            }
         } else if (schema instanceof ComposedSchema) {
             final Map<String, Object> response = new HashMap<>();
             ((ComposedSchema) schema).getAllOf().forEach(composedSchema -> {
@@ -560,10 +568,31 @@ public class SwaggerServiceImpl implements SwaggerService {
 
     private Map<String, Object> getResponseProperties(final SwaggerParseResult swagger, final Map<String, Schema> properties) {
         return properties.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> {
-            if (e.getValue().getType() != null) {
-                return e.getValue().getType();
+            final String type = e.getValue().getType();
+            if (type != null) {
+                final Object example = e.getValue().getExample();
+                if (example == null) {
+                    final List enums = e.getValue().getEnum();
+                    if (enums == null) {
+                        if (type.equals("object")) {
+                            return getResponseProperties(swagger, e.getValue().getProperties());
+                        } else if (type.equals("array")) {
+                            return singletonList(((ArraySchema) e.getValue()).getItems().getExample());
+                        }
+                        return type;
+                    } else {
+                        return enums.get(0);
+                    }
+                } else {
+                    return example;
+                }
             } else {
-                return getResponseFromSimpleRef(swagger, e.getValue().get$ref());
+                final Map<String, Object> response = getResponseFromSimpleRef(swagger, e.getValue().get$ref());
+                final Object array = response.get("array");
+                if (array != null) {
+                    return array;
+                }
+                return response;
             }
         }));
     }
