@@ -33,7 +33,6 @@ import static java.util.stream.Collectors.toList;
  * @author GraviteeSource Team
  */
 @Api(tags = {"Portal entrypoints"})
-@Path("/entrypoints")
 public class PortalEntryPointsResource extends AbstractResource  {
 
     @Autowired

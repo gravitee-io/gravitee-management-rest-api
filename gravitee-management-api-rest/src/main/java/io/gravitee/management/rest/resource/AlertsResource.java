@@ -34,7 +34,6 @@ import static java.util.stream.Collectors.toList;
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Path("/alerts")
 @Api(tags = {"Alerts"})
 public class AlertsResource extends AbstractResource {
 
