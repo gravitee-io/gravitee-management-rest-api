@@ -73,7 +73,12 @@ public class ParameterServiceImpl extends TransactionalService implements Parame
 
     @Override
     public List<String> findAll(final Key key) {
-        return findAll(key, value -> value, null);
+        final List<String> values = findAll(key, value -> value, null);
+        if (values.isEmpty()) {
+            return singletonList(key.defaultValue());
+        } else {
+            return values;
+        }
     }
 
     @Override
