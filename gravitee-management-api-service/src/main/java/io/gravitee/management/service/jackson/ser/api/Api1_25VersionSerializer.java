@@ -18,6 +18,8 @@ package io.gravitee.management.service.jackson.ser.api;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import io.gravitee.definition.model.LoggingMode;
+import io.gravitee.definition.model.ResponseTemplate;
+import io.gravitee.definition.model.ResponseTemplates;
 import io.gravitee.management.model.MemberEntity;
 import io.gravitee.management.model.PlanEntity;
 import io.gravitee.management.model.PlanStatus;
@@ -37,9 +39,9 @@ import java.util.stream.Collectors;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Api1_20VersionSerializer extends ApiSerializer {
+public class Api1_25VersionSerializer extends ApiSerializer {
 
-    public Api1_20VersionSerializer() {
+    public Api1_25VersionSerializer() {
         super(ApiEntity.class);
     }
 
@@ -62,38 +64,24 @@ public class Api1_20VersionSerializer extends ApiSerializer {
 
         // proxy part
         if (apiEntity.getProxy() != null) {
-            //remove the http config from groups
-            if (apiEntity.getProxy().getGroups() != null) {
-                apiEntity.getProxy().getGroups().forEach(group -> {
-                    group.setHttpClientOptions(null);
-                    group.setHttpClientSslOptions(null);
-                });
-            }
             jsonGenerator.writeObjectField("proxy", apiEntity.getProxy());
         }
 
-
-
+        // response templates
+        if (apiEntity.getResponseTemplates() != null) {
+            jsonGenerator.writeObjectFieldStart("response_templates");
+            for(Map.Entry<String, ResponseTemplates> rt : apiEntity.getResponseTemplates().entrySet()) {
+                jsonGenerator.writeObjectFieldStart(rt.getKey());
+                for(Map.Entry<String, ResponseTemplate> entry : rt.getValue().getTemplates().entrySet()) {
+                    jsonGenerator.writeObjectField(entry.getKey(), entry.getValue());
+                }
+                jsonGenerator.writeEndObject();
+            }
+            jsonGenerator.writeEndObject();
+        }
+        
         // handle filtered fields list
         List<String> filteredFieldsList = (List<String>) apiEntity.getMetadata().get(METADATA_FILTERED_FIELDS_LIST);
-
-        // members
-        if (!filteredFieldsList.contains("members")) {
-            Set<MemberEntity> memberEntities = applicationContext.getBean(MembershipService.class).getMembers(MembershipReferenceType.API, apiEntity.getId(), RoleScope.API);
-            List<Member> members = (memberEntities == null ? Collections.emptyList() : new ArrayList<>(memberEntities.size()));
-            if (memberEntities != null && !memberEntities.isEmpty()) {
-                memberEntities.forEach(m -> {
-                    UserEntity userEntity = applicationContext.getBean(UserService.class).findById(m.getId());
-                    if (userEntity != null) {
-                        Member member = new Member();
-                        member.setUsername(getUsernameFromSourceId(userEntity.getSourceId()));
-                        member.setRole(m.getRole());
-                        members.add(member);
-                    }
-                });
-            }
-            jsonGenerator.writeObjectField("members", members);
-        }
 
         //plans
         if (!filteredFieldsList.contains("plans")) {
@@ -113,6 +101,6 @@ public class Api1_20VersionSerializer extends ApiSerializer {
 
     @Override
     public Version version() {
-        return Version.V_1_20;
+        return Version.V_1_25;
     }
 }

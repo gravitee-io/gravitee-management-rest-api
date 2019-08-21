@@ -112,8 +112,11 @@ public class ApiService_ExportAsJsonTest {
         //V_1_20
         ApiSerializer apiPrior120VersionSerializer = new Api1_20VersionSerializer();
         apiPrior120VersionSerializer.setApplicationContext(applicationContext);
+        //V_1_25
+        ApiSerializer apiPrior125VersionSerializer = new Api1_25VersionSerializer();
+        apiPrior125VersionSerializer.setApplicationContext(applicationContext);
 
-        apiCompositeSerializer.setSerializers(Arrays.asList(apiDefaultSerializer, apiPrior115VersionSerializer, apiPrior120VersionSerializer));
+        apiCompositeSerializer.setSerializers(Arrays.asList(apiDefaultSerializer, apiPrior115VersionSerializer, apiPrior120VersionSerializer, apiPrior125VersionSerializer));
         SimpleModule module = new SimpleModule();
         module.addSerializer(ApiEntity.class, apiCompositeSerializer);
         objectMapper.registerModule(module);
@@ -245,6 +248,11 @@ public class ApiService_ExportAsJsonTest {
     }
 
     @Test
+    public void shouldConvertAsJsonForExport_1_25() throws TechnicalException, IOException {
+        shouldConvertAsJsonForExport(ApiSerializer.Version.V_1_25, "1_25");
+    }
+
+    @Test
     public void shouldConvertAsJsonWithoutMembers() throws IOException {
         shouldConvertAsJsonWithoutMembers(ApiSerializer.Version.DEFAULT, null);
     }
@@ -257,6 +265,11 @@ public class ApiService_ExportAsJsonTest {
     @Test
     public void shouldConvertAsJsonWithoutMembers_1_20() throws IOException {
         shouldConvertAsJsonWithoutMembers(ApiSerializer.Version.V_1_20, "1_20");
+    }
+
+    @Test
+    public void shouldConvertAsJsonWithoutMembers_1_25() throws IOException {
+        shouldConvertAsJsonWithoutMembers(ApiSerializer.Version.V_1_25, "1_25");
     }
 
     @Test
@@ -275,6 +288,11 @@ public class ApiService_ExportAsJsonTest {
     }
 
     @Test
+    public void shouldConvertAsJsonWithoutPages_1_25() throws IOException {
+        shouldConvertAsJsonWithoutPages(ApiSerializer.Version.V_1_25, "1_25");
+    }
+
+    @Test
     public void shouldConvertAsJsonWithoutPlans() throws IOException {
         shouldConvertAsJsonWithoutPlans(ApiSerializer.Version.DEFAULT, null);
     }
@@ -287,6 +305,11 @@ public class ApiService_ExportAsJsonTest {
     @Test
     public void shouldConvertAsJsonWithoutPlans_1_20() throws IOException {
         shouldConvertAsJsonWithoutPlans(ApiSerializer.Version.V_1_20, "1_20");
+    }
+
+    @Test
+    public void shouldConvertAsJsonWithoutPlans_1_25() throws IOException {
+        shouldConvertAsJsonWithoutPlans(ApiSerializer.Version.V_1_25, "1_25");
     }
 
     @Test
