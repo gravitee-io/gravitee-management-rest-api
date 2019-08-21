@@ -2,6 +2,7 @@
   "description" : "Gravitee.io",
   "paths" : { },
   "resources" : [ ],
+  "path_mappings":[],
   "groups" : [ "My Group" ],
   "pages" : [ {
     "name" : "My Title",
@@ -38,14 +39,35 @@
   "proxy": {
     "context_path": "/test",
     "strip_context_path": false,
-    "loggingMode": "CLIENT_PROXY",
-    "endpoints": [
+    "logging": {
+      "mode": "CLIENT_PROXY",
+      "condition": "condition"
+    },
+    "groups": [
       {
-        "name": "default",
-        "target": "http://test",
-        "weight": 1,
-        "backup": false,
-        "type": "HTTP",
+        "name": "default-group",
+        "endpoints": [
+          {
+            "name": "default",
+            "target": "http://test",
+            "weight": 1,
+            "backup": false,
+            "type": "HTTP",
+            "http": {
+              "connectTimeout": 5000,
+              "idleTimeout": 60000,
+              "keepAlive": true,
+              "readTimeout": 10000,
+              "pipelining": false,
+              "maxConcurrentConnections": 100,
+              "useCompression": true,
+              "followRedirects": false
+            }
+          }
+        ],
+        "load_balancing": {
+          "type": "ROUND_ROBIN"
+        },
         "http": {
           "connectTimeout": 5000,
           "idleTimeout": 60000,
@@ -57,9 +79,14 @@
           "followRedirects": false
         }
       }
-    ],
-    "load_balancing": {
-      "type": "ROUND_ROBIN"
+    ]
+  },
+  "response_templates": {
+    "API_KEY_MISSING": {
+      "*/*": {
+        "status": 400,
+        "body": "{\"bad\":\"news\"}"
+      }
     }
   }
 }
