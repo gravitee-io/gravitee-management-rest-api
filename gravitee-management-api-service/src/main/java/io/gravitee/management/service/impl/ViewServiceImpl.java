@@ -16,6 +16,7 @@
 package io.gravitee.management.service.impl;
 
 import io.gravitee.common.utils.IdGenerator;
+import io.gravitee.common.utils.UUID;
 import io.gravitee.management.model.InlinePictureEntity;
 import io.gravitee.management.model.NewViewEntity;
 import io.gravitee.management.model.UpdateViewEntity;
@@ -253,7 +254,7 @@ public class ViewServiceImpl extends TransactionalService implements ViewService
 
     private View convert(final NewViewEntity viewEntity) {
         final View view = new View();
-        view.setId(IdGenerator.generate(viewEntity.getName()));
+        view.setId(UUID.toString(UUID.random()));
         view.setName(viewEntity.getName());
         view.setDescription(viewEntity.getDescription());
         view.setOrder(viewEntity.getOrder());
