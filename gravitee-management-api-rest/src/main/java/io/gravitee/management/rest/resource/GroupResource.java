@@ -108,6 +108,7 @@ public class GroupResource extends AbstractResource {
             updateGroupEntity.setLockApplicationRole(groupEntity.isLockApplicationRole());
             updateGroupEntity.setSystemInvitation(groupEntity.isSystemInvitation());
             updateGroupEntity.setEmailInvitation(groupEntity.isEmailInvitation());
+            updateGroupEntity.setEventRules(groupEntity.getEventRules());
             if (groupEntity.isLockApiRole()) {
                 updateGroupEntity.getRoles().put(RoleScope.API, groupEntity.getRoles().get(RoleScope.API));
             }
