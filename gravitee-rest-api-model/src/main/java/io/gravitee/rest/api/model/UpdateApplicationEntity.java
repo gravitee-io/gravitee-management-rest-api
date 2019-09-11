@@ -36,6 +36,8 @@ public class UpdateApplicationEntity {
     @NotNull(message = "Application's description must not be null")
     private String description;
 
+    private String picture;
+
     @NotNull(message = "Application's settings must not be null")
     private ApplicationSettings settings;
 
@@ -101,6 +103,15 @@ public class UpdateApplicationEntity {
 
     public void setClientId(String clientId) {
         this.clientId = clientId;
+    }
+
+    
+    public String getPicture() {
+        return picture;
+    }
+
+    public void setPicture(String picture) {
+        this.picture = picture;
     }
 
     @Override
