@@ -20,9 +20,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.common.utils.UUID;
 import io.gravitee.definition.model.Path;
-import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.repository.management.api.PlanRepository;
-import io.gravitee.repository.management.model.Plan;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.parameters.Key;
 import io.gravitee.rest.api.model.plan.PlanQuery;
@@ -32,7 +29,9 @@ import io.gravitee.rest.api.service.PlanService;
 import io.gravitee.rest.api.service.SubscriptionService;
 import io.gravitee.rest.api.service.exceptions.*;
 import io.gravitee.rest.api.service.processor.PlanSynchronizationProcessor;
-
+import io.gravitee.repository.exceptions.TechnicalException;
+import io.gravitee.repository.management.api.PlanRepository;
+import io.gravitee.repository.management.model.Plan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -311,23 +310,17 @@ public class PlanServiceImpl extends TransactionalService implements PlanService
             plan.setUpdatedAt(plan.getClosedAt());
             plan.setNeedRedeployAt(plan.getClosedAt());
 
-            // Close active subscriptions and reject pending
+            // Close subscriptions
             if (plan.getSecurity() != Plan.PlanSecurityType.KEY_LESS) {
                 subscriptionService.findByPlan(planId)
                         .stream()
-                        .filter(subscriptionEntity -> subscriptionEntity.getStatus() == SubscriptionStatus.ACCEPTED)
-                        .forEach(subscription -> subscriptionService.close(subscription.getId()));
-
-                final String planName = plan.getName();
-                subscriptionService.findByPlan(planId)
-                        .stream()
-                        .filter(subscriptionEntity -> subscriptionEntity.getStatus() == SubscriptionStatus.PENDING)
                         .forEach(subscription -> {
-                            ProcessSubscriptionEntity processSubscriptionEntity = new ProcessSubscriptionEntity();
-                            processSubscriptionEntity.setId(subscription.getId());
-                            processSubscriptionEntity.setAccepted(false);
-                            processSubscriptionEntity.setReason("Plan " + planName + " has been closed.");
-                            subscriptionService.process(processSubscriptionEntity, userId);
+                            try {
+                                subscriptionService.close(subscription.getId());
+                            } catch (SubscriptionNotClosableException snce) {
+                                // subscription status could not be closed (already closed or rejected)
+                                // ignore it
+                            }
                         });
             }
 

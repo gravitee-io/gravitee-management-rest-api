@@ -16,7 +16,10 @@
 package io.gravitee.rest.api.management.rest.resource;
 
 import io.gravitee.common.http.MediaType;
-import io.gravitee.repository.management.model.NotificationReferenceType;
+import io.gravitee.rest.api.management.rest.resource.param.LifecycleActionParam;
+import io.gravitee.rest.api.management.rest.resource.param.ReviewActionParam;
+import io.gravitee.rest.api.management.rest.security.Permission;
+import io.gravitee.rest.api.management.rest.security.Permissions;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.api.ApiLifecycleState;
@@ -26,12 +29,6 @@ import io.gravitee.rest.api.model.notification.NotifierEntity;
 import io.gravitee.rest.api.model.parameters.Key;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
-import io.gravitee.rest.api.management.rest.resource.param.LifecycleActionParam;
-import io.gravitee.rest.api.management.rest.resource.param.ReviewActionParam;
-import io.gravitee.rest.api.management.rest.resource.param.LifecycleActionParam.LifecycleAction;
-import io.gravitee.rest.api.management.rest.resource.param.ReviewActionParam.ReviewAction;
-import io.gravitee.rest.api.management.rest.security.Permission;
-import io.gravitee.rest.api.management.rest.security.Permissions;
 import io.gravitee.rest.api.service.MessageService;
 import io.gravitee.rest.api.service.NotifierService;
 import io.gravitee.rest.api.service.ParameterService;
@@ -39,12 +36,13 @@ import io.gravitee.rest.api.service.QualityMetricsService;
 import io.gravitee.rest.api.service.SwaggerService;
 import io.gravitee.rest.api.service.exceptions.ApiNotFoundException;
 import io.gravitee.rest.api.service.exceptions.ForbiddenAccessException;
+import io.gravitee.repository.management.model.NotificationReferenceType;
 import io.swagger.annotations.*;
-
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
 import org.glassfish.jersey.message.internal.MatchingEntityTag;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -83,7 +81,7 @@ public class ApiResource extends AbstractResource {
     private MessageService messageService;
     @Autowired
     private ParameterService parameterService;
-    @Autowired
+    @Inject
     private SwaggerService swaggerService;
 
     @GET
@@ -99,7 +97,8 @@ public class ApiResource extends AbstractResource {
         if (Visibility.PUBLIC.equals(apiEntity.getVisibility())
                 || hasPermission(RolePermission.API_DEFINITION, api, RolePermissionAction.READ)) {
             setPicture(apiEntity);
-            apiEntity.setContextPath(apiEntity.getProxy().getContextPath());
+            //TODO DBY: what is the purpose of this ?
+            //apiEntity.setContextPath(apiEntity.getProxy().getContextPath());
             filterSensitiveData(apiEntity);
 
             return Response
@@ -112,8 +111,7 @@ public class ApiResource extends AbstractResource {
     }
 
     private void setPicture(final ApiEntity apiEntity) {
-        final UriBuilder ub = uriInfo.getAbsolutePathBuilder();
-        final UriBuilder uriBuilder = ub.path("picture");
+        final UriBuilder uriBuilder = uriInfo.getAbsolutePathBuilder().path("picture");
         if (apiEntity.getPicture() != null) {
             // force browser to get if updated
             uriBuilder.queryParam("hash", apiEntity.getPicture().hashCode());
@@ -242,7 +240,7 @@ public class ApiResource extends AbstractResource {
         // Force context-path if user is not the primary_owner or an administrator
         if (!hasPermission(RolePermission.API_GATEWAY_DEFINITION, api, RolePermissionAction.UPDATE) &&
                 !Objects.equals(currentApi.getPrimaryOwner().getId(), getAuthenticatedUser()) && !isAdmin()) {
-            apiToUpdate.getProxy().setContextPath(currentApi.getProxy().getContextPath());
+            apiToUpdate.getProxy().setVirtualHosts(currentApi.getProxy().getVirtualHosts());
         }
 
         final ApiEntity updatedApi = apiService.update(api, apiToUpdate);
@@ -324,17 +322,17 @@ public class ApiResource extends AbstractResource {
             value = "Get the state of the API",
             notes = "User must have the MANAGE_LIFECYCLE permission to use this service")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "API's state", response = io.gravitee.rest.api.management.rest.model.ApiEntity.class),
+            @ApiResponse(code = 200, message = "API's state", response = ApiStateEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public io.gravitee.rest.api.management.rest.model.ApiEntity isAPISynchronized(@PathParam("api") String api) {
+    public ApiStateEntity isAPISynchronized(@PathParam("api") String api) {
         ApiEntity foundApi = apiService.findById(api);
         if (Visibility.PUBLIC.equals(foundApi.getVisibility())
                 || hasPermission(RolePermission.API_DEFINITION, api, RolePermissionAction.READ)) {
-            io.gravitee.rest.api.management.rest.model.ApiEntity apiEntity = new io.gravitee.rest.api.management.rest.model.ApiEntity();
-            apiEntity.setApiId(api);
-            setSynchronizationState(apiEntity);
+            ApiStateEntity apiStateEntity = new ApiStateEntity();
+            apiStateEntity.setApiId(api);
+            setSynchronizationState(apiStateEntity);
 
-            return apiEntity;
+            return apiStateEntity;
         }
         throw new ForbiddenAccessException();
     }
@@ -391,7 +389,7 @@ public class ApiResource extends AbstractResource {
                 .build();
     }
 
-    
+
     @POST
     @Path("import/swagger")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -415,7 +413,7 @@ public class ApiResource extends AbstractResource {
                 .lastModified(updatedApi.getUpdatedAt())
                 .build();
     }
-    
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("export")
@@ -553,19 +551,19 @@ public class ApiResource extends AbstractResource {
                 .build();
     }
 
-    private void checkAPIReviewWorkflow(final ApiEntity api, final ReviewAction action) {
+    private void checkAPIReviewWorkflow(final ApiEntity api, final ReviewActionParam.ReviewAction action) {
         if (ApiLifecycleState.ARCHIVED.equals(api.getLifecycleState())) {
             throw new BadRequestException("Deleted API can not be reviewed");
         }
         if (api.getWorkflowState() != null) {
             switch (api.getWorkflowState()) {
                 case IN_REVIEW:
-                    if (ReviewAction.ASK.equals(action)) {
+                    if (ReviewActionParam.ReviewAction.ASK.equals(action)) {
                         throw new BadRequestException("Review is still in progress");
                     }
                     break;
                 case DRAFT:
-                    if (ReviewAction.ACCEPT.equals(action) || ReviewAction.REJECT.equals(action)) {
+                    if (ReviewActionParam.ReviewAction.ACCEPT.equals(action) || ReviewActionParam.ReviewAction.REJECT.equals(action)) {
                         throw new BadRequestException("State invalid to accept/reject a review");
                     }
                     break;
@@ -650,26 +648,26 @@ public class ApiResource extends AbstractResource {
         return resourceContext.getResource(ApiAlertsResource.class);
     }
 
-    private void setSynchronizationState(io.gravitee.rest.api.management.rest.model.ApiEntity apiEntity) {
-        if (apiService.isSynchronized(apiEntity.getApiId())) {
-            apiEntity.setIsSynchronized(true);
+    private void setSynchronizationState(ApiStateEntity apiStateEntity) {
+        if (apiService.isSynchronized(apiStateEntity.getApiId())) {
+            apiStateEntity.setIsSynchronized(true);
         } else {
-            apiEntity.setIsSynchronized(false);
+            apiStateEntity.setIsSynchronized(false);
         }
     }
 
-    private void checkAPILifeCycle(ApiEntity api, LifecycleAction action) {
+    private void checkAPILifeCycle(ApiEntity api, LifecycleActionParam.LifecycleAction action) {
         if (ApiLifecycleState.ARCHIVED.equals(api.getLifecycleState())) {
             throw new BadRequestException("Deleted API can not be " + action.name().toLowerCase());
         }
         switch (api.getState()) {
             case STARTED:
-                if (LifecycleAction.START.equals(action)) {
+                if (LifecycleActionParam.LifecycleAction.START.equals(action)) {
                     throw new BadRequestException("API is already started");
                 }
                 break;
             case STOPPED:
-                if (LifecycleAction.STOP.equals(action)) {
+                if (LifecycleActionParam.LifecycleAction.STOP.equals(action)) {
                     throw new BadRequestException("API is already stopped");
                 }
 

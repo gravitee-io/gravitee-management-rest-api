@@ -17,6 +17,13 @@ package io.gravitee.rest.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.definition.jackson.datatype.GraviteeMapper;
+import io.gravitee.rest.api.model.UserEntity;
+import io.gravitee.rest.api.model.api.ApiEntity;
+import io.gravitee.rest.api.model.api.NewApiEntity;
+import io.gravitee.rest.api.service.exceptions.ApiAlreadyExistsException;
+import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
+import io.gravitee.rest.api.service.impl.ApiServiceImpl;
+import io.gravitee.rest.api.service.search.SearchEngineService;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiRepository;
 import io.gravitee.repository.management.api.MembershipRepository;
@@ -25,19 +32,6 @@ import io.gravitee.repository.management.model.Api;
 import io.gravitee.repository.management.model.ApiLifecycleState;
 import io.gravitee.repository.management.model.LifecycleState;
 import io.gravitee.repository.management.model.Visibility;
-import io.gravitee.rest.api.model.UserEntity;
-import io.gravitee.rest.api.model.api.ApiEntity;
-import io.gravitee.rest.api.model.api.NewApiEntity;
-import io.gravitee.rest.api.service.AuditService;
-import io.gravitee.rest.api.service.GroupService;
-import io.gravitee.rest.api.service.ParameterService;
-import io.gravitee.rest.api.service.UserService;
-import io.gravitee.rest.api.service.exceptions.ApiAlreadyExistsException;
-import io.gravitee.rest.api.service.exceptions.ApiContextPathAlreadyExistsException;
-import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
-import io.gravitee.rest.api.service.impl.ApiServiceImpl;
-import io.gravitee.rest.api.service.search.SearchEngineService;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +46,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.Collections;
 import java.util.Optional;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -93,7 +86,8 @@ public class ApiService_CreateTest {
     private SearchEngineService searchEngineService;
     @Mock
     private ParameterService parameterService;
-
+    @Mock
+    private VirtualHostService virtualHostService;
     @Before
     public void init() {
         final SecurityContext securityContext = mock(SecurityContext.class);
@@ -133,74 +127,6 @@ public class ApiService_CreateTest {
 
         when(newApi.getVersion()).thenReturn("v1");
         when(newApi.getDescription()).thenReturn("Ma description");
-
-        apiService.create(newApi, USER_NAME);
-    }
-
-    @Test
-    public void shouldCreateForUserBecauseContextPathNotExists() throws TechnicalException {
-        testCreationWithContextPath("/context", "/context2");
-    }
-
-    @Test
-    public void shouldCreateForUserBecauseContextPathNotExists2() throws TechnicalException {
-        testCreationWithContextPath("/context2", "/context");
-    }
-
-    @Test
-    public void shouldCreateForUserBecauseContextPathNotExists3() throws TechnicalException {
-        testCreationWithContextPath("/products/sect/search", "/products/ecom/search");
-    }
-
-    @Test
-    public void shouldCreateForUserBecauseContextPathNotExists4() throws TechnicalException {
-        testCreationWithContextPath("/products/sect/search", "/products/ecom");
-    }
-
-    @Test(expected = ApiContextPathAlreadyExistsException.class)
-    public void shouldNotCreateForUserBecauseContextPathExists() throws TechnicalException {
-        testCreationWithContextPath("/context", "/context");
-    }
-
-    @Test(expected = ApiContextPathAlreadyExistsException.class)
-    public void shouldNotCreateForUserBecauseSubContextPathExists() throws TechnicalException {
-        testCreationWithContextPath("/context/toto", "/context");
-    }
-
-    @Test(expected = ApiContextPathAlreadyExistsException.class)
-    public void shouldNotCreateForUserBecauseSubContextPathExists2() throws TechnicalException {
-        testCreationWithContextPath("/context", "/context/toto");
-    }
-
-    @Test(expected = ApiContextPathAlreadyExistsException.class)
-    public void shouldNotCreateForUserBecauseSubContextPathExists3() throws TechnicalException {
-        testCreationWithContextPath("/products/sect/search", "/products/sect");
-    }
-
-    @Test(expected = ApiContextPathAlreadyExistsException.class)
-    public void shouldNotCreateForUserBecauseContextPathExists_TrailingSlash() throws TechnicalException {
-        testCreationWithContextPath("/context/", "/context/toto");
-    }
-
-    @Test(expected = ApiContextPathAlreadyExistsException.class)
-    public void shouldNotCreateForUserBecauseContextPathExists_TrailingSlash2() throws TechnicalException {
-        testCreationWithContextPath("/context//toto", "/context/toto");
-    }
-
-    private void testCreationWithContextPath(String existingContextPath, String contextPathToCreate) throws TechnicalException {
-        when(apiRepository.findById(anyString())).thenReturn(Optional.empty());
-        when(apiRepository.create(any())).thenReturn(api);
-        when(newApi.getName()).thenReturn(API_NAME);
-        when(newApi.getVersion()).thenReturn("v1");
-        when(newApi.getDescription()).thenReturn("Ma description");
-
-        when(apiRepository.search(new ApiCriteria.Builder().environment("DEFAULT").build())).thenReturn(asList(api));
-        when(api.getId()).thenReturn(API_ID);
-        when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"" + existingContextPath + "\"}}");
-
-        when(newApi.getContextPath()).thenReturn(contextPathToCreate);
-        when(userService.findById(USER_NAME)).thenReturn(new UserEntity());
-        when(pageService.search(any())).thenReturn(null);
 
         apiService.create(newApi, USER_NAME);
     }

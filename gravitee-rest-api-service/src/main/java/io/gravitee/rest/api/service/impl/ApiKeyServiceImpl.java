@@ -15,9 +15,6 @@
  */
 package io.gravitee.rest.api.service.impl;
 
-import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.repository.management.api.ApiKeyRepository;
-import io.gravitee.repository.management.model.ApiKey;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.exceptions.ApiKeyNotFoundException;
@@ -25,7 +22,9 @@ import io.gravitee.rest.api.service.exceptions.SubscriptionClosedException;
 import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
 import io.gravitee.rest.api.service.notification.ApiHook;
 import io.gravitee.rest.api.service.notification.NotificationParamsBuilder;
-
+import io.gravitee.repository.exceptions.TechnicalException;
+import io.gravitee.repository.management.api.ApiKeyRepository;
+import io.gravitee.repository.management.model.ApiKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +116,7 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
             // Get previously generated keys to set their expiration date
             Set<ApiKey> oldKeys = apiKeyRepository.findBySubscription(subscription);
             for (ApiKey oldKey : oldKeys) {
-                if (! oldKey.equals(newApiKey)) {
+                if (! oldKey.equals(newApiKey) && !convert(oldKey).isExpired()) {
                     setExpiration(expirationDate, oldKey);
                 }
             }
@@ -312,10 +311,10 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
     }
 
     private void setExpiration(Date expirationDate, ApiKey key) throws TechnicalException {
+        final Date now = new Date();
+        key.setUpdatedAt(now);
         if (!key.isRevoked()) {
             ApiKey oldkey = new ApiKey(key);
-
-            key.setUpdatedAt(new Date());
             key.setExpireAt(expirationDate);
             apiKeyRepository.update(key);
 
@@ -332,7 +331,7 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
                     .apikey(key)
                     .plan(plan)
                     .owner(owner);
-            if (key.getExpireAt() != null && new Date().before(key.getExpireAt())) {
+            if (key.getExpireAt() != null && now.before(key.getExpireAt())) {
                 paramsBuilder.expirationDate(key.getExpireAt());
             }
 
@@ -349,7 +348,6 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
                     oldkey,
                     key);
         } else {
-            key.setUpdatedAt(new Date());
             apiKeyRepository.update(key);
         }
     }
@@ -360,6 +358,7 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
         apiKeyEntity.setKey(apiKey.getKey());
         apiKeyEntity.setCreatedAt(apiKey.getCreatedAt());
         apiKeyEntity.setExpireAt(apiKey.getExpireAt());
+        apiKeyEntity.setExpired(apiKey.getExpireAt() != null && new Date().after(apiKey.getExpireAt()));
         apiKeyEntity.setRevoked(apiKey.isRevoked());
         apiKeyEntity.setRevokedAt(apiKey.getRevokedAt());
         apiKeyEntity.setUpdatedAt(apiKey.getUpdatedAt());
