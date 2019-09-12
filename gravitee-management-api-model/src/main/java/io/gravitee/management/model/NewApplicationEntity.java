@@ -16,6 +16,7 @@
 package io.gravitee.management.model;
 
 import io.gravitee.management.model.application.ApplicationSettings;
+import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -35,6 +36,7 @@ public class NewApplicationEntity {
     @NotNull(message = "Application's description must not be null")
     private String description;
 
+    @ApiModelProperty(dataType="io.gravitee.management.model.application.ApplicationSettings", value = "Application settings")
     private ApplicationSettings settings;
 
     /**

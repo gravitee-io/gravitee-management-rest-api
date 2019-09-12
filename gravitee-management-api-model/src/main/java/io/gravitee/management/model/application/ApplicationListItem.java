@@ -17,6 +17,7 @@ package io.gravitee.management.model.application;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.management.model.PrimaryOwnerEntity;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Date;
 import java.util.Objects;
@@ -46,6 +47,7 @@ public class ApplicationListItem {
     private PrimaryOwnerEntity primaryOwner;
 
     @JsonProperty("settings")
+    @ApiModelProperty(dataType="io.gravitee.management.model.application.ApplicationListItemSettings", value = "Application settings")
     private ApplicationListItemSettings settings;
 
     public String getId() {

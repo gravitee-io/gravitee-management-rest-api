@@ -17,6 +17,7 @@ package io.gravitee.management.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.gravitee.management.model.application.ApplicationSettings;
+import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotNull;
 import java.util.Set;
@@ -36,6 +37,7 @@ public class UpdateApplicationEntity {
     private String description;
 
     @NotNull(message = "Application's settings must not be null")
+    @ApiModelProperty(dataType="io.gravitee.management.model.application.ApplicationListItemSettings", value = "Application settings")
     private ApplicationSettings settings;
 
     private Set<String> groups;
