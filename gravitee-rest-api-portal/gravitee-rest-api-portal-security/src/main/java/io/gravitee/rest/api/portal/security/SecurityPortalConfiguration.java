@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.authentication.configuration.GlobalAuthenticationConfigurerAdapter;
 
-import io.gravitee.rest.api.portal.security.config.BasicSecurityConfigurerAdapter;
+import io.gravitee.rest.api.portal.security.config.BasicSecurityPortalConfigurerAdapter;
 import io.gravitee.rest.api.security.authentication.AuthenticationProviderManager;
 import io.gravitee.rest.api.security.authentication.impl.AuthenticationProviderManagerImpl;
 import io.gravitee.rest.api.security.cookies.JWTCookieGenerator;
@@ -31,7 +31,7 @@ import io.gravitee.rest.api.security.cookies.JWTCookieGenerator;
  *
  */
 @Configuration
-@Import(BasicSecurityConfigurerAdapter.class)
+@Import(BasicSecurityPortalConfigurerAdapter.class)
 public class SecurityPortalConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
     @Bean

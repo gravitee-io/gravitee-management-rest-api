@@ -80,7 +80,7 @@ public class ViewResourceTest extends AbstractResourceTest {
         doReturn(mockApis).when(apiService).findByUser(any(), any());
         
         Function<ViewEntity, ViewEntity> identity = (v) -> v;
-        doReturn(identity).when(viewEnhancer).enhance(any());
+        doReturn(identity).when(viewMapper).enhance(any());
         
         Mockito.when(viewMapper.convert(any(), any())).thenCallRealMethod();
 
@@ -99,7 +99,7 @@ public class ViewResourceTest extends AbstractResourceTest {
 
         Mockito.verify(viewService).findNotHiddenById(VIEW_ID);
         Mockito.verify(apiService).findByUser(USER_NAME, null);
-        Mockito.verify(viewEnhancer).enhance(any());
+        Mockito.verify(viewMapper).enhance(any());
         Mockito.verify(viewMapper).convert(any(), any());
 
         final View responseView = response.readEntity(View.class);

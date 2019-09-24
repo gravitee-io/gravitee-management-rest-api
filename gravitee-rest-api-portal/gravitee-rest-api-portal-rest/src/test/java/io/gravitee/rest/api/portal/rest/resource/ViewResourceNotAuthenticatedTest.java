@@ -95,7 +95,7 @@ public class ViewResourceNotAuthenticatedTest extends AbstractResourceTest {
         doReturn(mockApis).when(apiService).findByVisibility(any());
         
         Function<ViewEntity, ViewEntity> identity = (v) -> v;
-        doReturn(identity).when(viewEnhancer).enhance(any());
+        doReturn(identity).when(viewMapper).enhance(any());
         
         Mockito.when(viewMapper.convert(any(), any())).thenCallRealMethod();
 
@@ -108,7 +108,7 @@ public class ViewResourceNotAuthenticatedTest extends AbstractResourceTest {
 
         Mockito.verify(viewService).findNotHiddenById(VIEW_ID);
         Mockito.verify(apiService).findByVisibility(any());
-        Mockito.verify(viewEnhancer).enhance(any());
+        Mockito.verify(viewMapper).enhance(any());
         Mockito.verify(viewMapper).convert(any(), any());
 
         final View responseView = response.readEntity(View.class);

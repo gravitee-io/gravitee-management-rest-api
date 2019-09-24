@@ -33,7 +33,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import io.gravitee.rest.api.portal.rest.JerseySpringTest;
-import io.gravitee.rest.api.portal.rest.enhancer.ViewEnhancer;
 import io.gravitee.rest.api.portal.rest.mapper.AnalyticsMapper;
 import io.gravitee.rest.api.portal.rest.mapper.ApiMapper;
 import io.gravitee.rest.api.portal.rest.mapper.ApplicationMapper;
@@ -142,7 +141,6 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
         reset(notificationConfigMapper);
         reset(portalNotificationMapper);
         reset(viewMapper);
-        reset(viewEnhancer);
     }
     
     public AbstractResourceTest() {
@@ -301,9 +299,6 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
 
     @Autowired
     protected ViewMapper viewMapper;
-
-    @Autowired
-    protected ViewEnhancer viewEnhancer;
     
     @Autowired
     protected PortalNotificationMapper portalNotificationMapper;
@@ -552,11 +547,6 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
         @Bean
         public ViewMapper viewMapper() {
             return mock(ViewMapper.class);
-        }
-
-        @Bean
-        public ViewEnhancer viewEnhancer() {
-            return mock(ViewEnhancer.class);
         }
     }
 }

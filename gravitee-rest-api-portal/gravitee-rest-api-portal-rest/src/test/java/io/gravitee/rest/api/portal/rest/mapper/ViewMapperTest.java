@@ -20,16 +20,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Function;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import io.gravitee.rest.api.model.ViewEntity;
+import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.portal.rest.model.View;
 import io.gravitee.rest.api.portal.rest.model.ViewLinks;
 
@@ -37,7 +43,6 @@ import io.gravitee.rest.api.portal.rest.model.ViewLinks;
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
 public class ViewMapperTest {
 
     private static final String VIEW_DESCRIPTION = "my-view-description";
@@ -49,8 +54,53 @@ public class ViewMapperTest {
 
     private static final String VIEW_BASE_URL = "http://foo/bar";
 
-    @InjectMocks
-    private ViewMapper viewMapper;
+    private ViewMapper viewMapper = new ViewMapper();
+    
+    private Function<ViewEntity, ViewEntity> enhancer;
+    
+    @Before
+    public void init() {
+        ApiEntity apiA = new ApiEntity();
+        apiA.setId("A");
+        apiA.setViews(new HashSet<>(Arrays.asList("1", "")));
+        ApiEntity apiB = new ApiEntity();
+        apiB.setId("B");
+        apiB.setViews(new HashSet<>(Arrays.asList("1", "2")));
+        ApiEntity apiC = new ApiEntity();
+        apiC.setId("C");
+        apiC.setViews(new HashSet<>(Arrays.asList("2", "3")));
+        ApiEntity apiD = new ApiEntity();
+        apiD.setId("D");
+        apiD.setViews(null);
+        
+        Set<ApiEntity> apis = new HashSet<>();
+        apis.add(apiA);
+        apis.add(apiB);
+        apis.add(apiC);
+        apis.add(apiD);
+        
+        enhancer = viewMapper.enhance(apis);
+    }
+    
+    @Test
+    public void testEnhanceForOneView() {
+        ViewEntity v = new ViewEntity();
+        v.setId("1");
+        
+        v = enhancer.apply(v);
+        
+        assertEquals(2, v.getTotalApis());
+    }
+    
+    @Test
+    public void testEnhanceForAllView() {
+        ViewEntity v = new ViewEntity();
+        v.setId("all");
+        
+        v = enhancer.apply(v);
+        
+        assertEquals(4, v.getTotalApis());
+    }
     
     @Test
     public void testConvert() {

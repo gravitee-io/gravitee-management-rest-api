@@ -107,7 +107,7 @@ public class ViewsResourceNotAuthenticatedTest extends AbstractResourceTest {
         doReturn(mockViews).when(viewService).findAll();
 
         Function<ViewEntity, ViewEntity> identity = (v) -> v;
-        doReturn(identity).when(viewEnhancer).enhance(any());
+        doReturn(identity).when(viewMapper).enhance(any());
         
         doReturn(false).when(ratingService).isEnabled();
 

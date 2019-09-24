@@ -34,7 +34,6 @@ import io.gravitee.common.http.MediaType;
 import io.gravitee.rest.api.model.ViewEntity;
 import io.gravitee.rest.api.model.Visibility;
 import io.gravitee.rest.api.model.api.ApiEntity;
-import io.gravitee.rest.api.portal.rest.enhancer.ViewEnhancer;
 import io.gravitee.rest.api.portal.rest.mapper.ViewMapper;
 import io.gravitee.rest.api.portal.rest.model.View;
 import io.gravitee.rest.api.portal.rest.resource.param.PaginationParam;
@@ -55,9 +54,6 @@ public class ViewsResource extends AbstractResource {
     @Autowired
     private ViewMapper viewMapper;
     
-    @Autowired
-    private ViewEnhancer viewEnhancer;
-    
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getViews(@BeanParam PaginationParam paginationParam) {
@@ -72,7 +68,7 @@ public class ViewsResource extends AbstractResource {
                 .stream()
                 .filter(v -> !v.isHidden())
                 .sorted(Comparator.comparingInt(ViewEntity::getOrder))
-                .map(v -> viewEnhancer.enhance(apis).apply(v))
+                .map(v -> viewMapper.enhance(apis).apply(v))
                 .map(v-> viewMapper.convert(v, uriInfo.getBaseUriBuilder()))
                 .collect(Collectors.toList());
         

@@ -9,11 +9,11 @@
 		},
 		{
 			"key": "portal_url",
-			"value": "http://localhost:8084/portal/DEFAULT",
+			"value": "http://localhost:8083/portal/DEFAULT",
 			"enabled": true
 		}
 	],
 	"_postman_variable_scope": "environment",
-	"_postman_exported_at": "2019-09-23T12:47:26.464Z",
-	"_postman_exported_using": "Postman/7.5.0"
+	"_postman_exported_at": "2019-09-24T19:36:57.501Z",
+	"_postman_exported_using": "Postman/7.7.0"
 }

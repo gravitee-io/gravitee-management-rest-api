@@ -15,12 +15,15 @@
  */
 package io.gravitee.rest.api.portal.rest.mapper;
 
+import java.util.Set;
+import java.util.function.Function;
+
 import javax.ws.rs.core.UriBuilder;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import io.gravitee.rest.api.model.ViewEntity;
+import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.portal.rest.model.View;
 import io.gravitee.rest.api.portal.rest.model.ViewLinks;
 import io.gravitee.rest.api.portal.rest.utils.PortalApiLinkHelper;
@@ -31,8 +34,6 @@ import io.gravitee.rest.api.portal.rest.utils.PortalApiLinkHelper;
  */
 @Component
 public class ViewMapper {
-    @Autowired
-    UserMapper userMapper;
     
     public View convert(ViewEntity viewEntity, UriBuilder baseUriBuilder) {
         final View view = new View();
@@ -56,4 +57,15 @@ public class ViewMapper {
         return view;
     }
 
+    public Function<ViewEntity, ViewEntity> enhance(Set<ApiEntity> apis) {
+        return view -> {
+            long totalApis = apis.stream()
+                                    .filter(api -> io.gravitee.repository.management.model.View.ALL_ID.equals(view.getId())
+                                            || (api.getViews() != null && api.getViews().contains(view.getId())))
+                                    .count();
+            view.setTotalApis(totalApis);
+
+            return view;
+        };
+    }
 }
