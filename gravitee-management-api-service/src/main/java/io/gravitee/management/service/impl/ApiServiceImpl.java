@@ -185,7 +185,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
     }
 
     private ApiEntity create(final NewApiEntity newApiEntity, final String userId,
-            final ImportSwaggerDescriptorEntity swaggerDescriptor, final List<SwaggerPath> swaggerPaths) throws ApiAlreadyExistsException {
+            final ImportSwaggerDescriptorEntity swaggerDescriptor, final List<Path> swaggerPaths) throws ApiAlreadyExistsException {
         UpdateApiEntity apiEntity = new UpdateApiEntity();
 
         apiEntity.setName(newApiEntity.getName());
@@ -293,7 +293,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
     }
 
-    private void fillApiEntityFromSwagger(UpdateApiEntity apiEntity, ImportSwaggerDescriptorEntity swaggerDescriptor, List<SwaggerPath> swaggerPaths) {
+    private void fillApiEntityFromSwagger(UpdateApiEntity apiEntity, ImportSwaggerDescriptorEntity swaggerDescriptor, List<Path> swaggerPaths) {
         if (swaggerDescriptor.isWithPolicyPaths() && swaggerPaths != null && !swaggerPaths.isEmpty()) {
             final Map<String, Path> pathWithMocks = new HashMap<>(swaggerPaths.size());
             swaggerPaths.forEach(swaggerPath -> {
@@ -301,56 +301,16 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 path.setPath(swaggerPath.getPath());
 
                 if (swaggerDescriptor.isWithPolicyMocks()) {
-                    addMockToPath(swaggerPath, path);
+                    path.setRules(swaggerPath.getRules());
                 }
+
                 pathWithMocks.put(swaggerPath.getPath(), path);
             });
             apiEntity.setPaths(pathWithMocks);
         }
         if (swaggerDescriptor.isWithPathMapping()) {
-            apiEntity.setPathMappings(swaggerPaths.stream().map(SwaggerPath::getPath).collect(toSet()));
+            apiEntity.setPathMappings(swaggerPaths.stream().map(Path::getPath).collect(toSet()));
         }
-    }
-    
-    private void addMockToPath(SwaggerPath swaggerPath, final Path path) {
-        final List<Rule> rules = new ArrayList<>();
-        swaggerPath.getVerbs().forEach(swaggerVerb -> {
-            final Rule rule = new Rule();
-            rule.setEnabled(true);
-            rule.setDescription(swaggerVerb.getDescription());
-            rule.setMethods(singleton(HttpMethod.valueOf(swaggerVerb.getVerb())));
-            final Policy policy = new Policy();
-            policy.setName("mock");
-
-            final Map<String, Object> configuration = new HashMap<>();
-
-            String responseStatus = swaggerVerb.getResponseStatus();
-            try {
-                Integer.parseInt(responseStatus);
-            } catch (final NumberFormatException nfe) {
-                responseStatus = "200";
-            }
-            configuration.put("status", responseStatus);
-            final Map<Object, Object> header = new HashMap<>(2);
-            header.put("name", "Content-Type");
-            header.put("value", "application/json");
-            configuration.put("headers", singletonList(header));
-            try {
-                final Object responseProperties = swaggerVerb.getResponseProperties();
-                if (responseProperties != null) {
-                    configuration.put("content", objectMapper.writeValueAsString(swaggerVerb.isArray()?
-                            singletonList(responseProperties): responseProperties));
-                }
-                policy.setConfiguration(objectMapper.writeValueAsString(configuration));
-            } catch (final JsonProcessingException e) {
-                e.printStackTrace();
-            }
-
-            rule.setPolicy(policy);
-            rules.add(rule);
-        });
-
-        path.setRules(rules);
     }
 
     private String addGraviteeUrl(List<VirtualHost> virtualHosts, String payload) {
@@ -731,7 +691,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         updateApiEntity.setGroups(swaggerApiEntity.getGroups());
 
         //overwrite from swagger, if asked
-        List<SwaggerPath> swaggerPaths = swaggerApiEntity.getPaths();
+        List<Path> swaggerPaths = swaggerApiEntity.getPaths();
         fillApiEntityFromSwagger(updateApiEntity, swaggerDescriptor, swaggerPaths);
         createOrUpdateDocumentation(swaggerDescriptor, apiEntityToUpdate, false);
 
@@ -1495,7 +1455,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             final ImportSwaggerDescriptorEntity importSwaggerDescriptorEntity = new ImportSwaggerDescriptorEntity();
             importSwaggerDescriptorEntity.setPayload(pageEntity.getContent());
             final NewSwaggerApiEntity newSwaggerApiEntity = swaggerService.prepare(importSwaggerDescriptorEntity);
-            apiEntity.getPathMappings().addAll(newSwaggerApiEntity.getPaths().stream().map(SwaggerPath::getPath).collect(toList()));
+            apiEntity.getPathMappings().addAll(newSwaggerApiEntity.getPaths().stream().map(Path::getPath).collect(toList()));
         }
 
         return update(apiEntity.getId(), ApiService.convert(apiEntity));

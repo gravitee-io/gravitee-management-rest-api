@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.model.api;
+package io.gravitee.management.service.impl.swagger.v3;
 
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class SwaggerPath {
+public abstract class AbstractPolicyVisitor implements PolicyVisitor {
 
-    private String path;
-    private List<SwaggerVerb> verbs;
+    @Autowired
+    protected ObjectMapper mapper;
 
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public List<SwaggerVerb> getVerbs() {
-        return verbs;
-    }
-
-    public void setVerbs(List<SwaggerVerb> verbs) {
-        this.verbs = verbs;
+    public void setMapper(ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 }

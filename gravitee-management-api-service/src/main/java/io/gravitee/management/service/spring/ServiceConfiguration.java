@@ -24,6 +24,8 @@ import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.definition.jackson.datatype.GraviteeMapper;
 import io.gravitee.management.fetcher.spring.FetcherConfigurationConfiguration;
 import io.gravitee.management.model.api.ApiEntity;
+import io.gravitee.management.service.impl.swagger.v2.spring.SwaggerVisitorConfiguration;
+import io.gravitee.management.service.impl.swagger.v3.spring.OaiVisitorConfiguration;
 import io.gravitee.management.service.impl.search.configuration.SearchEngineConfiguration;
 import io.gravitee.management.service.jackson.filter.ApiPermissionFilter;
 import io.gravitee.management.service.jackson.ser.api.ApiCompositeSerializer;
@@ -55,7 +57,9 @@ import java.util.Collections;
 		PolicyPluginConfiguration.class, ResourcePluginConfiguration.class,
 		FetcherPluginConfiguration.class, FetcherConfigurationConfiguration.class,
 		SearchEngineConfiguration.class, NotifierPluginConfiguration.class,
-		AlertPluginConfiguration.class, ServiceDiscoveryPluginConfiguration.class})
+		AlertPluginConfiguration.class, ServiceDiscoveryPluginConfiguration.class,
+		SwaggerVisitorConfiguration.class, OaiVisitorConfiguration.class
+		})
 public class ServiceConfiguration {
 
 	@Bean

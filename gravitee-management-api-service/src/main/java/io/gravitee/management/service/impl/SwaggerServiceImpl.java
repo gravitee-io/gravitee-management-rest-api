@@ -16,18 +16,20 @@
 package io.gravitee.management.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.definition.model.Path;
+import io.gravitee.definition.model.Rule;
 import io.gravitee.management.model.ImportSwaggerDescriptorEntity;
 import io.gravitee.management.model.PageEntity;
 import io.gravitee.management.model.api.NewSwaggerApiEntity;
-import io.gravitee.management.model.api.SwaggerPath;
-import io.gravitee.management.model.api.SwaggerVerb;
 import io.gravitee.management.model.api.UpdateSwaggerApiEntity;
 import io.gravitee.management.service.SwaggerService;
 import io.gravitee.management.service.exceptions.SwaggerDescriptorException;
-import io.swagger.models.*;
-import io.swagger.models.properties.ObjectProperty;
+import io.gravitee.management.service.impl.swagger.v2.SwaggerCompositePolicyVisitor;
+import io.gravitee.management.service.impl.swagger.v3.OAICompositePolicyVisitor;
+import io.swagger.models.Scheme;
+import io.swagger.models.Swagger;
 import io.swagger.models.properties.Property;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.parser.SwaggerCompatConverter;
@@ -36,14 +38,7 @@ import io.swagger.parser.util.RemoteUrl;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
-import io.swagger.v3.oas.models.examples.Example;
-import io.swagger.v3.oas.models.media.ArraySchema;
-import io.swagger.v3.oas.models.media.ComposedSchema;
-import io.swagger.v3.oas.models.media.ObjectSchema;
-import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.servers.ServerVariable;
 import io.swagger.v3.oas.models.servers.ServerVariables;
@@ -52,11 +47,11 @@ import io.swagger.v3.parser.core.models.AuthorizationValue;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -69,7 +64,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.*;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 
@@ -85,8 +80,12 @@ public class SwaggerServiceImpl implements SwaggerService {
 
     @Value("${swagger.scheme:https}")
     private String defaultScheme;
-    @Inject
-    private ObjectMapper mapper;
+
+    @Autowired
+    private OAICompositePolicyVisitor oaiPolicyVisitor;
+
+    @Autowired
+    private SwaggerCompositePolicyVisitor swaggerPolicyVisitor;
 
     static {
         System.setProperty(String.format("%s.trustAll", RemoteUrl.class.getName()), Boolean.TRUE.toString());
@@ -312,51 +311,21 @@ public class SwaggerServiceImpl implements SwaggerService {
                 swagger.getSchemes().iterator().next().toValue();
 
         apiEntity.setEndpoint(Arrays.asList(scheme + "://" + swagger.getHost() + swagger.getBasePath()));
+
         apiEntity.setPaths(swagger.getPaths().entrySet().stream()
                 .map(entry -> {
-                    final SwaggerPath swaggerPath = new SwaggerPath();
+                    final Path swaggerPath = new Path();
                     swaggerPath.setPath(entry.getKey().replaceAll("\\{(.[^/]*)\\}", ":$1"));
                     if (isWithPolicyMocks) {
-                        final ArrayList<SwaggerVerb> verbs = new ArrayList<>();
                         entry.getValue().getOperationMap().forEach((key, operation) -> {
-                            final SwaggerVerb swaggerVerb = new SwaggerVerb();
-                            swaggerVerb.setVerb(key.name());
-                            swaggerVerb.setDescription(operation.getSummary() == null ?
-                                    (operation.getOperationId() == null ? operation.getDescription() : operation.getOperationId()) :
-                                    operation.getSummary());
-                            final Map.Entry<String, Response> responseEntry = operation.getResponses().entrySet().iterator().next();
-                            swaggerVerb.setResponseStatus(responseEntry.getKey());
-                            final Model responseSchema = responseEntry.getValue().getResponseSchema();
-                            if (responseSchema != null) {
-                                if (responseSchema instanceof ArrayModel) {
-                                    final ArrayModel arrayModel = (ArrayModel) responseSchema;
-                                    swaggerVerb.setArray(true);
-                                    if (arrayModel.getItems() instanceof RefProperty) {
-                                        final String simpleRef = ((RefProperty) arrayModel.getItems()).getSimpleRef();
-                                        swaggerVerb.setResponseProperties(getResponseFromSimpleRef(swagger, simpleRef));
-                                    } else if (arrayModel.getItems() instanceof ObjectProperty) {
-                                        swaggerVerb.setResponseProperties(getResponseProperties(swagger, ((ObjectProperty) arrayModel.getItems()).getProperties()));
-                                    }
-                                } else if (responseSchema instanceof RefModel) {
-                                    final String simpleRef = ((RefModel) responseSchema).getSimpleRef();
-                                    swaggerVerb.setResponseProperties(getResponseFromSimpleRef(swagger, simpleRef));
-                                } else if (responseSchema instanceof ModelImpl) {
-                                    final ModelImpl model = (ModelImpl) responseSchema;
-                                    swaggerVerb.setArray("array".equals(model.getType()));
-                                    if ("object".equals(model.getType())) {
-                                        if (model.getAdditionalProperties() != null) {
-                                            swaggerVerb.setResponseProperties(Collections.singletonMap("additionalProperty", model.getAdditionalProperties().getType()));
-                                        }
-                                    }
-                                }
-                            }
-                            verbs.add(swaggerVerb);
+                            Optional<List<Rule>> rules = swaggerPolicyVisitor.visit(swagger, operation, HttpMethod.valueOf(key.name()));
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
                         });
-                        swaggerPath.setVerbs(verbs);
                     }
                     return swaggerPath;
                 })
                 .collect(toCollection(ArrayList::new)));
+
         return apiEntity;
     }
 
@@ -411,28 +380,42 @@ public class SwaggerServiceImpl implements SwaggerService {
 
         apiEntity.setPaths(swagger.getOpenAPI().getPaths().entrySet().stream()
                 .map(entry -> {
-                    final SwaggerPath swaggerPath = new SwaggerPath();
+                    final Path swaggerPath = new Path();
                     swaggerPath.setPath(entry.getKey().replaceAll("\\{(.[^/]*)\\}", ":$1"));
                     if (isWithPolicyMocks) {
-                        final ArrayList<SwaggerVerb> verbs = new ArrayList<>();
                         final PathItem pathItem = entry.getValue();
-                        if (pathItem.getGet() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getGet(), "GET"));
-                        if (pathItem.getPut() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getPut(), "PUT"));
-                        if (pathItem.getPost() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getPost(), "POST"));
-                        if (pathItem.getDelete() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getDelete(), "DELETE"));
-                        if (pathItem.getPatch() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getPatch(), "PATCH"));
-                        if (pathItem.getHead() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getHead(), "HEAD"));
-                        if (pathItem.getOptions() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getOptions(), "OPTIONS"));
-                        if (pathItem.getTrace() != null)
-                            verbs.add(getSwaggerVerb(swagger, pathItem.getTrace(), "TRACE"));
-                        swaggerPath.setVerbs(verbs);
+                        if (pathItem.getGet() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getGet(), HttpMethod.GET);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getPut() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getPut(), HttpMethod.PUT);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getPost() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getPost(), HttpMethod.POST);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getDelete() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getDelete(), HttpMethod.DELETE);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getPatch() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getPatch(), HttpMethod.PATCH);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getHead() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getHead(), HttpMethod.HEAD);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getOptions() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getOptions(), HttpMethod.OPTIONS);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
+                        if (pathItem.getTrace() != null) {
+                            Optional<List<Rule>> rules = oaiPolicyVisitor.visit(swagger, pathItem.getTrace(), HttpMethod.TRACE);
+                            rules.ifPresent(ruleList -> swaggerPath.getRules().addAll(ruleList));
+                        }
                     }
                     return swaggerPath;
                 })
@@ -475,168 +458,6 @@ public class SwaggerServiceImpl implements SwaggerService {
             }
         }
         return evaluatedUrls;
-    }
-    
-	private SwaggerVerb getSwaggerVerb(final SwaggerParseResult swagger, final Operation operation, final String verb) {
-        final SwaggerVerb swaggerVerb = new SwaggerVerb();
-        swaggerVerb.setVerb(verb);
-        swaggerVerb.setDescription(operation.getSummary() == null ?
-                (operation.getOperationId() == null ? operation.getDescription() : operation.getOperationId()) :
-                operation.getSummary());
-        final Map.Entry<String, ApiResponse> responseEntry = operation.getResponses().entrySet().iterator().next();
-        swaggerVerb.setResponseStatus(responseEntry.getKey());
-        if (responseEntry.getValue().getContent() != null) {
-            final io.swagger.v3.oas.models.media.MediaType mediaType =
-                    responseEntry.getValue().getContent().entrySet().iterator().next().getValue();
-            if (mediaType.getExample() != null) {
-                swaggerVerb.setResponseProperties(mapper.convertValue(mediaType.getExample(), Map.class));
-            } else if (mediaType.getExamples() != null) {
-                final Entry<String, Example> next = mediaType.getExamples().entrySet().iterator().next();
-                swaggerVerb.setResponseProperties(singletonMap(next.getKey(), next.getValue().getValue()));
-            } else {
-                final Schema responseSchema = mediaType.getSchema();
-                if (responseSchema != null) {
-                    if (responseSchema instanceof ArraySchema) {
-                        final ArraySchema arraySchema = (ArraySchema) responseSchema;
-                        processResponseSchema(swagger, swaggerVerb, "array", arraySchema.getItems());
-                    } else {
-                        processResponseSchema(swagger, swaggerVerb, responseSchema.getType() == null ? "object" :
-                                responseSchema.getType(), responseSchema);
-                    }
-                }
-            }
-        }
-        return swaggerVerb;
-    }
-
-    private void processResponseSchema(SwaggerParseResult swagger, SwaggerVerb swaggerVerb, String type, Schema responseSchema) {
-        if (responseSchema.getProperties() == null) {
-            swaggerVerb.setArray("array".equals(type));
-            if (responseSchema.getAdditionalProperties() != null) {
-                swaggerVerb.setResponseProperties(Collections.singletonMap("additionalProperty", ((ObjectSchema) responseSchema.getAdditionalProperties()).getType()));
-            } else if (responseSchema.get$ref() != null) {
-                if (!"array".equals(type)) {
-                    swaggerVerb.setArray(isRefArray(swagger, responseSchema.get$ref()));
-                }
-                swaggerVerb.setResponseProperties(getResponseFromSimpleRef(swagger, responseSchema.get$ref()));
-            } else {
-                swaggerVerb.setResponseProperties(singletonMap(responseSchema.getType(), getResponsePropertiesFromType(responseSchema.getType())));
-            }
-        } else {
-            swaggerVerb.setResponseProperties(getResponseProperties(swagger, responseSchema.getProperties()));
-        }
-    }
-
-    private boolean isRefArray(SwaggerParseResult swagger, final String ref) {
-        final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
-        final Schema schema = swagger.getOpenAPI().getComponents().getSchemas().get(simpleRef);
-        return schema instanceof ArraySchema;
-    }
-
-    private Object getResponsePropertiesFromType(final String responseType) {
-        if (responseType == null) {
-            return null;
-        }
-        final Random random = new Random();
-        switch (responseType) {
-            case "string":
-                return "Mocked string";
-            case "boolean":
-                return random.nextBoolean();
-            case "integer":
-                return random.nextInt(1000);
-            case "number":
-                return random.nextDouble();
-            case "array":
-                return singletonList(getResponsePropertiesFromType("string"));
-            default:
-                return emptyMap();
-        }
-    }
-
-    private Object getResponseFromSimpleRef(SwaggerParseResult swagger, String ref) {
-        if (ref == null){
-            return null;
-        }
-        final String simpleRef = ref.substring(ref.lastIndexOf('/') + 1);
-        final Schema schema = swagger.getOpenAPI().getComponents().getSchemas().get(simpleRef);
-        return getSchemaValue(swagger, schema);
-    }
-
-    private Map<String, Object> getResponseProperties(final SwaggerParseResult swagger, final Map<String, Schema> properties) {
-        if (properties == null) {
-            return null;
-        }
-        return properties.entrySet()
-                .stream()
-                .collect(
-                        toMap(
-                                Map.Entry::getKey,
-                                e -> this.getSchemaValue(swagger, e.getValue())));
-    }
-
-    private Object getSchemaValue(final SwaggerParseResult swagger, Schema schema) {
-        if (schema == null) {
-            return null;
-        }
-
-        final Object example = schema.getExample();
-        if (example != null) {
-            return example;
-        }
-
-        final List enums = schema.getEnum();
-        if (enums != null) {
-            return enums.get(0);
-        }
-
-        if (schema instanceof ObjectSchema) {
-            return getResponseProperties(swagger, schema.getProperties());
-        }
-
-        if (schema instanceof ArraySchema) {
-            Schema<?> items = ((ArraySchema) schema).getItems();
-            Object sample = items.getExample();
-            if (sample != null) {
-                return singletonList(sample);
-            }
-
-            if (items.getEnum() != null) {
-                return singletonList(items.getEnum().get(0));
-            }
-
-            if (items.get$ref() != null) {
-                return getResponseFromSimpleRef(swagger, items.get$ref());
-            }
-
-            return singleton(getResponsePropertiesFromType(items.getType()));
-        }
-
-        if (schema instanceof ComposedSchema) {
-            final Map<String, Object> response = new HashMap<>();
-            ((ComposedSchema) schema).getAllOf().forEach(composedSchema -> {
-                if (composedSchema.get$ref() != null) {
-                    Object responseFromSimpleRef = getResponseFromSimpleRef(swagger, composedSchema.get$ref());
-                    if (responseFromSimpleRef instanceof Map) {
-                        response.putAll((Map) responseFromSimpleRef);
-                    }
-                }
-                if (composedSchema.getProperties() != null) {
-                    response.putAll(getResponseProperties(swagger, composedSchema.getProperties()));
-                }
-            });
-            return response;
-        }
-
-        if (schema.getProperties() != null) {
-            return getResponseProperties(swagger, schema.getProperties());
-        }
-
-        if (schema.get$ref() != null) {
-            return getResponseFromSimpleRef(swagger, schema.get$ref());
-        }
-
-        return getResponsePropertiesFromType(schema.getType());
     }
 
     @Override

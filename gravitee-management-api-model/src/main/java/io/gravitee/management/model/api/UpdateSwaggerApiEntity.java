@@ -15,6 +15,8 @@
  */
 package io.gravitee.management.model.api;
 
+import io.gravitee.definition.model.Path;
+
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class UpdateSwaggerApiEntity {
     @NotNull
     private List<String> endpoint;
     private Set<String> groups;
-    private List<SwaggerPath> paths;
+    private List<Path> paths;
 
     public String getName() {
         return name;
@@ -78,11 +80,11 @@ public class UpdateSwaggerApiEntity {
         this.endpoint = endpoint;
     }
 
-    public List<SwaggerPath> getPaths() {
+    public List<Path> getPaths() {
         return paths;
     }
 
-    public void setPaths(List<SwaggerPath> paths) {
+    public void setPaths(List<Path> paths) {
         this.paths = paths;
     }
 
