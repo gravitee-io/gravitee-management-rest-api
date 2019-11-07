@@ -42,10 +42,12 @@ public class RequestValidationPolicyVisitor extends AbstractPolicyVisitor {
                     String in = parameter.getIn();
                     switch (in) {
                         case "query":
-                            rules.add(new Rule("{#request.params['" + parameter.getName() + "']}", new NotNullConstraint()));
+                            rules.add(new Rule("{#request.params['" + parameter.getName() + "']}",
+                                    new NotNullConstraint(parameter.getName() + " query parameter is required")));
                             break;
                         case "header":
-                            rules.add(new Rule("{#request.headers['" + parameter.getName() + "'][0]}", new NotNullConstraint()));
+                            rules.add(new Rule("{#request.headers['" + parameter.getName() + "'][0]}",
+                                    new NotNullConstraint(parameter.getName() + " header is required")));
                             break;
                     }
                 }
@@ -111,9 +113,15 @@ public class RequestValidationPolicyVisitor extends AbstractPolicyVisitor {
     private class Constraint {
         private final String type;
         private List<String> parameters;
+        private String message;
 
         Constraint(String type) {
             this.type = type;
+        }
+
+        Constraint(String type, String message) {
+            this.type = type;
+            this.message = message;
         }
 
         public String getType() {
@@ -127,13 +135,17 @@ public class RequestValidationPolicyVisitor extends AbstractPolicyVisitor {
         public void setParameters(List<String> parameters) {
             this.parameters = parameters;
         }
+
+        public String getMessage() {
+            return message;
+        }
     }
 
     public class NotNullConstraint extends Constraint {
 
-        NotNullConstraint() {
+        NotNullConstraint(String message) {
             // We support only the NOT_NULL constraint for now
-            super("NOT_NULL");
+            super("NOT_NULL", message);
         }
     }
 }
