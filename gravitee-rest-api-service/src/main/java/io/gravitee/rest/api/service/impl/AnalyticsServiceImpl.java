@@ -321,7 +321,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             metadata.put("version", apiEntity.getVersion());
         } catch (ApiNotFoundException anfe) {
             metadata.put("deleted", "true");
-            metadata.put("name", "Deleted API");
             if (api.equals(UNKNOWN_API)) {
                 metadata.put("name", "Unknown API (not found)");
             } else {
