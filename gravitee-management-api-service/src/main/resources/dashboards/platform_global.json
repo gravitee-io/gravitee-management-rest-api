@@ -177,6 +177,22 @@
     "labels": ["Global latency (ms)", "API latency (ms)"]
   }
 }, {
+  "col": 0,
+  "row": 6,
+  "sizeY": 1,
+  "sizeX": 6,
+  "title": "Unknown API calls",
+  "subhead": "Calls to gateway URIs non registered as APIs",
+  "chart": {
+    "type": "line",
+    "request": {
+      "type": "date_histo",
+      "query": "api:1",
+      "aggs": "field:api"
+    },
+    "labels": ["Calls number"]
+  }
+}, {
   "col": 4,
   "row": 1,
   "sizeY": 1,
