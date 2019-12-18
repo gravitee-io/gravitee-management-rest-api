@@ -54,6 +54,9 @@ public class ApiRequest {
     private String user;
     private String securityType;
     private String securityToken;
+    private String sslLocalPrincipal;
+    private String sslPeerPrincipal;
+    private String sslProtocol;
 
     public String getId() {
         return id;
@@ -285,6 +288,30 @@ public class ApiRequest {
 
     public void setSecurityToken(String securityToken) {
         this.securityToken = securityToken;
+    }
+
+    public String getSslLocalPrincipal() {
+        return sslLocalPrincipal;
+    }
+
+    public void setSslLocalPrincipal(String sslLocalPrincipal) {
+        this.sslLocalPrincipal = sslLocalPrincipal;
+    }
+
+    public String getSslPeerPrincipal() {
+        return sslPeerPrincipal;
+    }
+
+    public void setSslPeerPrincipal(String sslPeerPrincipal) {
+        this.sslPeerPrincipal = sslPeerPrincipal;
+    }
+
+    public String getSslProtocol() {
+        return sslProtocol;
+    }
+
+    public void setSslProtocol(String sslProtocol) {
+        this.sslProtocol = sslProtocol;
     }
 
     @Override

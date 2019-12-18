@@ -15,6 +15,7 @@
  */
 package io.gravitee.rest.api.service.impl;
 
+import io.gravitee.common.utils.GraviteeConstants;
 import io.gravitee.repository.analytics.AnalyticsException;
 import io.gravitee.repository.analytics.api.AnalyticsRepository;
 import io.gravitee.repository.analytics.query.*;
@@ -56,9 +57,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
      * Logger.
      */
     private final Logger logger = LoggerFactory.getLogger(AnalyticsServiceImpl.class);
-
-    private static final String UNKNOWN_API = "1";
-    private static final String APPLICATION_KEYLESS = "1";
 
     @Autowired
     private AnalyticsRepository analyticsRepository;
@@ -322,7 +320,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         } catch (ApiNotFoundException anfe) {
             metadata.put("deleted", "true");
             metadata.put("name", "Deleted API");
-            if (api.equals(UNKNOWN_API)) {
+            if (api.equals(GraviteeConstants.UNKNOWN_API)) {
                 metadata.put("name", "Unknown API (not found)");
             } else {
                 metadata.put("name", "Deleted API");
@@ -343,7 +341,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             }
         } catch (ApplicationNotFoundException anfe) {
             metadata.put("deleted", "true");
-            if (application.equals(APPLICATION_KEYLESS)) {
+            if (application.equals(GraviteeConstants.UNKNOWN_APPLICATION)) {
                 metadata.put("name", "Unknown application (keyless)");
             } else {
                 metadata.put("name", "Deleted application");

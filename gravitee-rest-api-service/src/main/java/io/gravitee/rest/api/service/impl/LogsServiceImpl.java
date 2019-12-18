@@ -329,6 +329,12 @@ public class LogsServiceImpl implements LogsService {
         sb.append(separator);
         sb.append("Plan");
         sb.append(separator);
+        sb.append("SSL Protocol");
+        sb.append(separator);
+        sb.append("SSL Local Principal");
+        sb.append(separator);
+        sb.append("SSL Peer Principal");
+        sb.append(separator);
 
         //get the first item to define the type of export
         if (searchLogResponse.getLogs().get(0) instanceof ApiRequestItem) {
@@ -356,6 +362,12 @@ public class LogsServiceImpl implements LogsService {
                 sb.append(separator);
                 final Object application = searchLogResponse.getMetadata().get(apiLog.getApplication());
                 sb.append(getName(application));
+                sb.append(separator);
+                sb.append(apiLog.getSslProtocol());
+                sb.append(separator);
+                sb.append(apiLog.getSslLocalPrincipal());
+                sb.append(separator);
+                sb.append(apiLog.getSslPeerPrincipal());
                 sb.append(lineSeparator());
             }
 
@@ -384,6 +396,12 @@ public class LogsServiceImpl implements LogsService {
                 sb.append(separator);
                 final Object api = searchLogResponse.getMetadata().get(applicationLog.getApi());
                 sb.append(getName(api));
+                sb.append(separator);
+                sb.append(applicationLog.getSslProtocol());
+                sb.append(separator);
+                sb.append(applicationLog.getSslLocalPrincipal());
+                sb.append(separator);
+                sb.append(applicationLog.getSslPeerPrincipal());
                 sb.append(lineSeparator());
             }
         }
@@ -407,6 +425,9 @@ public class LogsServiceImpl implements LogsService {
         req.setTimestamp(log.getTimestamp());
         req.setEndpoint(log.getEndpoint() != null);
         req.setUser(log.getUser());
+        req.setSslProtocol(log.getSslProtocol());
+        req.setSslLocalPrincipal(log.getSslLocalPrincipal());
+        req.setSslPeerPrincipal(log.getSslPeerPrincipal());
         return req;
     }
 
@@ -422,6 +443,9 @@ public class LogsServiceImpl implements LogsService {
         req.setStatus(log.getStatus());
         req.setTimestamp(log.getTimestamp());
         req.setUser(log.getUser());
+        req.setSslProtocol(log.getSslProtocol());
+        req.setSslLocalPrincipal(log.getSslLocalPrincipal());
+        req.setSslPeerPrincipal(log.getSslPeerPrincipal());
         return req;
     }
 
@@ -475,6 +499,9 @@ public class LogsServiceImpl implements LogsService {
 
         req.setMetadata(metadata);
         req.setUser(log.getUser());
+        req.setSslProtocol(log.getSslProtocol());
+        req.setSslLocalPrincipal(log.getSslLocalPrincipal());
+        req.setSslPeerPrincipal(log.getSslPeerPrincipal());
 
         return req;
     }
@@ -489,6 +516,7 @@ public class LogsServiceImpl implements LogsService {
         request.setMethod(repoRequest.getMethod());
         request.setHeaders(repoRequest.getHeaders());
         request.setBody(repoRequest.getBody());
+        request.setSslInfo(repoRequest.getSslInfo());
 
         return request;
     }
@@ -502,6 +530,7 @@ public class LogsServiceImpl implements LogsService {
         response.setStatus(repoResponse.getStatus());
         response.setHeaders(repoResponse.getHeaders());
         response.setBody(repoResponse.getBody());
+        response.setSslInfo(repoResponse.getSslInfo());
 
         return response;
     }
@@ -543,6 +572,9 @@ public class LogsServiceImpl implements LogsService {
 
         req.setMetadata(metadata);
         req.setUser(log.getUser());
+        req.setSslProtocol(log.getSslProtocol());
+        req.setSslLocalPrincipal(log.getSslLocalPrincipal());
+        req.setSslPeerPrincipal(log.getSslPeerPrincipal());
 
         return req;
     }
