@@ -15,8 +15,10 @@
  */
 package io.gravitee.management.model.log.extended;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
+import io.gravitee.common.ssl.SSLInfo;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -31,6 +33,9 @@ public class Request {
     private String uri;
 
     private String body;
+
+    @JsonProperty("ssl")
+    private SSLInfo sslInfo;
 
     public HttpMethod getMethod() {
         return method;
@@ -62,5 +67,13 @@ public class Request {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public SSLInfo getSslInfo() {
+        return sslInfo;
+    }
+
+    public void setSslInfo(SSLInfo sslInfo) {
+        this.sslInfo = sslInfo;
     }
 }

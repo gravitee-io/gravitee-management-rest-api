@@ -15,6 +15,7 @@
  */
 package io.gravitee.management.service.impl;
 
+import io.gravitee.common.utils.GraviteeConstants;
 import io.gravitee.management.model.analytics.query.StatsQuery;
 import io.gravitee.management.model.api.ApiEntity;
 import io.gravitee.management.model.ApplicationEntity;
@@ -57,9 +58,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
      * Logger.
      */
     private final Logger logger = LoggerFactory.getLogger(AnalyticsServiceImpl.class);
-
-    private static final String UNKNOWN_API = "?";
-    private static final String APPLICATION_KEYLESS = "?";
 
     private static final String METADATA_NAME = "name";
     private static final String METADATA_DELETED = "deleted";
@@ -146,7 +144,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                     .root(query.getRootField(), query.getRootIdentifier());
 
             if (query.getAggregations() != null) {
-                query.getAggregations().stream()
+                query.getAggregations()
                         .forEach(aggregation ->
                                 queryBuilder.aggregation(
                                         AggregationType.valueOf(aggregation.type().name()), aggregation.field()));
@@ -335,7 +333,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
             metadata.put(METADATA_NAME, apiEntity.getName());
             metadata.put(METADATA_VERSION, apiEntity.getVersion());
         } catch (ApiNotFoundException anfe) {
-            if (api.equals(UNKNOWN_API)) {
+            if (api.equals(GraviteeConstants.UNKNOWN_API)) {
                 metadata.put(METADATA_NAME, METADATA_UNKNOWN_API_NAME);
                 metadata.put(METADATA_UNKNOWN, Boolean.TRUE.toString());
             } else {
@@ -357,7 +355,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 metadata.put(METADATA_DELETED, Boolean.TRUE.toString());
             }
         } catch (ApplicationNotFoundException anfe) {
-            if (application.equals(APPLICATION_KEYLESS)) {
+            if (application.equals(GraviteeConstants.UNKNOWN_APPLICATION)) {
                 metadata.put(METADATA_NAME, METADATA_UNKNOWN_APPLICATION_NAME);
                 metadata.put(METADATA_UNKNOWN, Boolean.TRUE.toString());
             } else {
