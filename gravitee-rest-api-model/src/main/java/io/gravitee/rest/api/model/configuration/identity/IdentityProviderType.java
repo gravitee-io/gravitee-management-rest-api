@@ -23,6 +23,9 @@ public enum IdentityProviderType {
 
 	GOOGLE,
 	GITHUB,
+	GRAVITEE,
 	GRAVITEEIO_AM,
+	LDAP,
+	MEMORY,
 	OIDC
 }

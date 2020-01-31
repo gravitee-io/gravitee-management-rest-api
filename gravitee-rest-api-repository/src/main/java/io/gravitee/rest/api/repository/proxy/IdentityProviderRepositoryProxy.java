@@ -30,27 +30,38 @@ import java.util.Set;
 @Component
 public class IdentityProviderRepositoryProxy extends AbstractProxy<IdentityProviderRepository> implements IdentityProviderRepository {
 
+    @Override
     public Set<IdentityProvider> findAll() throws TechnicalException {
         return target.findAll();
     }
 
+    @Override
     public Optional<IdentityProvider> findById(String s) throws TechnicalException {
         return target.findById(s);
     }
 
+    @Override
     public IdentityProvider create(IdentityProvider item) throws TechnicalException {
         return target.create(item);
     }
 
+    @Override
     public IdentityProvider update(IdentityProvider item) throws TechnicalException {
         return target.update(item);
     }
 
+    @Override
     public void delete(String s) throws TechnicalException {
         target.delete(s);
     }
 
+    @Override
     public Set<IdentityProvider> findAllByOrganizationId(String organizationId) throws TechnicalException {
         return target.findAllByOrganizationId(organizationId);
+    }
+
+    @Override
+    public Integer findMaxIdentityProviderOrganizationIdOrder(String organizationId) throws TechnicalException {
+        return target.findMaxIdentityProviderOrganizationIdOrder(organizationId);
     }
 }

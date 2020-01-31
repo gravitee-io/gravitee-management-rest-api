@@ -17,8 +17,8 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
 	<properties>
 		<jsoup.version>1.10.1</jsoup.version>
@@ -26,46 +26,46 @@
 		<swagger-parser.version>2.0.14</swagger-parser.version>
 	</properties>
 
-	<parent>
+    <parent>
         <groupId>io.gravitee.rest.api</groupId>
         <artifactId>gravitee-rest-api</artifactId>
         <version>3.2.0-SNAPSHOT</version>
     </parent>
 
-	<artifactId>gravitee-rest-api-service</artifactId>
-	<packaging>jar</packaging>
+    <artifactId>gravitee-rest-api-service</artifactId>
+    <packaging>jar</packaging>
 
-	<name>Gravitee.io Rest APIs - Service</name>
-	<description>Gravitee IO Manager Service</description>
+    <name>Gravitee.io Rest APIs - Service</name>
+    <description>Gravitee IO Manager Service</description>
 
-	<dependencies>
-		<!-- https://mvnrepository.com/artifact/com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer -->
-		<dependency>
-			<groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
-			<artifactId>owasp-java-html-sanitizer</artifactId>
-		</dependency>
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer -->
+        <dependency>
+            <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+            <artifactId>owasp-java-html-sanitizer</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>com.vladsch.flexmark</groupId>
-			<artifactId>flexmark-html2md-converter</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-html2md-converter</artifactId>
+        </dependency>
 
-		<!-- Gravitee Management dependencies -->
-		<dependency>
-			<groupId>io.gravitee.rest.api</groupId>
-			<artifactId>gravitee-rest-api-model</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.gravitee.rest.api.idp</groupId>
-			<artifactId>gravitee-rest-api-idp-core</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.gravitee.rest.api</groupId>
-			<artifactId>gravitee-rest-api-fetcher</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+        <!-- Gravitee Management dependencies -->
+        <dependency>
+            <groupId>io.gravitee.rest.api</groupId>
+            <artifactId>gravitee-rest-api-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.rest.api.idp</groupId>
+            <artifactId>gravitee-rest-api-idp-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.rest.api</groupId>
+            <artifactId>gravitee-rest-api-fetcher</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.gravitee.policy</groupId>
             <artifactId>gravitee-policy-api</artifactId>

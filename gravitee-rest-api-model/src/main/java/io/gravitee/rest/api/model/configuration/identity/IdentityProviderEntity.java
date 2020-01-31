@@ -59,6 +59,8 @@ public class IdentityProviderEntity {
 
     private String organization;
 
+    private int order;
+    
     public String getId() {
         return id;
     }
@@ -169,6 +171,14 @@ public class IdentityProviderEntity {
 
     public void setOrganization(String organization) {
         this.organization = organization;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     @Override

@@ -45,6 +45,8 @@ public class NewIdentityProviderEntity {
 
     private boolean syncMappings;
 
+    private Integer order;
+    
     public String getName() {
         return name;
     }
@@ -107,5 +109,13 @@ public class NewIdentityProviderEntity {
 
     public void setSyncMappings(boolean syncMappings) {
         this.syncMappings = syncMappings;
+    }
+
+    public Integer getOrder() {
+        return order;
+    }
+
+    public void setOrder(Integer order) {
+        this.order = order;
     }
 }

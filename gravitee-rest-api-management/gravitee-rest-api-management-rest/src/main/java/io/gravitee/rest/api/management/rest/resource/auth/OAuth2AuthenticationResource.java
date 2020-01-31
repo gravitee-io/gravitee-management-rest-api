@@ -336,7 +336,7 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
             if (mapping != null && !mapping.isEmpty()) {
                 try {
                     if (mapping.contains("{#")) {
-                        map.put(field, templateEngine.convert(mapping));
+                        map.put(field, templateEngine.getValue(mapping, String.class));
                     } else {
                         map.put(field, userInfoPath.read(mapping).toString());
                     }

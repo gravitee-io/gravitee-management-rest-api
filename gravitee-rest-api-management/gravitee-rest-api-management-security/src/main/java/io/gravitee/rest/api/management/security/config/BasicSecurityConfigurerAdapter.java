@@ -106,7 +106,7 @@ public class BasicSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter
                         .collect(Collectors.toList());
 
         for (io.gravitee.rest.api.security.authentication.AuthenticationProvider provider : providers) {
-            LOGGER.info("Loading authentication provider of type {} at position {}", provider.type(), provider.index());
+            LOGGER.info("Loading authentication provider of type {} at position {}", provider.type(), provider.order());
 
             boolean found = false;
             Collection<IdentityProvider> identityProviders = identityProviderManager.getAll();

@@ -39,6 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.repository.management.model.Audit.AuditProperties.IDENTITY_PROVIDER;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 
 /**
@@ -76,6 +77,11 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
 
             IdentityProvider identityProvider = convert(newIdentityProviderEntity);
             identityProvider.setOrganizationId(GraviteeContext.getCurrentOrganization());
+
+            if (newIdentityProviderEntity.getOrder() == null) {
+                int newOrder = identityProviderRepository.findMaxIdentityProviderOrganizationIdOrder(identityProvider.getOrganizationId());
+                identityProvider.setOrder(newOrder + 1);
+            }
 
             // If provider is a social type, we must ensure required parameters
             if (identityProvider.getType() == IdentityProviderType.GOOGLE ||
@@ -123,6 +129,7 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
             identityProvider.setCreatedAt(idpToUpdate.getCreatedAt());
             identityProvider.setUpdatedAt(new Date());
             identityProvider.setOrganizationId(optIdentityProvider.get().getOrganizationId());
+            identityProvider.setOrder(idpToUpdate.getOrder());
             IdentityProvider updatedIdentityProvider = identityProviderRepository.update(identityProvider);
 
             // Audit
@@ -132,6 +139,11 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
                     identityProvider.getUpdatedAt(),
                     idpToUpdate,
                     updatedIdentityProvider);
+
+            if (updateIdentityProvider.getOrder() != idpToUpdate.getOrder()) {
+                updatedIdentityProvider.setOrder(updateIdentityProvider.getOrder());
+                reorderAndSaveIdps(updatedIdentityProvider);
+            }
 
             return convert(updatedIdentityProvider);
         } catch (TechnicalException ex) {
@@ -229,6 +241,9 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
         identityProvider.setUserProfileMapping(newIdentityProviderEntity.getUserProfileMapping());
         identityProvider.setEmailRequired(newIdentityProviderEntity.isEmailRequired());
         identityProvider.setSyncMappings(newIdentityProviderEntity.isSyncMappings());
+        if (newIdentityProviderEntity.getOrder() != null) {
+            identityProvider.setOrder(newIdentityProviderEntity.getOrder());
+        }
 
         return identityProvider;
     }
@@ -240,6 +255,7 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
         identityProviderEntity.setName(identityProvider.getName());
         identityProviderEntity.setDescription(identityProvider.getDescription());
         identityProviderEntity.setEnabled(identityProvider.isEnabled());
+        identityProviderEntity.setOrder(identityProvider.getOrder());
         identityProviderEntity.setType(io.gravitee.rest.api.model.configuration.identity.IdentityProviderType
                 .valueOf(identityProvider.getType().name().toUpperCase()));
         identityProviderEntity.setConfiguration(identityProvider.getConfiguration());
@@ -311,6 +327,7 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
         identityProvider.setUserProfileMapping(updateIdentityProvider.getUserProfileMapping());
         identityProvider.setEmailRequired(updateIdentityProvider.isEmailRequired());
         identityProvider.setSyncMappings(updateIdentityProvider.isSyncMappings());
+        identityProvider.setOrder(updateIdentityProvider.getOrder());
 
         if (updateIdentityProvider.getGroupMappings() != null && !updateIdentityProvider.getGroupMappings().isEmpty()) {
             identityProvider.setGroupMappings(updateIdentityProvider.getGroupMappings()
@@ -351,5 +368,36 @@ public class IdentityProviderServiceImpl extends AbstractService implements Iden
         }
 
         return identityProvider;
+    }
+
+    private void reorderAndSaveIdps(final IdentityProvider identityProviderToReorder) throws TechnicalException {
+        final Collection<IdentityProvider> providers = identityProviderRepository.findAllByOrganizationId(identityProviderToReorder.getOrganizationId());
+        final List<Boolean> increment = asList(true);
+        providers.stream()
+                .filter(idp -> idp.getOrder() > 0)
+                .sorted(Comparator.comparingInt(IdentityProvider::getOrder))
+                .forEachOrdered(provider -> {
+                    try {
+                        if (provider.equals(identityProviderToReorder)) {
+                            increment.set(0, false);
+                            provider.setOrder(identityProviderToReorder.getOrder());
+                        } else {
+                            final int newOrder;
+                            final Boolean isIncrement = increment.get(0);
+                            if (provider.getOrder() < identityProviderToReorder.getOrder()) {
+                                newOrder = provider.getOrder() - (isIncrement ? 0 : 1);
+                            } else if (provider.getOrder() > identityProviderToReorder.getOrder()) {
+                                newOrder = provider.getOrder() + (isIncrement ? 1 : 0);
+                            } else {
+                                newOrder = provider.getOrder() + (isIncrement ? 1 : -1);
+                            }
+                            provider.setOrder(newOrder);
+                        }
+                        identityProviderRepository.update(provider);
+                    } catch (final TechnicalException ex) {
+                        LOGGER.error("An error occurs while trying to update identity provider {}", provider, ex);
+                        throw new TechnicalManagementException("An error occurs while trying to update " + provider, ex);
+                    }
+                });
     }
 }

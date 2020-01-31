@@ -25,7 +25,7 @@ public interface AuthenticationProvider {
 
     String type();
 
-    int index();
+    int order();
 
     Map<String, Object> configuration();
 

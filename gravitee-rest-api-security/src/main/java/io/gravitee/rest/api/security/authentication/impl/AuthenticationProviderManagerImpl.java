@@ -62,7 +62,7 @@ public class AuthenticationProviderManagerImpl implements AuthenticationProvider
     }
 
     private Map<String, Object> getConfiguration(AuthenticationProvider provider) {
-        String prefix = "security.providers[" + provider.index() + "].";
+        String prefix = "security.providers[" + provider.order() + "].";
         Map<String, Object> properties = EnvironmentUtils.getPropertiesStartingWith(environment, prefix);
         Map<String, Object> unprefixedProperties = new HashMap<>(properties.size());
         properties.entrySet().stream().forEach(propEntry -> unprefixedProperties.put(

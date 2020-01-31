@@ -64,7 +64,7 @@ public class SocialIdentityProviderImpl extends AbstractService implements Socia
             return identityProviderService
                     .findAll()
                     .stream()
-                    .filter(IdentityProviderEntity::isEnabled)
+                    .filter(idp -> idp.isEnabled() && (idp.getType() == IdentityProviderType.GITHUB || idp.getType() == IdentityProviderType.GOOGLE || idp.getType() == IdentityProviderType.GRAVITEEIO_AM || idp.getType() == IdentityProviderType.OIDC))
                     .map(this::convert)
                     .collect(Collectors.toSet());
         } catch (Exception ex) {

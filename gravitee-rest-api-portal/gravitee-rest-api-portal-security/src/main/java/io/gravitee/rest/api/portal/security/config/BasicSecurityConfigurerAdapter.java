@@ -103,7 +103,7 @@ public class BasicSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter
 
         for (AuthenticationProvider provider : providers) {
             String providerType = provider.type();
-            LOGGER.info("Loading authentication provider of type {} at position {}", providerType, provider.index());
+            LOGGER.info("Loading authentication provider of type {} at position {}", providerType, provider.order());
 
             Collection<IdentityProvider> identityProviders = identityProviderManager.getAll();
             if(identityProviders != null) {

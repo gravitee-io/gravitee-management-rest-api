@@ -26,12 +26,12 @@ import io.gravitee.rest.api.security.authentication.AuthenticationProvider;
 class DefaultAuthenticationProvider implements AuthenticationProvider {
 
     private final String type;
-    private final int index;
+    private final int order;
     private Map<String, Object> configuration;
 
-    DefaultAuthenticationProvider(String type, int index) {
+    DefaultAuthenticationProvider(String type, int order) {
         this.type = type;
-        this.index = index;
+        this.order = order;
     }
 
     @Override
@@ -40,8 +40,8 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
-    public int index() {
-        return this.index;
+    public int order() {
+        return this.order;
     }
 
     public Map<String, Object> configuration() {
@@ -59,14 +59,14 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
 
         DefaultAuthenticationProvider that = (DefaultAuthenticationProvider) o;
 
-        if (index != that.index) return false;
+        if (order != that.order) return false;
         return type.equals(that.type);
     }
 
     @Override
     public int hashCode() {
         int result = type.hashCode();
-        result = 31 * result + index;
+        result = 31 * result + order;
         return result;
     }
 }

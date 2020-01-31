@@ -47,6 +47,8 @@ public class UpdateIdentityProviderEntity {
 
     private boolean syncMappings;
 
+    private int order;
+
     public String getName() {
         return name;
     }
@@ -117,6 +119,14 @@ public class UpdateIdentityProviderEntity {
 
     public void setSyncMappings(boolean syncMappings) {
         this.syncMappings = syncMappings;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     @Override
