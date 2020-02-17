@@ -15,6 +15,7 @@
  */
 package io.gravitee.management.service.impl;
 
+import io.gravitee.common.util.Reporting;
 import io.gravitee.management.model.analytics.query.StatsQuery;
 import io.gravitee.management.model.api.ApiEntity;
 import io.gravitee.management.model.ApplicationEntity;
@@ -58,8 +59,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
      */
     private final Logger logger = LoggerFactory.getLogger(AnalyticsServiceImpl.class);
 
-    private static final String UNKNOWN_API = "?";
-    private static final String APPLICATION_KEYLESS = "?";
+    private static final String UNKNOWN_API = Reporting.UNKNOWN_SERVICE;
+    private static final String APPLICATION_KEYLESS = Reporting.UNKNOWN_SERVICE;
 
     private static final String METADATA_NAME = "name";
     private static final String METADATA_DELETED = "deleted";
