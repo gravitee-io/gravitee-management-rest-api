@@ -15,6 +15,9 @@
  */
 package io.gravitee.rest.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -26,6 +29,17 @@ public class PrimaryOwnerEntity {
     private final String email;
 
     private final String displayName;
+
+    @JsonCreator
+    public PrimaryOwnerEntity(
+            @JsonProperty("id") String id,
+            @JsonProperty("email") String email,
+            @JsonProperty("displayName") String displayName) {
+
+        this.id = id;
+        this.email = email;
+        this.displayName = displayName;
+    }
 
     public PrimaryOwnerEntity(UserEntity user) {
         this.id = user.getId();

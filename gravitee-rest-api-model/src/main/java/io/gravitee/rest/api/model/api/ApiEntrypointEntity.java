@@ -15,6 +15,9 @@
  */
 package io.gravitee.rest.api.model.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Set;
 
 /**
@@ -29,7 +32,12 @@ public class ApiEntrypointEntity {
 
     private final String host;
 
-    public ApiEntrypointEntity(Set<String> tags, String target, String host) {
+    @JsonCreator
+    public ApiEntrypointEntity(
+            @JsonProperty("tags") Set<String> tags,
+            @JsonProperty("target") String target,
+            @JsonProperty("host") String host) {
+
         this.tags = tags;
         this.target = target;
         this.host = host;
