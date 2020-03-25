@@ -15,31 +15,27 @@
  */
 package io.gravitee.management.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class PrimaryOwnerEntity {
-
+    @ApiModelProperty(
+            value = "The user id.",
+            example = "005197cc-cc84-86a6-a75a-88f9772c67db")
     private final String id;
 
+    @ApiModelProperty(
+            value = "The user email.",
+            example = "contact@gravitee.io")
     private final String email;
 
+    @ApiModelProperty(
+            value = "The user display name.",
+            example = "John Doe")
     private final String displayName;
-
-    @JsonCreator
-    public PrimaryOwnerEntity(
-            @JsonProperty("id") String id,
-            @JsonProperty("email") String email,
-            @JsonProperty("displayName") String displayName) {
-
-        this.id = id;
-        this.email = email;
-        this.displayName = displayName;
-    }
 
     public PrimaryOwnerEntity(UserEntity user) {
         this.id = user.getId();
