@@ -15,6 +15,8 @@
  */
 package io.gravitee.management.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
@@ -36,6 +38,17 @@ public class PrimaryOwnerEntity {
             value = "The user display name.",
             example = "John Doe")
     private final String displayName;
+
+    @JsonCreator
+    public PrimaryOwnerEntity(
+            @JsonProperty("id") String id,
+            @JsonProperty("email") String email,
+            @JsonProperty("displayName") String displayName) {
+
+        this.id = id;
+        this.email = email;
+        this.displayName = displayName;
+    }
 
     public PrimaryOwnerEntity(UserEntity user) {
         this.id = user.getId();
