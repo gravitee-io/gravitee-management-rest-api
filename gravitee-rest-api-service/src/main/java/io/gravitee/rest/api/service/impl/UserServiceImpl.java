@@ -122,6 +122,8 @@ public class UserServiceImpl extends AbstractService implements UserService {
     private GroupService groupService;
     @Autowired
     private OrganizationService organizationService;
+    @Autowired
+    private NewsletterService newsletterService;
 
     @Value("${user.login.defaultApplication:true}")
     private boolean defaultApplicationForFirstConnection;
@@ -176,6 +178,8 @@ public class UserServiceImpl extends AbstractService implements UserService {
             // Set date fields
             user.setLastConnectionAt(new Date());
             user.setUpdatedAt(user.getLastConnectionAt());
+
+            user.setLoginCount(user.getLoginCount() + 1);
 
             User updatedUser = userRepository.update(user);
             auditService.createPortalAuditLog(
@@ -530,6 +534,10 @@ public class UserServiceImpl extends AbstractService implements UserService {
                 .build()
         );
 
+        if (newExternalUserEntity.isNewsletter()) {
+            newsletterService.subscribe(newExternalUserEntity);
+        }
+
         return userEntity;
     }
     @Override
@@ -604,9 +612,8 @@ public class UserServiceImpl extends AbstractService implements UserService {
             user.setUpdatedAt(new Date());
 
             // Set variant fields
-            if (updateUserEntity.getPicture() != null) {
-                user.setPicture(updateUserEntity.getPicture());
-            }
+            user.setPicture(updateUserEntity.getPicture());
+
             if (updateUserEntity.getFirstname() != null) {
                 user.setFirstname(updateUserEntity.getFirstname());
             }
@@ -618,6 +625,10 @@ public class UserServiceImpl extends AbstractService implements UserService {
             }
             if (updateUserEntity.getStatus() != null) {
                 user.setStatus(UserStatus.valueOf(updateUserEntity.getStatus()));
+            }
+
+            if (updateUserEntity.isNewsletter() && user.getEmail() != null) {
+                newsletterService.subscribe(user);
             }
 
             User updatedUser = userRepository.update(user);
@@ -739,6 +750,7 @@ public class UserServiceImpl extends AbstractService implements UserService {
                 anonym.setSourceId("deleted-" + user.getId());
                 anonym.setFirstname("Unknown");
                 anonym.setLastname("");
+                anonym.setLoginCount(user.getLoginCount());
                 user = anonym;
             }
 
@@ -893,6 +905,8 @@ public class UserServiceImpl extends AbstractService implements UserService {
 
             userEntity.setRoles(roles);
         }
+
+        userEntity.setLoginCount(user.getLoginCount());
 
         return userEntity;
     }
