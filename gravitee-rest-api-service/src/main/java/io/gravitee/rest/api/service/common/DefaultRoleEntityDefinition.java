@@ -49,6 +49,7 @@ public interface DefaultRoleEntityDefinition {
                 .put(EnvironmentPermission.GROUP.getName(), new char[]{READ.getId()})
                 .put(EnvironmentPermission.TENANT.getName(), new char[]{READ.getId()})
                 .put(EnvironmentPermission.PLATFORM.getName(), new char[]{READ.getId()})
+                .put(EnvironmentPermission.QUALITY_RULE.getName(), new char[]{READ.getId()})
                 .build()
             );
     
