@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.gravitee.common.utils.IdGenerator;
+import io.gravitee.common.utils.UUID;
 import io.gravitee.management.model.NewApplicationEntity;
 import io.gravitee.management.model.UpdateApplicationEntity;
 import io.gravitee.management.model.configuration.application.registration.ClientRegistrationProviderEntity;
@@ -362,7 +363,7 @@ public class ClientRegistrationServiceImpl extends AbstractService implements Cl
 
     private ClientRegistrationProvider convert(NewClientRegistrationProviderEntity newClientRegistrationProvider) {
         ClientRegistrationProvider provider = new ClientRegistrationProvider();
-
+        provider.setId(UUID.toString(UUID.random()));
         provider.setName(newClientRegistrationProvider.getName());
         provider.setDescription(newClientRegistrationProvider.getDescription());
         provider.setDiscoveryEndpoint(newClientRegistrationProvider.getDiscoveryEndpoint());
