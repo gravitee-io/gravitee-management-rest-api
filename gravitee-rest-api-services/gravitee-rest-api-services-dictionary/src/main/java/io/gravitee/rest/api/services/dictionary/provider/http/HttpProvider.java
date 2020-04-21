@@ -51,6 +51,8 @@ public class HttpProvider implements Provider {
 
     private Vertx vertx;
 
+    private Node node;
+
     public HttpProvider(final HttpProviderConfiguration configuration) {
         Objects.requireNonNull(configuration, "Configuration must not be null");
         this.configuration = configuration;
@@ -84,6 +86,14 @@ public class HttpProvider implements Provider {
                     requestUri.getHost(),
                     requestUri.toString()
             );
+
+            request.putHeader(HttpHeaders.USER_AGENT, NodeUtils.userAgent(node));
+            request.putHeader("X-Gravitee-Request-Id", UUID.toString(UUID.random()));
+
+            if (configuration.getHeaders() != null) {
+                configuration.getHeaders().forEach(httpHeader ->
+                        request.putHeader(httpHeader.getName(), httpHeader.getValue()));
+            }
 
             request.handler(response -> {
                 if (response.statusCode() == HttpStatusCode.OK_200) {
@@ -135,5 +145,9 @@ public class HttpProvider implements Provider {
 
     public void setVertx(Vertx vertx) {
         this.vertx = vertx;
+    }
+
+    public void setNode(Node node) {
+        this.node = node;
     }
 }

@@ -24,6 +24,7 @@ import javax.ws.rs.QueryParam;
  */
 public class AuditParam {
     @QueryParam("mgmt")
+    @ApiParam(value = "true if you only want logs from the management, false if you also want api and application audit logs")
     private boolean managementLogsOnly;
 
     @QueryParam("api")
@@ -33,15 +34,22 @@ public class AuditParam {
     private String applicationId;
 
     @QueryParam("event")
+    @ApiParam(
+            value = "filter by the name of an event.",
+            example = "APPLICATION_UPDATED, API_CREATED, METADATA_DELETED, ..."
+    )
     private String event;
 
     @QueryParam("from")
+    @ApiParam(value = "Timestamp used to define the start date of the time window to query")
     private long from;
 
     @QueryParam("to")
+    @ApiParam(value = "Timestamp used to define the end date of the time window to query")
     private long to;
 
     @QueryParam("size")
+    @ApiParam(value = "Number of elements per page")
     @DefaultValue("20")
     private int size;
 

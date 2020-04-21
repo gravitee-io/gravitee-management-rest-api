@@ -33,6 +33,7 @@ public interface MembershipService {
     MemberEntity            addRoleToMemberOnReference                  (MembershipReference reference, MembershipMember member, MembershipRole role);
     MemberEntity            addRoleToMemberOnReference                  (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId, String role);
     void                    deleteMember                                (MembershipMemberType memberType, String memberId);
+    void                    deleteMembers                               (MembershipReferenceType referenceType, String referenceId);
     void                    deleteMembership                            (String membershipId);
     void                    deleteReference                             (MembershipReferenceType referenceType, String referenceId);
     void                    deleteReferenceMember                       (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId);

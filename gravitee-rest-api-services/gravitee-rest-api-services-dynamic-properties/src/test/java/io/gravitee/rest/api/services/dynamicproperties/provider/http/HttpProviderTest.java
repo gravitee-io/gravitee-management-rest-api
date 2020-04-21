@@ -60,6 +60,9 @@ public class HttpProviderTest {
     @Mock
     private JoltMapper mapper;
 
+    @Mock
+    private Node node;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);

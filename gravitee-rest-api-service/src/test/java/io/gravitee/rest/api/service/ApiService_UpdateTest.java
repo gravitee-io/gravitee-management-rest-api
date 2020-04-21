@@ -105,6 +105,8 @@ public class ApiService_UpdateTest {
     private WorkflowService workflowService;
     @Mock
     private VirtualHostService virtualHostService;
+    @Mock
+    private ViewService viewService;
 
     @Before
     public void setUp() {
@@ -142,6 +144,10 @@ public class ApiService_UpdateTest {
         when(existingApi.getVersion()).thenReturn("v1");
         when(existingApi.getDescription()).thenReturn("Ma description");
         final Proxy proxy = mock(Proxy.class);
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        when(proxy.getGroups()).thenReturn(singleton(endpointGroup));
         when(existingApi.getProxy()).thenReturn(proxy);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/context")));
         when(existingApi.getLifecycleState()).thenReturn(CREATED);
@@ -177,6 +183,8 @@ public class ApiService_UpdateTest {
         when(existingApi.getProxy()).thenReturn(proxy);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/new")));
         final EndpointGroup group = mock(EndpointGroup.class);
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        when(group.getEndpoints()).thenReturn(singleton(endpoint));
         when(group.getName()).thenReturn("group");
         when(proxy.getGroups()).thenReturn(singleton(group));
         Endpoint endpoint = mock(Endpoint.class);
@@ -198,6 +206,10 @@ public class ApiService_UpdateTest {
         when(existingApi.getVersion()).thenReturn("v1");
         when(existingApi.getDescription()).thenReturn("Ma description");
         final Proxy proxy = mock(Proxy.class);
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        when(proxy.getGroups()).thenReturn(singleton(endpointGroup));
         when(existingApi.getProxy()).thenReturn(proxy);
         when(existingApi.getLifecycleState()).thenReturn(CREATED);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/context")));
@@ -229,6 +241,12 @@ public class ApiService_UpdateTest {
     public void shouldUpdateWithExistingAllowedTag() throws TechnicalException {
         prepareUpdate();
         when(existingApi.getTags()).thenReturn(singleton("private"));
+        Proxy proxy = new Proxy();
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        proxy.setGroups(singleton(endpointGroup));
+        when(existingApi.getProxy()).thenReturn(proxy);
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"} ,\"tags\": [\"public\"]}");
         when(tagService.findByUser(any())).thenReturn(Sets.newSet("public", "private"));
         final ApiEntity apiEntity = apiService.update(API_ID, existingApi);
@@ -240,6 +258,12 @@ public class ApiService_UpdateTest {
     public void shouldUpdateWithExistingAllowedTags() throws TechnicalException {
         prepareUpdate();
         when(existingApi.getTags()).thenReturn(newSet("public", "private"));
+        Proxy proxy = new Proxy();
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        proxy.setGroups(singleton(endpointGroup));
+        when(existingApi.getProxy()).thenReturn(proxy);
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"} ,\"tags\": [\"public\"]}");
         when(tagService.findByUser(any())).thenReturn(Sets.newSet("public", "private"));
         final ApiEntity apiEntity = apiService.update(API_ID, existingApi);
@@ -263,6 +287,10 @@ public class ApiService_UpdateTest {
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"} ,\"tags\": [\"public\"]}");
         when(existingApi.getTags()).thenReturn(singleton("private"));
         final Proxy proxy = mock(Proxy.class);
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        when(proxy.getGroups()).thenReturn(singleton(endpointGroup));
         when(existingApi.getProxy()).thenReturn(proxy);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/context")));
         when(tagService.findByUser(any())).thenReturn(emptySet());
@@ -275,6 +303,10 @@ public class ApiService_UpdateTest {
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"} ,\"tags\": [\"public\"]}");
         when(existingApi.getTags()).thenReturn(singleton("private"));
         final Proxy proxy = mock(Proxy.class);
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        when(proxy.getGroups()).thenReturn(singleton(endpointGroup));
         when(existingApi.getProxy()).thenReturn(proxy);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/context")));
         when(tagService.findByUser(any())).thenReturn(singleton("public"));
@@ -287,6 +319,10 @@ public class ApiService_UpdateTest {
         when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"} ,\"tags\": [\"public\", \"private\"]}");
         when(existingApi.getTags()).thenReturn(emptySet());
         final Proxy proxy = mock(Proxy.class);
+        EndpointGroup endpointGroup = new EndpointGroup();
+        Endpoint endpoint = new HttpEndpoint(null, null);
+        endpointGroup.setEndpoints(singleton(endpoint));
+        when(proxy.getGroups()).thenReturn(singleton(endpointGroup));
         when(existingApi.getProxy()).thenReturn(proxy);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/context")));
         when(tagService.findByUser(any())).thenReturn(singleton("private"));

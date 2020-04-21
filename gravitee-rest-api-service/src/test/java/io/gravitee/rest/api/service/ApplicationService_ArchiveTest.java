@@ -77,6 +77,12 @@ public class ApplicationService_ArchiveTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private GenericNotificationConfigService genericNotificationConfigService;
+    
+    @Mock
+    private MembershipRepository membershipRepository;
+
     @Test
     public void shouldArchive() throws TechnicalException {
         when(applicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.of(application));

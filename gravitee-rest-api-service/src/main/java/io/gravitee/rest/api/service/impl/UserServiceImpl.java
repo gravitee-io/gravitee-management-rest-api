@@ -660,12 +660,28 @@ public class UserServiceImpl extends AbstractService implements UserService {
 
         if (results.hasResults()) {
             List<UserEntity> users = new ArrayList<>((findByIds(results.getDocuments())));
+
+            populatePrimaryOwnerFlag(users);
+
             return new Page<>(users,
                     pageable.getPageNumber(),
                     pageable.getPageSize(),
                     results.getHits());
         }
         return new Page<>(Collections.emptyList(), 1, 0, 0);
+    }
+
+    private void populatePrimaryOwnerFlag(final List<UserEntity> users) {
+        users.forEach(user -> {
+            final boolean apiPO = membershipService.findUserMembership(user.getId(), MembershipReferenceType.API)
+                    .stream().anyMatch(membership -> membership.getRoles() != null &&
+                            SystemRole.PRIMARY_OWNER.name().equals(membership.getRoles().get(RoleScope.API.getId())));
+
+            final boolean appPO = membershipService.findUserMembership(user.getId(), MembershipReferenceType.APPLICATION)
+                    .stream().anyMatch(membership -> membership.getRoles() != null &&
+                            SystemRole.PRIMARY_OWNER.name().equals(membership.getRoles().get(RoleScope.APPLICATION.getId())));
+            user.setPrimaryOwner(apiPO || appPO);
+        });
     }
 
 
@@ -691,6 +707,8 @@ public class UserServiceImpl extends AbstractService implements UserService {
                     .stream()
                     .map(u -> convert(u, false))
                     .collect(toList());
+
+            populatePrimaryOwnerFlag(entities);
 
             return new Page<>(entities,
                     users.getPageNumber() + 1,

@@ -392,6 +392,17 @@ public class MembershipServiceImpl extends AbstractService implements Membership
     }
 
     @Override
+    public void deleteMembers(MembershipReferenceType referenceType, String referenceId) {
+        try {
+            LOGGER.debug("Delete members for {} {}", referenceType, referenceId);
+            membershipRepository.deleteMembers(referenceType, referenceId);
+        } catch (TechnicalException ex) {
+            LOGGER.error("An error occurs while trying to delete members for {} {}", referenceType, referenceId, ex);
+            throw new TechnicalManagementException("An error occurs while trying to delete members for " + referenceType + " " + referenceId, ex);
+        }
+    }
+
+    @Override
     public void deleteReferenceMember(MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId) {
         try {
             Set<Membership> memberships = membershipRepository.findByMemberIdAndMemberTypeAndReferenceTypeAndReferenceId(memberId, convert(memberType), convert(referenceType), referenceId);
@@ -427,6 +438,7 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                         UserMembership userMembership = new UserMembership();
                         userMembership.setType(type.name());
                         userMembership.setReference(membership.getReferenceId());
+                        userMembership.setRoles(membership.getRoles());
                         return userMembership;
                     })
                     .collect(Collectors.toSet());

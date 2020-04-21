@@ -55,6 +55,9 @@ public class DynamicPropertiesService extends AbstractService implements EventLi
     @Autowired
     private Vertx vertx;
 
+    @Autowired
+    private Node node;
+
     private final Map<ApiEntity, Long> timers = new HashMap<>();
 
     @Override
@@ -101,6 +104,7 @@ public class DynamicPropertiesService extends AbstractService implements EventLi
                 if (dynamicPropertyService.getProvider() == DynamicPropertyProvider.HTTP) {
                     HttpProvider provider = new HttpProvider(dynamicPropertyService);
                     provider.setVertx(vertx);
+                    provider.setNode(node);
 
                     updater.setProvider(provider);
                     updater.setApiService(apiService);

@@ -117,6 +117,7 @@ public class GraviteeManagementApplication extends ResourceConfig {
         register(GraviteeContextRequestFilter.class);
         register(GraviteeContextResponseFilter.class);
         register(UriBuilderRequestFilter.class);
+        register(MaintenanceFilter.class);
         register(ByteArrayOutputStreamWriter.class);
         register(JacksonFeature.class);
 

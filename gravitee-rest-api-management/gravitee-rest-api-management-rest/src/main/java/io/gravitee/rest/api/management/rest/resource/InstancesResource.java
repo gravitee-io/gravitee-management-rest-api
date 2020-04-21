@@ -56,8 +56,15 @@ public class InstancesResource {
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_INSTANCE, acls = RolePermissionAction.READ)
     })
-    public Collection<InstanceListItem> listInstances(@QueryParam("includeStopped") boolean includeStopped) {
-        return new ArrayList<>(instanceService.findInstances(includeStopped));
+    public Page<InstanceListItem> listInstances(@BeanParam InstanceSearchParam param) {
+        InstanceQuery query = new InstanceQuery();
+        query.setIncludeStopped(param.isIncludeStopped());
+        query.setFrom(param.getFrom());
+        query.setTo(param.getTo());
+        query.setPage(param.getPage());
+        query.setSize(param.getSize());
+
+        return instanceService.search(query);
     }
 
     @Path("{instance}")

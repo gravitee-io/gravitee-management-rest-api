@@ -61,6 +61,9 @@ public class DictionaryService extends AbstractService implements EventListener<
     @Autowired
     private Vertx vertx;
 
+    @Autowired
+    private Node node;
+
     private final Map<String, Long> timers = new HashMap<>();
 
     @Override
@@ -95,7 +98,7 @@ public class DictionaryService extends AbstractService implements EventListener<
     }
 
     private void startDynamicDictionary(DictionaryEntity dictionary) {
-        if (! timers.containsKey(dictionary)) {
+        if (! timers.containsKey(dictionary.getId())) {
             DictionaryProviderEntity providerConf = dictionary.getProvider();
 
             if (DICTIONARY_HTTP_PROVIDER.equals(providerConf.getType())) {
@@ -105,6 +108,7 @@ public class DictionaryService extends AbstractService implements EventListener<
 
                     HttpProvider provider = new HttpProvider(configuration);
                     provider.setVertx(vertx);
+                    provider.setNode(node);
 
                     refresher.setProvider(provider);
                     refresher.setDictionaryService(dictionaryService);

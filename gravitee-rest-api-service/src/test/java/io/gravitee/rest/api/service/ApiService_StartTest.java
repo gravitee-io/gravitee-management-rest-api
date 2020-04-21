@@ -59,7 +59,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Azize Elamrani (azize dot elamrani at gmail dot com)
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
+ * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ApiService_StartTest {
@@ -88,13 +90,24 @@ public class ApiService_StartTest {
     private NotifierService notifierService;
     @Mock
     private ParameterService parameterService;
+    @Mock
+    private ViewService viewService;
 
     @Before
     public void setUp() {
         PropertyFilter apiMembershipTypeFilter = new ApiPermissionFilter();
         objectMapper.setFilterProvider(new SimpleFilterProvider(Collections.singletonMap("apiMembershipTypeFilter", apiMembershipTypeFilter)));
         UserEntity u = mock(UserEntity.class);
+        when(u.getId()).thenReturn("uid");
         when(userService.findById(any())).thenReturn(u);
+        Membership po = mock(Membership.class);
+        when(membershipRepository.findByReferenceAndRole(
+                eq(MembershipReferenceType.API),
+                anyString(),
+                eq(RoleScope.API),
+                eq(SystemRole.PRIMARY_OWNER.name()))).thenReturn(singleton(po));
+        when(po.getUserId()).thenReturn("uid");
+        when(api.getId()).thenReturn(API_ID);
     }
 
     @Test

@@ -61,6 +61,7 @@ public class ViewService_UpdateTest {
     public void shouldNotUpdateUnknownView_multi_mode() throws TechnicalException {
         UpdateViewEntity mockView = mock(UpdateViewEntity.class);
         when(mockView.getId()).thenReturn("unknown");
+        when(mockView.getName()).thenReturn("Unknown");
         when(mockViewRepository.findById("unknown")).thenReturn(Optional.empty());
 
         List<ViewEntity> list = viewService.update(singletonList(mockView));
@@ -87,6 +88,7 @@ public class ViewService_UpdateTest {
     public void shouldUpdateView_multi_mode() throws TechnicalException {
         UpdateViewEntity mockView = mock(UpdateViewEntity.class);
         when(mockView.getId()).thenReturn("known");
+        when(mockView.getName()).thenReturn("Known");
         when(mockViewRepository.findById("known")).thenReturn(Optional.of(new View()));
         View updatedView = mock(View.class);
         when(updatedView.getId()).thenReturn("view-id");
@@ -121,6 +123,7 @@ public class ViewService_UpdateTest {
     public void shouldUpdateView_single_mode() throws TechnicalException {
         UpdateViewEntity mockView = mock(UpdateViewEntity.class);
         when(mockView.getId()).thenReturn("view-id");
+        when(mockView.getName()).thenReturn("View ID");
         when(mockViewRepository.findById("view-id")).thenReturn(Optional.of(new View()));
         View updatedView = mock(View.class);
         when(updatedView.getId()).thenReturn("view-id");

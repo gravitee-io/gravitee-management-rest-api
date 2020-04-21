@@ -41,6 +41,7 @@ import static io.gravitee.repository.management.model.Audit.AuditProperties.API_
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -286,7 +287,9 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
 
             key.setPaused(apiKeyEntity.isPaused());
             key.setPlan(apiKeyEntity.getPlan());
-            setExpiration(apiKeyEntity.getExpireAt(), key);
+            if (apiKeyEntity.getExpireAt() != null) {
+                setExpiration(apiKeyEntity.getExpireAt(), key);
+            }
 
             return convert(key);
         } catch (TechnicalException ex) {
@@ -327,6 +330,12 @@ public class ApiKeyServiceImpl extends TransactionalService implements ApiKeySer
 
         key.setUpdatedAt(now);
         if (!key.isRevoked()) {
+            //the expired date must be <= than the subscription end date
+            SubscriptionEntity subscription = subscriptionService.findById(key.getSubscription());
+            if (subscription.getEndingAt() != null && (expirationDate == null || subscription.getEndingAt().compareTo(expirationDate) < 0)) {
+                expirationDate = subscription.getEndingAt();
+            }
+
             ApiKey oldkey = new ApiKey(key);
             key.setExpireAt(expirationDate);
             apiKeyRepository.update(key);

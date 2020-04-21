@@ -109,16 +109,19 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
         try {
             LOGGER.debug("Find application by ID: {}", applicationId);
 
-            Optional<Application> application = applicationRepository.findById(applicationId);
+            Optional<Application> applicationOptional = applicationRepository.findById(applicationId);
 
-            if (application.isPresent()) {
-                MemberEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(MembershipReferenceType.APPLICATION, application.get().getId());
+            if (applicationOptional.isPresent()) {
+                Application application = applicationOptional.get();
+                MemberEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(MembershipReferenceType.APPLICATION, application.getId());
                 if (primaryOwnerMemberEntity == null) {
-                    LOGGER.error("The Application {} doesn't have any primary owner.", applicationId);
-                    return convert(application.get(), null);
+                    if (!ApplicationStatus.ARCHIVED.equals(application.getStatus())) {
+                        LOGGER.error("The Application {} doesn't have any primary owner.", applicationId);
+                    }
+                    return convert(application, null);
                 }
 
-                return convert(application.get(), userService.findById(primaryOwnerMemberEntity.getId()));
+                return convert(application, userService.findById(primaryOwnerMemberEntity.getId()));
             }
 
             throw new ApplicationNotFoundException(applicationId);
@@ -559,6 +562,10 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
             application.setUpdatedAt(new Date());
             application.setStatus(ApplicationStatus.ARCHIVED);
             applicationRepository.update(application);
+            // remove notifications
+            genericNotificationConfigService.deleteReference(NotificationReferenceType.APPLICATION, applicationId);
+            // remove memberships
+            membershipRepository.deleteMembers(MembershipReferenceType.APPLICATION, applicationId);
             // Audit
             auditService.createApplicationAuditLog(
                     application.getId(),

@@ -79,6 +79,8 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
 	private static final Logger logger = LoggerFactory.getLogger(PageServiceImpl.class);
 
+	private static final String SENSITIVE_DATA_REPLACEMENT = "********";
+
 	@Autowired
 	private PageRepository pageRepository;
 	@Autowired
@@ -217,9 +219,50 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
 	@Override
 	public void transformSwagger(PageEntity pageEntity, String apiId) {
-		transformUsingConfiguration(pageEntity);
+		// First apply templating if required
 		if (apiId != null) {
 			transformWithTemplate(pageEntity, apiId);
+		}
+
+		// If swagger page, let's try to apply transformations
+		if (io.gravitee.repository.management.model.PageType.SWAGGER.name().equalsIgnoreCase(pageEntity.getType())) {
+			SwaggerDescriptor<?> descriptor = swaggerService.parse(pageEntity.getContent());
+
+			if (descriptor.getVersion() == SwaggerDescriptor.Version.SWAGGER_V1 || descriptor.getVersion() == SwaggerDescriptor.Version.SWAGGER_V2) {
+				Collection<SwaggerTransformer<SwaggerV2Descriptor>> transformers = new ArrayList<>();
+				transformers.add(new PageConfigurationSwaggerV2Transformer(pageEntity));
+
+				if (apiId != null) {
+					List<ApiEntrypointEntity> entrypoints = apiService.findById(apiId).getEntrypoints();
+					transformers.add(new EntrypointsSwaggerV2Transformer(pageEntity, entrypoints));
+				}
+
+				swaggerService.transform((SwaggerV2Descriptor) descriptor, transformers);
+			} else if (descriptor.getVersion() == SwaggerDescriptor.Version.OAI_V3) {
+				Collection<SwaggerTransformer<OAIDescriptor>> transformers = new ArrayList<>();
+				transformers.add(new PageConfigurationOAITransformer(pageEntity));
+
+				if (apiId != null) {
+					List<ApiEntrypointEntity> entrypoints = apiService.findById(apiId).getEntrypoints();
+					transformers.add(new EntrypointsOAITransformer(pageEntity, entrypoints));
+				}
+
+				swaggerService.transform((OAIDescriptor) descriptor, transformers);
+			}
+
+			if (pageEntity.getContentType().equalsIgnoreCase(MediaType.APPLICATION_JSON)) {
+				try {
+					pageEntity.setContent(descriptor.toJson());
+				} catch (JsonProcessingException e) {
+					logger.error("Unexpected error", e);
+				}
+			} else {
+				try {
+					pageEntity.setContent(descriptor.toYaml());
+				} catch (JsonProcessingException e) {
+					logger.error("Unexpected error", e);
+				}
+			}
 		}
 	}
 
@@ -335,12 +378,6 @@ public class PageServiceImpl extends TransactionalService implements PageService
         }
     }
 	
-	private void transformUsingConfiguration(final PageEntity pageEntity) {
-		if (PageType.SWAGGER.name().equalsIgnoreCase(pageEntity.getType())) {
-			swaggerService.transform(pageEntity);
-		}
-	}
-
 	@Override
 	public void transformWithTemplate(final PageEntity pageEntity, final String api) {
 		if (pageEntity.getContent() != null) {
@@ -355,7 +392,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 						model.put("metadata", mapMetadata);
 					}
 				} else {
-					ApiModelEntity apiEntity = apiService.findByIdForTemplates(api);
+					ApiModelEntity apiEntity = apiService.findByIdForTemplates(api, true);
 					model.put("api", apiEntity);
 				}
 
@@ -624,6 +661,9 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
             if (page.getSource() != null) {
 				try {
+					if (pageToUpdate.getSource() != null && pageToUpdate.getSource().getConfiguration() != null) {
+						mergeSensitiveData(this.getFetcher(pageToUpdate.getSource()).getConfiguration(), page);
+					}
 					fetchPage(page);
 				} catch (FetcherException e) {
 					throw onUpdateFail(pageId, e);
@@ -879,26 +919,57 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
 	@Override
 	public List<PageEntity> importFiles(String apiId, ImportPageEntity pageEntity) {
-		upsertRootPage(apiId, pageEntity);
+		Page page = upsertRootPage(apiId, pageEntity);
+		pageEntity.setSource(convert(page.getSource(), false));
+		return fetchPages(apiId, pageEntity);
+	}
 
+	@Override
+	public boolean isDisplayable(ApiEntity api, boolean pageIsPublished, String username) {
+		boolean isDisplayable = false;
+		if (api.getVisibility() == Visibility.PUBLIC && pageIsPublished) {
+			isDisplayable = true;
+		} else if (username != null) {
+			MemberEntity member = membershipService.getMember(MembershipReferenceType.API, api.getId(), username, io.gravitee.repository.management.model.RoleScope.API);
+			if (member == null && api.getGroups() != null) {
+				Iterator<String> groupIdIterator = api.getGroups().iterator();
+				while (!isDisplayable && groupIdIterator.hasNext()) {
+					String groupId = groupIdIterator.next();
+					member = membershipService.getMember(MembershipReferenceType.GROUP, groupId, username, io.gravitee.repository.management.model.RoleScope.API);
+					isDisplayable = isDisplayableForMember(member, pageIsPublished);
+				}
+			} else {
+				isDisplayable = isDisplayableForMember(member, pageIsPublished);
+			}
+		}
+		return isDisplayable;
+	}
+
+	@Override
+	public void fetchAll(PageQuery query, String contributor) {
 		try {
-			Page page = convert(pageEntity);
-			Fetcher _fetcher = this.getFetcher(page.getSource());
-			if (_fetcher == null) {
-				return emptyList();
-			}
-
-			if (!(_fetcher instanceof FilesFetcher)) {
-				throw new UnsupportedOperationException("The plugin does not support to import a directory.");
-			}
-
-			FilesFetcher fetcher = (FilesFetcher) _fetcher;
-
-			return importDirectory(apiId, pageEntity, fetcher);
-
-		} catch (FetcherException ex) {
-			logger.error("An error occurs while trying to import a directory",ex);
-			throw new TechnicalManagementException("An error occurs while trying import a directory" , ex);
+			pageRepository.search(queryToCriteria(query))
+					.stream()
+					.filter(pageListItem ->
+							pageListItem.getSource() != null)
+					.forEach(pageListItem -> {
+						if (pageListItem.getType() != null && pageListItem.getType().toString().equals("ROOT")) {
+							final ImportPageEntity pageEntity = new ImportPageEntity();
+							pageEntity.setType(PageType.valueOf(pageListItem.getType().toString()));
+							pageEntity.setSource(convert(pageListItem.getSource(), false));
+							pageEntity.setConfiguration(pageListItem.getConfiguration());
+							pageEntity.setPublished(pageListItem.isPublished());
+							pageEntity.setExcludedGroups(pageListItem.getExcludedGroups());
+							pageEntity.setLastContributor(contributor);
+							fetchPages(query.getApi(), pageEntity);
+						} else {
+							fetch(pageListItem.getId(), contributor);
+						}
+					});
+		} catch (TechnicalException ex) {
+			logger.error("An error occurs while trying to fetch pages", ex);
+			throw new TechnicalManagementException(
+					"An error occurs while trying to fetch pages", ex);
 		}
 	}
 
@@ -1503,7 +1574,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		return page;
 	}
 
-	private static UpdatePageEntity convertToUpdateEntity(Page page) {
+	private UpdatePageEntity convertToUpdateEntity(Page page) {
 		UpdatePageEntity updatePageEntity = new UpdatePageEntity();
 
 		updatePageEntity.setName(page.getName());
@@ -1511,7 +1582,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		updatePageEntity.setLastContributor(page.getLastContributor());
 		updatePageEntity.setOrder(page.getOrder());
 		updatePageEntity.setPublished(page.isPublished());
-		updatePageEntity.setSource(convert(page.getSource()));
+		updatePageEntity.setSource(this.convert(page.getSource()));
 		updatePageEntity.setConfiguration(page.getConfiguration());
 		updatePageEntity.setHomepage(page.isHomepage());
 		updatePageEntity.setExcludedGroups(page.getExcludedGroups());
@@ -1530,17 +1601,67 @@ public class PageServiceImpl extends TransactionalService implements PageService
 	}
 
 	private static PageSourceEntity convert(PageSource pageSource) {
+		return convert(pageSource, true);
+	}
+
+	private PageSourceEntity convert(PageSource pageSource, boolean removeSensitiveData) {
 		PageSourceEntity entity = null;
 		if (pageSource != null) {
 			entity = new PageSourceEntity();
 			entity.setType(pageSource.getType());
 			try {
-				entity.setConfiguration((new ObjectMapper()).readTree(pageSource.getConfiguration()));
-			} catch (IOException e) {
-			    logger.error(e.getMessage(), e);
+				FetcherConfiguration fetcherConfiguration = this.getFetcher(pageSource).getConfiguration();
+				if (removeSensitiveData) {
+					removeSensitiveData(fetcherConfiguration);
+				}
+				entity.setConfiguration((new ObjectMapper()).valueToTree(fetcherConfiguration));
+			} catch (FetcherException e) {
+				logger.error(e.getMessage(), e);
 			}
 		}
 		return entity;
+	}
+
+	private void removeSensitiveData(FetcherConfiguration fetcherConfiguration) {
+		Field[] fields = fetcherConfiguration.getClass().getDeclaredFields();
+		for (Field field : fields) {
+			if (field.isAnnotationPresent(Sensitive.class)) {
+				boolean accessible = field.isAccessible();
+				field.setAccessible(true);
+				try {
+					field.set(fetcherConfiguration, SENSITIVE_DATA_REPLACEMENT);
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
+				field.setAccessible(accessible);
+			}
+		}
+	}
+
+	private void mergeSensitiveData(FetcherConfiguration originalFetcherConfiguration, Page page) throws FetcherException {
+		FetcherConfiguration updatedFetcherConfiguration = this.getFetcher(page.getSource()).getConfiguration();
+		boolean updated = false;
+
+		Field[] fields = originalFetcherConfiguration.getClass().getDeclaredFields();
+		for (Field field : fields) {
+			if (field.isAnnotationPresent(Sensitive.class)) {
+				boolean accessible = field.isAccessible();
+				field.setAccessible(true);
+				try {
+					Object updatedValue = field.get(updatedFetcherConfiguration);
+					if ( updatedValue.equals(SENSITIVE_DATA_REPLACEMENT) ) {
+						updated = true;
+						field.set(updatedFetcherConfiguration, field.get(originalFetcherConfiguration));
+					}
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
+				field.setAccessible(accessible);
+			}
+		}
+		if(updated) {
+			page.getSource().setConfiguration((new ObjectMapper()).valueToTree(updatedFetcherConfiguration).toString());
+		}
 	}
 
 	@SuppressWarnings("squid:S1166")

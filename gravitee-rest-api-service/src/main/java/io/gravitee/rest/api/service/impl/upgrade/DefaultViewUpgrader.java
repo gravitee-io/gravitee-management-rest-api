@@ -35,7 +35,6 @@ import java.util.Optional;
  */
 @Component
 public class DefaultViewUpgrader implements Upgrader, Ordered {
-
     /**
      * Logger.
      */
@@ -43,19 +42,50 @@ public class DefaultViewUpgrader implements Upgrader, Ordered {
 
     @Autowired
     private ViewService viewService;
+    @Autowired
+    private ViewRepository viewRepository;
+    @Autowired
+    private ApiRepository apiRepository;
 
     @Override
     public boolean upgrade() {
         // Initialize default view
-        Optional<ViewEntity> optionalAllView = viewService.findAll().
-                stream().
-                filter(v -> v.getId().equals(View.ALL_ID)).
-                findFirst();
-        if(!optionalAllView.isPresent()) {
-            logger.info("Create default View");
-            viewService.initialize(GraviteeContext.getDefaultEnvironment());
-        }
+        final Set<View> views;
+        try {
+            views = viewRepository.findAll();
+            Optional<View> optionalAllView = views.
+                    stream().
+                    filter(v -> v.getId().equals(View.ALL_ID)).
+                    findFirst();
+            if (optionalAllView.isPresent()) {
+                final String key = optionalAllView.get().getKey();
+                if (key == null || key.isEmpty()) {
+                    logger.info("Update views to add field key");
+                    for (final View view : views) {
+                        view.setKey(IdGenerator.generate(view.getName()));
+                        viewRepository.update(view);
+                    }
 
+                    for (final Api api : apiRepository.search(null)) {
+                        final Set<String> apiViews = api.getViews();
+                        if (apiViews != null) {
+                            final Set<String> newApiViews = new HashSet<>(apiViews.size());
+                            for (final String apiView : apiViews) {
+                                final Optional<View> optionalView = views.stream().filter(v -> apiView.equals(v.getId())).findAny();
+                                optionalView.ifPresent(view -> newApiViews.add(view.getId()));
+                            }
+                            api.setViews(newApiViews);
+                        }
+                        apiRepository.update(api);
+                    }
+                }
+            } else {
+                logger.info("Create default View");
+                viewService.createDefaultView();
+            }
+        } catch (TechnicalException e) {
+            e.printStackTrace();
+        }
         return true;
     }
 

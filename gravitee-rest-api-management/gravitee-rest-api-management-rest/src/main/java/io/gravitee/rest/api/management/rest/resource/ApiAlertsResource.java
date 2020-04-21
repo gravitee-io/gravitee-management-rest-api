@@ -107,4 +107,22 @@ public class ApiAlertsResource extends AbstractResource {
     public void delete(@PathParam("api") String api, @PathParam("alert") String alert) {
         alertService.delete(alert, api);
     }
+    
+    @GET
+    @Path("{alert}/events")
+    @ApiOperation(value = "Get the list of events for an alert")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Permissions({
+            @Permission(value = RolePermission.MANAGEMENT_ALERT, acls = READ)
+    })
+    public Page<AlertEventEntity> listEvents(@PathParam("alert") String alert, @BeanParam AlertEventSearchParam param) {
+        return alertService.findEvents(
+                alert,
+                new AlertEventQuery.Builder()
+                        .from(param.getFrom())
+                        .to(param.getTo())
+                        .pageNumber(param.getPage())
+                        .pageSize(param.getSize())
+                        .build());
+    }
 }

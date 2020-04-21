@@ -48,6 +48,7 @@ public class ApiAuditResource extends AbstractResource {
     private AuditService auditService;
 
     @GET
+    @ApiOperation("Retrieve audit logs for a dedicated API")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Permissions({
@@ -78,7 +79,7 @@ public class ApiAuditResource extends AbstractResource {
     @Permissions({
             @Permission(value = RolePermission.API_AUDIT, acls = RolePermissionAction.READ)
     })
-    public Response getEvents() {
+    public Response getEvents(@PathParam("api") String api) {
         if (events.isEmpty()) {
             Set<Class<? extends Audit.ApiAuditEvent>> subTypesOf =
                     new Reflections("io.gravitee.repository.management.model")

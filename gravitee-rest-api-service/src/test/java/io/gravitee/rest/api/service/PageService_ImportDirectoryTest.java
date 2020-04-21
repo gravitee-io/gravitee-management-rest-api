@@ -95,8 +95,12 @@ public class PageService_ImportDirectoryTest {
         AutowireCapableBeanFactory mockAutowireCapableBeanFactory = mock(AutowireCapableBeanFactory.class);
         when(applicationContext.getAutowireCapableBeanFactory()).thenReturn(mockAutowireCapableBeanFactory);
         Page newPage = mock(Page.class);
+        PageSource ps = new PageSource();
+        ps.setType(pageSource.getType());
+        ps.setConfiguration(pageSource.getConfiguration());
         when(newPage.getId()).thenReturn(RandomString.generate());
         when(newPage.isPublished()).thenReturn(Boolean.TRUE);
+        when(newPage.getSource()).thenReturn(ps);
         when(pageRepository.create(any())).thenReturn(newPage);
         when(graviteeDescriptorService.descriptorName()).thenReturn(".gravitee.json");
 
