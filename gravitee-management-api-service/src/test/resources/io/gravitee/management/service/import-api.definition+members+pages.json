@@ -122,6 +122,7 @@
       }
     },
     {
+      "id": "123",
       "name": "petstore",
       "type": "SWAGGER",
       "order": 2,

@@ -1276,23 +1276,13 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             final JsonNode plansDefinition = jsonNode.path("plans");
             if (plansDefinition != null && plansDefinition.isArray()) {
                 for (JsonNode planNode : plansDefinition) {
-                    PlanQuery query = new PlanQuery.Builder().
-                            api(createdOrUpdatedApiEntity.getId()).
-                            name(planNode.get("name").asText()).
-                            security(PlanSecurityType.valueOf(planNode.get("security").asText())).
-                            build();
-                    List<PlanEntity> planEntities = planService.search(query);
-                    if (planEntities == null || planEntities.isEmpty()) {
+                    if (!planNode.has("id")) {
                         NewPlanEntity newPlanEntity = objectMapper.readValue(planNode.toString(), NewPlanEntity.class);
                         newPlanEntity.setApi(createdOrUpdatedApiEntity.getId());
                         planService.create(newPlanEntity);
-                    } else if (planEntities.size() == 1) {
-                        UpdatePlanEntity updatePlanEntity = objectMapper.readValue(planNode.toString(), UpdatePlanEntity.class);
-                        updatePlanEntity.setId(planEntities.iterator().next().getId());
-                        planService.update(updatePlanEntity);
                     } else {
-                        LOGGER.error("Not able to identify the plan to update: {}. Too much plan with the same name", planNode.get("name").asText());
-                        throw new TechnicalManagementException("Not able to identify the plan to update: " + planNode.get("name").asText() + ". Too much plan with the same name");
+                        UpdatePlanEntity updatePlanEntity = objectMapper.readValue(planNode.toString(), UpdatePlanEntity.class);
+                        planService.update(updatePlanEntity);
                     }
                 }
             }
@@ -1373,15 +1363,8 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             PageEntity pageEntityToImport = child.data;
             pageEntityToImport.setParentId(parentId);
 
-            PageQuery query = new PageQuery.Builder().
-                    api(apiId).
-                    name(pageEntityToImport.getName()).
-                    type(PageType.valueOf(pageEntityToImport.getType())).
-                    build();
-            List<PageEntity> pageEntities = pageService.search(query);
-
             PageEntity createdOrUpdatedPage = null;
-            if (pageEntities == null || pageEntities.isEmpty()) {
+            if (child.data.getId() == null) {
                 NewPageEntity newPage = new NewPageEntity();
                 newPage.setConfiguration(pageEntityToImport.getConfiguration());
                 newPage.setContent(pageEntityToImport.getContent());
@@ -1396,7 +1379,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 newPage.setType(PageType.valueOf(pageEntityToImport.getType()));
 
                 createdOrUpdatedPage = pageService.createPage(apiId, newPage);
-            } else if(pageEntities.size() == 1) {
+            } else {
                 UpdatePageEntity updatePageEntity = new UpdatePageEntity();
                 updatePageEntity.setConfiguration(pageEntityToImport.getConfiguration());
                 updatePageEntity.setContent(pageEntityToImport.getContent());
@@ -1409,13 +1392,10 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 updatePageEntity.setPublished(pageEntityToImport.isPublished());
                 updatePageEntity.setSource(pageEntityToImport.getSource());
 
-                createdOrUpdatedPage = pageService.update(pageEntities.get(0).getId(), updatePageEntity);
-            } else {
-                LOGGER.error("Not able to identify the page to update: {}. Too much page with the same name", pageEntityToImport.getName());
-                throw new TechnicalManagementException("Not able to identify the page to update: " + pageEntityToImport.getName() + ". Too much page with the same name");
+                createdOrUpdatedPage = pageService.update(child.data.getId(), updatePageEntity);
             }
 
-            if(child.children != null && !child.children.isEmpty()) {
+            if (child.children != null && !child.children.isEmpty()) {
                 this.createOrUpdateChildrenPages(apiId, createdOrUpdatedPage.getId(), child.children);
             }
         }

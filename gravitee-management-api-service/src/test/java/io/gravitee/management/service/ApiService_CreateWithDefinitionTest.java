@@ -150,7 +150,8 @@ public class ApiService_CreateWithDefinitionTest {
 
         apiService.createOrUpdateWithDefinition(null, toBeImport, "admin");
 
-        verify(pageService, times(2)).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, times(1)).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, times(1)).update(eq("123"), any(UpdatePageEntity.class));
         verify(membershipService, never()).addOrUpdateMember(
                 new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
                 new MembershipService.MembershipUser(admin.getId(), null),
@@ -239,7 +240,8 @@ public class ApiService_CreateWithDefinitionTest {
 
         apiService.createOrUpdateWithDefinition(null, toBeImport, "admin");
 
-        verify(pageService, times(2)).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, times(1)).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, times(1)).update(eq("123"), any(UpdatePageEntity.class));
         verify(membershipRepository, times(1)).create(po);
         verify(apiRepository, never()).update(any());
         verify(apiRepository, times(1)).create(any());
@@ -305,7 +307,8 @@ public class ApiService_CreateWithDefinitionTest {
 
         apiService.createOrUpdateWithDefinition(null, toBeImport, "admin");
 
-        verify(planService, times(2)).create(any(NewPlanEntity.class));
+        verify(planService, times(1)).create(any(NewPlanEntity.class));
+        verify(planService, times(1)).update(any(UpdatePlanEntity.class));
         verify(membershipRepository, times(1)).create(po);
         verify(apiRepository, never()).update(any());
         verify(apiRepository, times(1)).create(any());

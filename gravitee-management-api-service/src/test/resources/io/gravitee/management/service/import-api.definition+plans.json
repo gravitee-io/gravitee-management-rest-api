@@ -97,7 +97,6 @@
   ],
   "plans" : [
     {
-      "id" : "plan-id",
       "name": "free plan",
       "description" : "free plan",
       "validation" : "AUTO",

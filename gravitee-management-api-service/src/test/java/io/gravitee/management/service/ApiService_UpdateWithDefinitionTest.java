@@ -133,7 +133,6 @@ public class ApiService_UpdateWithDefinitionTest {
         user.setSourceId(owner.getReferenceId());
         when(userService.findById(admin.getId())).thenReturn(admin);
         PageEntity existingPage = mock(PageEntity.class);
-        when(pageService.search(any())).thenReturn(Collections.singletonList(existingPage), Collections.emptyList());
 
         MemberEntity memberEntity = new MemberEntity();
         memberEntity.setId(admin.getId());
@@ -304,7 +303,6 @@ public class ApiService_UpdateWithDefinitionTest {
                 SystemRole.PRIMARY_OWNER.name()))
                 .thenReturn(Collections.singleton(po));
         PageEntity existingPage = mock(PageEntity.class);
-        when(pageService.search(any())).thenReturn(Collections.singletonList(existingPage), Collections.emptyList());
 
         apiService.createOrUpdateWithDefinition(apiEntity, toBeImport, null);
 
@@ -351,7 +349,6 @@ public class ApiService_UpdateWithDefinitionTest {
         UserEntity user = new UserEntity();
         ApiEntity apiEntity = prepareUpdateImportApiWithMembers(admin, user);
         PlanEntity existingPlan = new PlanEntity();
-        when(planService.search(any())).thenReturn(Collections.singletonList(existingPlan), Collections.emptyList());
 
         apiService.createOrUpdateWithDefinition(apiEntity, toBeImport, "import");
 
