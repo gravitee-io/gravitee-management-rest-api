@@ -152,7 +152,7 @@ public class UriBuilderRequestFilterTest {
 
         verifyUriBuildersSchemeNeverInvoked();
         verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321, 1234); // override with Host header but then override with Port header
+        verifyUriBuildersPortInvokedInOrder(4321, 1234); // override with port in Host header but then override with Port header
         verifyUriBuildersLastInvocationWasBuild();
     }
 
@@ -167,7 +167,7 @@ public class UriBuilderRequestFilterTest {
 
         verifyUriBuildersSchemeInvoked("https");
         verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(-1); // reset explicit header
+        verifyUriBuildersPortInvokedInOrder(-1); // reset explicit port
         verifyUriBuildersLastInvocationWasBuild();
     }
 
@@ -182,7 +182,7 @@ public class UriBuilderRequestFilterTest {
 
         verifyUriBuildersSchemeInvoked("https");
         verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321); // override with Host header
+        verifyUriBuildersPortInvokedInOrder(4321); // override with port in Host header
         verifyUriBuildersLastInvocationWasBuild();
     }
 
@@ -197,7 +197,7 @@ public class UriBuilderRequestFilterTest {
 
         verifyUriBuildersSchemeInvoked("https");
         verifyUriBuildersHostNeverInvoked();
-        verifyUriBuildersPortInvokedInOrder(1234); // override with Host header
+        verifyUriBuildersPortInvokedInOrder(1234); // override with Port header
         verifyUriBuildersLastInvocationWasBuild();
     }
 
@@ -229,7 +229,7 @@ public class UriBuilderRequestFilterTest {
 
         verifyUriBuildersSchemeInvoked("https");
         verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321, 1234); // override with Host header but then override with Port header
+        verifyUriBuildersPortInvokedInOrder(4321, 1234); // override with port in Host header but then override with Port header
         verifyUriBuildersLastInvocationWasBuild();
     }
 
