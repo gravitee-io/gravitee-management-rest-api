@@ -17,7 +17,6 @@ package io.gravitee.rest.api.management.rest.provider;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.Invocation;
@@ -32,6 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -51,6 +51,8 @@ public class UriBuilderRequestFilterTest {
     @Mock
     protected UriBuilder requestUriBuilder;
 
+    private static final int PROTOCOL_DEFAULT_PORT = -1;
+
     @Before
     public void setUp() {
         initMocks(this);
@@ -63,9 +65,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeNeverInvoked();
-        verifyUriBuildersHostNeverInvoked();
-        verifyUriBuildersPortNeverInvoked();
+        verifyUriBuildersKeptOriginalScheme();
+        verifyUriBuildersKeptOriginalHost();
+        verifyUriBuildersKeptOriginalPort();
         // no build() was invoked
     }
 
@@ -77,10 +79,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeInvoked("https"); // override with Proto header
-        verifyUriBuildersHostNeverInvoked();
-        verifyUriBuildersPortNeverInvoked();
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersChangedSchemeTo("https"); // override with Proto header
+        verifyUriBuildersKeptOriginalHost();
+        verifyUriBuildersKeptOriginalPort();
     }
 
     @Test
@@ -91,10 +92,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeNeverInvoked();
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(-1); // reset explicit port
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersKeptOriginalScheme();
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(PROTOCOL_DEFAULT_PORT); // reset explicit port
     }
 
     @Test
@@ -105,10 +105,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeNeverInvoked();
-        verifyUriBuildersHostNeverInvoked();
-        verifyUriBuildersPortInvokedInOrder(1234); // override with Port header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersKeptOriginalScheme();
+        verifyUriBuildersKeptOriginalHost();
+        verifyUriBuildersChangedPortTo(1234); // override with Port header
     }
 
     @Test
@@ -119,10 +118,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeNeverInvoked();
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321); // override with port in Host header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersKeptOriginalScheme();
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(4321); // override with port in Host header
     }
 
 
@@ -135,10 +133,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeNeverInvoked();
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(-1, 1234); // reset explicit port but then override with Port header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersKeptOriginalScheme();
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(1234); // reset explicit port but then override with Port header
     }
 
     @Test
@@ -150,10 +147,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeNeverInvoked();
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321, 1234); // override with port in Host header but then override with Port header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersKeptOriginalScheme();
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(1234); // override with port in Host header but then override with Port header
     }
 
     @Test
@@ -165,10 +161,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeInvoked("https");
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(-1); // reset explicit port
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersChangedSchemeTo("https");
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(PROTOCOL_DEFAULT_PORT); // reset explicit port
     }
 
     @Test
@@ -180,10 +175,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeInvoked("https");
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321); // override with port in Host header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersChangedSchemeTo("https");
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(4321); // override with port in Host header
     }
 
     @Test
@@ -195,10 +189,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeInvoked("https");
-        verifyUriBuildersHostNeverInvoked();
-        verifyUriBuildersPortInvokedInOrder(1234); // override with Port header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersChangedSchemeTo("https");
+        verifyUriBuildersKeptOriginalHost();
+        verifyUriBuildersChangedPortTo(1234); // override with Port header
     }
 
     @Test
@@ -211,10 +204,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeInvoked("https");
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(-1, 1234); // reset explicit port but then override with Port header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersChangedSchemeTo("https");
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(1234); // reset explicit port but then override with Port header
     }
 
     @Test
@@ -227,10 +219,9 @@ public class UriBuilderRequestFilterTest {
 
         filter.filter(containerRequestContext);
 
-        verifyUriBuildersSchemeInvoked("https");
-        verifyUriBuildersHostInvokedInOrder("gravitee.io"); // override with Host header
-        verifyUriBuildersPortInvokedInOrder(4321, 1234); // override with port in Host header but then override with Port header
-        verifyUriBuildersLastInvocationWasBuild();
+        verifyUriBuildersChangedSchemeTo("https");
+        verifyUriBuildersChangedHostTo("gravitee.io"); // override with Host header
+        verifyUriBuildersChangedPortTo(1234); // override with port in Host header but then override with Port header
     }
 
     private void givenHeaders(String... headers) {
@@ -254,65 +245,63 @@ public class UriBuilderRequestFilterTest {
         when(containerRequestContext.getUriInfo()).thenReturn(uriInfo);
     }
 
-    private void verifyUriBuildersSchemeNeverInvoked() {
-        verify(baseUriBuilder, never()).scheme(any());
-        verify(requestUriBuilder, never()).scheme(any());
-    }
-
-    private void verifyUriBuildersHostNeverInvoked() {
-        verify(baseUriBuilder, never()).host(any());
-        verify(requestUriBuilder, never()).host(any());
-    }
-
-    private void verifyUriBuildersPortNeverInvoked() {
-        verify(baseUriBuilder, never()).port(anyInt());
-        verify(requestUriBuilder, never()).port(anyInt());
-    }
-
-    private void verifyUriBuildersSchemeInvoked(String scheme) {
-        verify(baseUriBuilder).scheme(scheme);
-        verify(requestUriBuilder).scheme(scheme);
-    }
-
-    private void verifyUriBuildersHostInvokedInOrder(String... hosts) {
-        InOrder inOrder = inOrder(baseUriBuilder, requestUriBuilder);
-        for (String host : hosts) {
-            inOrder.verify(baseUriBuilder).host(host);
-            inOrder.verify(requestUriBuilder).host(host);
+    private void verifyUriBuildersKeptOriginalScheme() {
+        for (UriBuilder uriBuilder : new UriBuilder[]{baseUriBuilder, requestUriBuilder}) {
+            verify(uriBuilder, never()).scheme(anyString());
         }
-        assertEquals(hosts.length, invocationsCount(baseUriBuilder, "host"));
-        assertEquals(hosts.length, invocationsCount(requestUriBuilder, "host"));
     }
 
-    private void verifyUriBuildersPortInvokedInOrder(int... ports) {
-        InOrder inOrder = inOrder(baseUriBuilder, requestUriBuilder);
-        for (int port : ports) {
-            inOrder.verify(baseUriBuilder).port(port);
-            inOrder.verify(requestUriBuilder).port(port);
+    private void verifyUriBuildersKeptOriginalHost() {
+        for (UriBuilder uriBuilder : new UriBuilder[]{baseUriBuilder, requestUriBuilder}) {
+            verify(uriBuilder, never()).host(anyString());
         }
-        assertEquals(ports.length, invocationsCount(baseUriBuilder, "port"));
-        assertEquals(ports.length, invocationsCount(requestUriBuilder, "port"));
     }
 
-    private void verifyUriBuildersLastInvocationWasBuild() {
-        assertEquals("build", lastInvocationMethodName(baseUriBuilder));
-        assertEquals("build", lastInvocationMethodName(requestUriBuilder));
+    private void verifyUriBuildersKeptOriginalPort() {
+        for (UriBuilder uriBuilder : new UriBuilder[]{baseUriBuilder, requestUriBuilder}) {
+            verify(uriBuilder, never()).port(anyInt());
+        }
     }
 
-    private int invocationsCount(Object mock, String methodName) {
+    private void verifyUriBuildersChangedSchemeTo(String expectedScheme) {
+        for (UriBuilder uriBuilder : new UriBuilder[]{baseUriBuilder, requestUriBuilder}) {
+            String actualScheme = getMethodArgBeforeLastBuild(uriBuilder, "scheme", String.class);
+            assertNotNull(actualScheme);
+            assertEquals(expectedScheme, actualScheme);
+        }
+    }
+
+    private void verifyUriBuildersChangedHostTo(String expectedHost) {
+        for (UriBuilder uriBuilder : new UriBuilder[]{baseUriBuilder, requestUriBuilder}) {
+            String actualHost = getMethodArgBeforeLastBuild(uriBuilder, "host", String.class);
+            assertNotNull(actualHost);
+            assertEquals(expectedHost, actualHost);
+        }
+    }
+
+    private void verifyUriBuildersChangedPortTo(int expectedPort) {
+        for (UriBuilder uriBuilder : new UriBuilder[]{baseUriBuilder, requestUriBuilder}) {
+            Integer actualPort = getMethodArgBeforeLastBuild(uriBuilder, "port", Integer.class);
+            assertNotNull(actualPort);
+            assertEquals(expectedPort, actualPort.intValue());
+        }
+    }
+
+    private <T> T getMethodArgBeforeLastBuild(Object mock, String methodName, Class<T> argClass) {
         List<Invocation> invocations = sortedInvocations(mock);
-        int invocationsCount = 0;
+        Collections.reverse(invocations);
+        boolean buildFound = false;
         for (Invocation invocation : invocations) {
-            if (invocation.getMethod().getName().equals(methodName)) {
-                invocationsCount++;
+            String invocationMethodName = invocation.getMethod().getName();
+            if ("build".equals(invocationMethodName)) {
+                buildFound = true;
+                continue;
+            }
+            if (buildFound && methodName.equals(invocationMethodName)) {
+                return argClass.cast(invocation.getArgument(0));
             }
         }
-        return invocationsCount;
-    }
-
-    private String lastInvocationMethodName(Object mock) {
-        List<Invocation> invocations = sortedInvocations(mock);
-        return invocations.get(invocations.size() - 1).getMethod().getName();
+        return null;
     }
 
     private List<Invocation> sortedInvocations(Object mock) {
