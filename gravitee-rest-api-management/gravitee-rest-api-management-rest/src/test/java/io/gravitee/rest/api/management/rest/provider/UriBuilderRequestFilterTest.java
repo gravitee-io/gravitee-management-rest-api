@@ -68,7 +68,6 @@ public class UriBuilderRequestFilterTest {
         verifyUriBuildersKeptOriginalScheme();
         verifyUriBuildersKeptOriginalHost();
         verifyUriBuildersKeptOriginalPort();
-        // no build() was invoked
     }
 
     @Test
