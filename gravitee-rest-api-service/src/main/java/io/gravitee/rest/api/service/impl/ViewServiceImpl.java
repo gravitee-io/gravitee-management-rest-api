@@ -25,12 +25,12 @@ import java.util.stream.Collectors;
 
 import javax.xml.bind.DatatypeConverter;
 
+import io.gravitee.common.utils.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import io.gravitee.common.utils.IdGenerator;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ViewRepository;
 import io.gravitee.repository.management.model.View;
@@ -90,7 +90,7 @@ public class ViewServiceImpl extends TransactionalService implements ViewService
             LOGGER.debug("Find view by id : {}", id);
             Optional<View> view = viewRepository.findById(id);
             if (!view.isPresent()) {
-                view = viewRepository.findByKey(id);
+                view = viewRepository.findByKey(id, GraviteeContext.getCurrentEnvironment());
             }
             if (view.isPresent()) {
                 return convert(view.get());
@@ -247,6 +247,7 @@ public class ViewServiceImpl extends TransactionalService implements ViewService
             view.setId(View.ALL_ID);
             view.setEnvironmentId(environmentId);
             view.setName("All");
+            view.setKey(RandomString.generate());
             view.setDefaultView(true);
             view.setOrder(0);
             view.setCreatedAt(new Date());
@@ -275,7 +276,7 @@ public class ViewServiceImpl extends TransactionalService implements ViewService
 
     private View convert(final NewViewEntity viewEntity) {
         final View view = new View();
-        view.setId(UUID.toString(UUID.random()));
+        view.setId(RandomString.generate());
         view.setKey(IdGenerator.generate(viewEntity.getName()));
         view.setName(viewEntity.getName());
         view.setDescription(viewEntity.getDescription());

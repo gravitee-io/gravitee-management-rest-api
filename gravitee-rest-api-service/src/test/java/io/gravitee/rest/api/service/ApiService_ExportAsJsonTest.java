@@ -27,6 +27,7 @@ import io.gravitee.definition.model.*;
 import io.gravitee.definition.model.endpoint.HttpEndpoint;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
+import io.gravitee.rest.api.model.parameters.Key;
 import io.gravitee.rest.api.model.permissions.SystemRole;
 import io.gravitee.rest.api.service.impl.ApiServiceImpl;
 import io.gravitee.rest.api.service.jackson.filter.ApiPermissionFilter;
@@ -96,6 +97,7 @@ public class ApiService_ExportAsJsonTest {
         PropertyFilter apiMembershipTypeFilter = new ApiPermissionFilter();
         objectMapper.setFilterProvider(new SimpleFilterProvider(Collections.singletonMap("apiMembershipTypeFilter", apiMembershipTypeFilter)));
 
+        when(parameterService.find(Key.PORTAL_ENTRYPOINT)).thenReturn(Key.PORTAL_ENTRYPOINT.defaultValue());
         // register API Entity serializers
         when(applicationContext.getBean(MembershipService.class)).thenReturn(membershipService);
         when(applicationContext.getBean(PlanService.class)).thenReturn(planService);

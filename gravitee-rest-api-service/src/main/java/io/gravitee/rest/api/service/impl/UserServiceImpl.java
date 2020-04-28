@@ -38,6 +38,7 @@ import io.gravitee.rest.api.model.configuration.identity.RoleMappingEntity;
 import io.gravitee.rest.api.model.configuration.identity.SocialIdentityProviderEntity;
 import io.gravitee.rest.api.model.parameters.Key;
 import io.gravitee.rest.api.model.permissions.RoleScope;
+import io.gravitee.rest.api.model.permissions.SystemRole;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.builder.EmailNotificationBuilder;
 import io.gravitee.rest.api.service.common.GraviteeContext;
@@ -175,7 +176,11 @@ public class UserServiceImpl extends AbstractService implements UserService {
                     settings.setApp(simpleAppSettings);
                     defaultApp.setSettings(settings);
 
-                    applicationService.create(defaultApp, userId);
+                    try {
+                        applicationService.create(defaultApp, userId);
+                    } catch (IllegalStateException ex) {
+                        //do not fail to create a user even if we are not able to create its default app
+                    }
                 }
             }
 

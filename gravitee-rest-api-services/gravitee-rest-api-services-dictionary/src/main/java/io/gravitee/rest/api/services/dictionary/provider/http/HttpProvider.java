@@ -15,7 +15,11 @@
  */
 package io.gravitee.rest.api.services.dictionary.provider.http;
 
+import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.node.api.Node;
+import io.gravitee.node.api.utils.NodeUtils;
+import io.gravitee.rest.api.service.common.RandomString;
 import io.gravitee.rest.api.services.dictionary.model.DynamicProperty;
 import io.gravitee.rest.api.services.dictionary.provider.Provider;
 import io.gravitee.rest.api.services.dictionary.provider.http.configuration.HttpProviderConfiguration;
@@ -88,7 +92,7 @@ public class HttpProvider implements Provider {
             );
 
             request.putHeader(HttpHeaders.USER_AGENT, NodeUtils.userAgent(node));
-            request.putHeader("X-Gravitee-Request-Id", UUID.toString(UUID.random()));
+            request.putHeader("X-Gravitee-Request-Id", RandomString.generate());
 
             if (configuration.getHeaders() != null) {
                 configuration.getHeaders().forEach(httpHeader ->

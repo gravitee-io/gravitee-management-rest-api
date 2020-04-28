@@ -15,6 +15,7 @@
  */
 package io.gravitee.rest.api.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
@@ -33,6 +34,7 @@ import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.MembershipReferenceType;
 import io.gravitee.rest.api.model.Visibility;
 import io.gravitee.rest.api.model.api.ApiEntity;
+import io.gravitee.rest.api.model.api.ApiEntrypointEntity;
 import io.gravitee.rest.api.model.descriptor.GraviteeDescriptorEntity;
 import io.gravitee.rest.api.model.descriptor.GraviteeDescriptorPageEntity;
 import io.gravitee.rest.api.model.documentation.PageQuery;
@@ -42,7 +44,15 @@ import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.common.RandomString;
 import io.gravitee.rest.api.service.exceptions.*;
+import io.gravitee.rest.api.service.impl.swagger.transformer.SwaggerTransformer;
+import io.gravitee.rest.api.service.impl.swagger.transformer.entrypoints.EntrypointsOAITransformer;
+import io.gravitee.rest.api.service.impl.swagger.transformer.entrypoints.EntrypointsSwaggerV2Transformer;
+import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationOAITransformer;
+import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationSwaggerV2Transformer;
 import io.gravitee.rest.api.service.search.SearchEngineService;
+import io.gravitee.rest.api.service.swagger.OAIDescriptor;
+import io.gravitee.rest.api.service.swagger.SwaggerDescriptor;
+import io.gravitee.rest.api.service.swagger.SwaggerV2Descriptor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +65,7 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -225,7 +236,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		}
 
 		// If swagger page, let's try to apply transformations
-		if (io.gravitee.repository.management.model.PageType.SWAGGER.name().equalsIgnoreCase(pageEntity.getType())) {
+		if (PageType.SWAGGER.name().equalsIgnoreCase(pageEntity.getType())) {
 			SwaggerDescriptor<?> descriptor = swaggerService.parse(pageEntity.getContent());
 
 			if (descriptor.getVersion() == SwaggerDescriptor.Version.SWAGGER_V1 || descriptor.getVersion() == SwaggerDescriptor.Version.SWAGGER_V2) {

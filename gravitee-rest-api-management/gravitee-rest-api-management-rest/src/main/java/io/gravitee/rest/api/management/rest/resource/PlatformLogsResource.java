@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.rest.resource;
+package io.gravitee.rest.api.management.rest.resource;
 
 import io.gravitee.common.http.MediaType;
-import io.gravitee.management.model.analytics.query.LogQuery;
-import io.gravitee.management.model.log.ApiRequest;
-import io.gravitee.management.model.log.SearchLogResponse;
-import io.gravitee.management.model.permissions.RolePermission;
-import io.gravitee.management.model.permissions.RolePermissionAction;
-import io.gravitee.management.rest.resource.param.LogsParam;
-import io.gravitee.management.rest.security.Permission;
-import io.gravitee.management.rest.security.Permissions;
-import io.gravitee.management.service.LogsService;
+import io.gravitee.rest.api.model.analytics.query.LogQuery;
+import io.gravitee.rest.api.model.log.ApiRequest;
+import io.gravitee.rest.api.model.log.SearchLogResponse;
+import io.gravitee.rest.api.model.permissions.RolePermission;
+import io.gravitee.rest.api.model.permissions.RolePermissionAction;
+import io.gravitee.rest.api.management.rest.resource.param.LogsParam;
+import io.gravitee.rest.api.management.rest.security.Permission;
+import io.gravitee.rest.api.management.rest.security.Permissions;
+import io.gravitee.rest.api.service.LogsService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -55,7 +55,7 @@ public class PlatformLogsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Platform logs"),
             @ApiResponse(code = 500, message = "Internal server error")})
     @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_PLATFORM, acls = RolePermissionAction.READ)
+            @Permission(value = RolePermission.ENVIRONMENT_PLATFORM, acls = RolePermissionAction.READ)
     })
     public SearchLogResponse platformLogs(
             @BeanParam LogsParam param) {
@@ -82,7 +82,7 @@ public class PlatformLogsResource extends AbstractResource {
             @ApiResponse(code = 200, message = "Single log"),
             @ApiResponse(code = 500, message = "Internal server error")})
     @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_PLATFORM, acls = RolePermissionAction.READ)
+            @Permission(value = RolePermission.ENVIRONMENT_PLATFORM, acls = RolePermissionAction.READ)
     })
     public ApiRequest platformLog(
             @PathParam("log") String logId,
@@ -97,7 +97,7 @@ public class PlatformLogsResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "Platform logs as CSV"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({@Permission(value = RolePermission.MANAGEMENT_PLATFORM, acls = RolePermissionAction.READ)})
+    @Permissions({@Permission(value = RolePermission.ENVIRONMENT_PLATFORM, acls = RolePermissionAction.READ)})
     public Response exportPlatformLogsAsCSV(
             @BeanParam LogsParam param) {
         final SearchLogResponse searchLogResponse = platformLogs(param);

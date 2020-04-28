@@ -170,7 +170,7 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 final String accessToken = (String) getResponseEntity(response).get(ACCESS_TOKEN_PROPERTY);
-                return authenticateUser(identityProvider, servletResponse, accessToken, payload.getState());
+                return authenticateUser(identityProvider, servletResponse, accessToken, payloadInput.getState());
             } else {
                 LOGGER.error("Exchange authorization code failed with status {}: {}\n{}", response.getStatus(), response.getStatusInfo(), getResponseEntityAsString(response));
             }

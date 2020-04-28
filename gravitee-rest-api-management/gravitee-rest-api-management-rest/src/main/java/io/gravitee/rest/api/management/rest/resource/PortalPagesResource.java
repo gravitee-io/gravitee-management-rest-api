@@ -239,7 +239,8 @@ public class PortalPagesResource extends AbstractResource {
     public Response fetchAllPages() {
         String contributor = getAuthenticatedUser();
         pageService.fetchAll(new PageQuery.Builder().build(), contributor);
-        return
+        return Response.noContent().build();
+    }
 
     @DELETE
     @Path("/{page}")
@@ -297,7 +298,7 @@ public class PortalPagesResource extends AbstractResource {
     }
 
     private boolean isDisplayable(boolean isPagePublished, List<String> excludedGroups) {
-        return (isAuthenticated() && hasPermission(RolePermission.PORTAL_DOCUMENTATION, RolePermissionAction.UPDATE, RolePermissionAction.CREATE, RolePermissionAction.DELETE)) ||
+        return (isAuthenticated() && hasPermission(RolePermission.ENVIRONMENT_DOCUMENTATION, RolePermissionAction.UPDATE, RolePermissionAction.CREATE, RolePermissionAction.DELETE)) ||
                 (isPagePublished && groupService.isUserAuthorizedToAccessPortalData(excludedGroups, getAuthenticatedUserOrNull()));
     }
 }

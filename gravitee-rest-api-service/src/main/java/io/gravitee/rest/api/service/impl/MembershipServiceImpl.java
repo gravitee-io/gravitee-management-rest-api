@@ -57,6 +57,8 @@ public class MembershipServiceImpl extends AbstractService implements Membership
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MembershipServiceImpl.class);
 
+    private final static String DEFAULT_SOURCE = "system";
+
     @Autowired
     private UserService userService;
     @Autowired
@@ -118,6 +120,7 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                             reference.getId(), 
                             convert(reference.getType()),
                             optRole.get().getId());
+                    membership.setSource(source);
                     membership.setCreatedAt(updateDate);
                     membership.setUpdatedAt(updateDate);
                     membershipRepository.create(membership);
@@ -139,6 +142,7 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                             reference.getId(), 
                             convert(reference.getType()),
                             optRole.get().getId());
+                    membership.setSource(source);
                     membership.setCreatedAt(updateDate);
                     membership.setUpdatedAt(updateDate);
                     membershipRepository.create(membership);
@@ -732,13 +736,13 @@ public class MembershipServiceImpl extends AbstractService implements Membership
             }
             
             MemberEntity memberEntity = new MemberEntity(); 
-            //memberEntity.setCreatedAt(createdAt);
             UserEntity userEntity = userService.findById(userId);
+            memberEntity.setCreatedAt(userEntity.getCreatedAt());
             memberEntity.setDisplayName(userEntity.getDisplayName());
             memberEntity.setEmail(userEntity.getEmail());
             memberEntity.setId(userEntity.getId());
             
-            ///memberEntity.setUpdatedAt(updatedAt);
+            memberEntity.setUpdatedAt(userEntity.getUpdatedAt());
 
             Set<RoleEntity> userRoles = new HashSet<>();
             
@@ -855,6 +859,7 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                 if(membershipsWithNewRole.isEmpty()) {
                     membership.setId(RandomString.generate());
                     membership.setRoleId(newRoleId);
+                    membership.setSource(source);
                     membershipRepository.create(membership);
                 }
                 membershipRepository.delete(oldMembershipId);

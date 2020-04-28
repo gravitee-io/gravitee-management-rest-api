@@ -23,6 +23,7 @@ import io.gravitee.common.service.AbstractService;
 import io.gravitee.definition.model.services.dynamicproperty.DynamicPropertyProvider;
 import io.gravitee.definition.model.services.dynamicproperty.DynamicPropertyService;
 import io.gravitee.definition.model.services.schedule.Trigger;
+import io.gravitee.node.api.Node;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.service.ApiService;
 import io.gravitee.rest.api.service.event.ApiEvent;

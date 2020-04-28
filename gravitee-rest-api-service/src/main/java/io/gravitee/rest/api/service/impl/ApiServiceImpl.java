@@ -25,8 +25,8 @@ import freemarker.template.TemplateException;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.definition.model.*;
-import io.gravitee.definition.model.Api;
 import io.gravitee.definition.model.endpoint.HttpEndpoint;
+import io.gravitee.definition.model.services.discovery.EndpointDiscoveryService;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiQualityRuleRepository;
 import io.gravitee.repository.management.api.ApiRepository;
@@ -41,11 +41,9 @@ import io.gravitee.rest.api.model.EventType;
 import io.gravitee.rest.api.model.MembershipMemberType;
 import io.gravitee.rest.api.model.MembershipReferenceType;
 import io.gravitee.rest.api.model.MetadataFormat;
-import io.gravitee.rest.api.model.Visibility;
 import io.gravitee.rest.api.model.alert.AlertReferenceType;
 import io.gravitee.rest.api.model.alert.AlertTriggerEntity;
 import io.gravitee.rest.api.model.api.*;
-import io.gravitee.rest.api.model.api.ApiLifecycleState;
 import io.gravitee.rest.api.model.api.header.ApiHeaderEntity;
 import io.gravitee.rest.api.model.application.ApplicationListItem;
 import io.gravitee.rest.api.model.documentation.PageQuery;
@@ -78,6 +76,9 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -301,6 +302,10 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 final UpdatePageEntity page = new UpdatePageEntity();
                 page.setName(pageToUpdate.getName());
                 page.setOrder(pageToUpdate.getOrder());
+                page.setHomepage(pageToUpdate.isHomepage());
+                page.setPublished(pageToUpdate.isPublished());
+                page.setParentId(pageToUpdate.getParentId());
+                page.setConfiguration(pageToUpdate.getConfiguration());
                 if (INLINE.equals(swaggerDescriptor.getType())) {
                     page.setContent(swaggerDescriptor.getPayload());
                 } else {
@@ -596,52 +601,63 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         List<ApiEntrypointEntity> apiEntrypoints = new ArrayList<>();
 
         if (api.getProxy() != null) {
+            String defaultEntrypoint = parameterService.find(Key.PORTAL_ENTRYPOINT);
+            final String scheme = getScheme(defaultEntrypoint);
             if (api.getTags() != null && !api.getTags().isEmpty()) {
                 List<EntrypointEntity> entrypoints = entrypointService.findAll();
-                entrypoints.forEach(new Consumer<EntrypointEntity>() {
-                    @Override
-                    public void accept(EntrypointEntity entrypoint) {
-                        Set<String> tagEntrypoints = new HashSet<>(Arrays.asList(entrypoint.getTags()));
-                        tagEntrypoints.retainAll(api.getTags());
+                entrypoints.forEach(entrypoint -> {
+                    Set<String> tagEntrypoints = new HashSet<>(Arrays.asList(entrypoint.getTags()));
+                    tagEntrypoints.retainAll(api.getTags());
 
-                        if (tagEntrypoints.size() == entrypoint.getTags().length) {
-                            api.getProxy().getVirtualHosts().forEach(new Consumer<VirtualHost>() {
-                                @Override
-                                public void accept(VirtualHost virtualHost) {
-                                    final String targetHost = virtualHost.getHost() == null ? entrypoint.getValue() : virtualHost.getHost();
-                                    apiEntrypoints.add(new ApiEntrypointEntity(
-                                            tagEntrypoints,
-                                            DUPLICATE_SLASH_REMOVER
-                                                    .matcher(targetHost + URI_PATH_SEPARATOR + virtualHost.getPath())
-                                                    .replaceAll(URI_PATH_SEPARATOR),
-                                            virtualHost.getHost())
-                                    );
-                                }
-                            });
-                        }
+                    if (tagEntrypoints.size() == entrypoint.getTags().length) {
+                        api.getProxy().getVirtualHosts().forEach(virtualHost -> {
+                            String targetHost = (virtualHost.getHost() == null || !virtualHost.isOverrideEntrypoint()) ?
+                                    entrypoint.getValue() : virtualHost.getHost();
+                            if (!targetHost.toLowerCase().startsWith("http")) {
+                                targetHost = scheme + "://" + targetHost;
+                            }
+                            apiEntrypoints.add(new ApiEntrypointEntity(
+                                    tagEntrypoints,
+                                    DUPLICATE_SLASH_REMOVER
+                                            .matcher(targetHost + URI_PATH_SEPARATOR + virtualHost.getPath())
+                                            .replaceAll(URI_PATH_SEPARATOR),
+                                    virtualHost.getHost())
+                            );
+                        });
                     }
                 });
             }
 
             // If empty, get the default entrypoint
             if (apiEntrypoints.isEmpty()) {
-                String defaultEntrypoint = parameterService.find(Key.PORTAL_ENTRYPOINT);
-
-                api.getProxy().getVirtualHosts().forEach(new Consumer<VirtualHost>() {
-                    @Override
-                    public void accept(VirtualHost virtualHost) {
-                        final String targetHost = virtualHost.getHost() == null ? defaultEntrypoint : virtualHost.getHost();
-                        apiEntrypoints.add(new ApiEntrypointEntity(
-                                DUPLICATE_SLASH_REMOVER
-                                        .matcher(targetHost + URI_PATH_SEPARATOR + virtualHost.getPath())
-                                        .replaceAll(URI_PATH_SEPARATOR), virtualHost.getHost())
-                        );
+                api.getProxy().getVirtualHosts().forEach(virtualHost -> {
+                    String targetHost = (virtualHost.getHost() == null || !virtualHost.isOverrideEntrypoint()) ?
+                            defaultEntrypoint : virtualHost.getHost();
+                    if (!targetHost.toLowerCase().startsWith("http")) {
+                        targetHost = scheme + "://" + targetHost;
                     }
+                    apiEntrypoints.add(new ApiEntrypointEntity(
+                            DUPLICATE_SLASH_REMOVER
+                                    .matcher(targetHost + URI_PATH_SEPARATOR + virtualHost.getPath())
+                                    .replaceAll(URI_PATH_SEPARATOR), virtualHost.getHost())
+                    );
                 });
             }
         }
 
         api.setEntrypoints(apiEntrypoints);
+    }
+
+    private String getScheme(String defaultEntrypoint) {
+        String scheme = "https";
+        if (defaultEntrypoint != null) {
+            try {
+                scheme = new URL(defaultEntrypoint).getProtocol();
+            } catch (MalformedURLException e) {
+                // return default scheme
+            }
+        }
+        return scheme;
     }
 
     @Override

@@ -32,6 +32,8 @@ public interface MembershipService {
 
     MemberEntity            addRoleToMemberOnReference                  (MembershipReference reference, MembershipMember member, MembershipRole role);
     MemberEntity            addRoleToMemberOnReference                  (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId, String role);
+    MemberEntity            addRoleToMemberOnReference                  (MembershipReference reference, MembershipMember member, MembershipRole role, String source);
+    MemberEntity            addRoleToMemberOnReference                  (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId, String role, String source);
     void                    deleteMember                                (MembershipMemberType memberType, String memberId);
     void                    deleteMembers                               (MembershipReferenceType referenceType, String referenceId);
     void                    deleteMembership                            (String membershipId);
@@ -49,7 +51,7 @@ public interface MembershipService {
     Set<MembershipEntity>   getMembershipsByReference                   (MembershipReferenceType referenceType, String referenceId);
     Set<MembershipEntity>   getMembershipsByReferenceAndRole            (MembershipReferenceType referenceType, String referenceId, String role);
     Set<MembershipEntity>   getMembershipsByReferencesAndRole           (MembershipReferenceType referenceType, List<String> referenceIds, String role);
-    MemberEntity            getPrimaryOwner                             (MembershipReferenceType referenceType, String referenceId);
+    MembershipEntity            getPrimaryOwner                             (MembershipReferenceType referenceType, String referenceId);
     Set<RoleEntity>         getRoles                                    (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId);
     MemberEntity            getUserMember                               (MembershipReferenceType referenceType, String referenceId, String userId);
     Map<String, char[]>     getUserMemberPermissions                    (MembershipReferenceType referenceType, String referenceId, String userId);
@@ -61,14 +63,7 @@ public interface MembershipService {
     void                    removeMemberMemberships                     (MembershipMemberType memberType, String memberId);
     void                    transferApiOwnership                        (String apiId, MembershipMember member, List<RoleEntity> newPrimaryOwnerRoles);
     void                    transferApplicationOwnership                (String applicationId, MembershipMember member, List<RoleEntity> newPrimaryOwnerRoles);
-    
-//    MemberEntity getMember(MembershipReferenceType referenceType, String referenceId, String userId, RoleScope roleScope);
-//    RoleEntity getRole(MembershipReferenceType referenceType, String referenceId, String userId, RoleScope roleScope);
-//    Set<RoleEntity> getRoles(MembershipReferenceType referenceType, Set<String> referenceIds, String userId, RoleScope roleScope);
-//    Set<MemberEntity> getMembers(MembershipReferenceType referenceType, String referenceId, RoleScope roleScope, String roleName);
-//    boolean removeRole(MembershipReferenceType referenceType, String referenceId, String userId, RoleScope roleScope);
-//    List<UserMembership> findUserMembership(String userId, MembershipReferenceType type);
-//    Metadata findUserMembershipMetadata(List<UserMembership> memberships, MembershipReferenceType type);
+    MemberEntity            updateRoleToMemberOnReference               (MembershipReference reference, MembershipMember member, MembershipRole role);
 
     class MembershipReference {
         private final MembershipReferenceType type;
@@ -181,6 +176,39 @@ public interface MembershipService {
             int result = scope.hashCode();
             result = 31 * result + name.hashCode();
             return result;
+        }
+    }
+
+    class Membership {
+        final MembershipReference reference;
+        final MembershipUser user;
+        final MembershipRole role;
+        String source;
+
+        public Membership(MembershipReference reference, MembershipUser user, MembershipRole role) {
+            this.reference = reference;
+            this.user = user;
+            this.role = role;
+        }
+
+        public MembershipReference getReference() {
+            return reference;
+        }
+
+        public MembershipUser getUser() {
+            return user;
+        }
+
+        public MembershipRole getRole() {
+            return role;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public void setSource(String source) {
+            this.source = source;
         }
     }
 }

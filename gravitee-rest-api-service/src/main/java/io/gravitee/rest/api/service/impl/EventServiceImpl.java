@@ -38,6 +38,7 @@ import org.springframework.stereotype.Component;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static io.gravitee.repository.management.model.Event.EventProperties.API_ID;

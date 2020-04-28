@@ -21,6 +21,7 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
+import io.gravitee.node.api.Node;
 import io.gravitee.rest.api.model.configuration.dictionary.DictionaryEntity;
 import io.gravitee.rest.api.model.configuration.dictionary.DictionaryProviderEntity;
 import io.gravitee.rest.api.model.configuration.dictionary.DictionaryTriggerEntity;

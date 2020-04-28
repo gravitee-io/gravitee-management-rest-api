@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.service.impl.swagger.transformer.page;
+package io.gravitee.rest.api.service.impl.swagger.transformer.page;
 
-import io.gravitee.management.model.PageEntity;
-import io.gravitee.management.service.impl.swagger.SwaggerProperties;
-import io.gravitee.management.service.impl.swagger.transformer.OAITransformer;
-import io.gravitee.management.service.swagger.OAIDescriptor;
+import io.gravitee.rest.api.model.PageEntity;
+import io.gravitee.rest.api.service.impl.swagger.SwaggerProperties;
+import io.gravitee.rest.api.service.impl.swagger.transformer.OAITransformer;
+import io.gravitee.rest.api.service.swagger.OAIDescriptor;
 
 import java.net.URI;
 import java.net.URISyntaxException;

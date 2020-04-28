@@ -15,6 +15,10 @@
  */
 package io.gravitee.rest.api.service.impl.upgrade;
 
+import io.gravitee.common.utils.IdGenerator;
+import io.gravitee.repository.management.api.ApiRepository;
+import io.gravitee.repository.management.api.ViewRepository;
+import io.gravitee.repository.management.model.Api;
 import io.gravitee.repository.management.model.View;
 import io.gravitee.rest.api.model.ViewEntity;
 import io.gravitee.rest.api.service.Upgrader;
@@ -27,6 +31,7 @@ import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

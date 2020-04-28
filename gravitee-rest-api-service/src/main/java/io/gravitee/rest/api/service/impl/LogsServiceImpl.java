@@ -15,9 +15,11 @@
  */
 package io.gravitee.rest.api.service.impl;
 
+import io.gravitee.common.http.HttpMethod;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.analytics.query.LogQuery;
 import io.gravitee.rest.api.model.api.ApiEntity;
+import io.gravitee.rest.api.model.api.ApiLifecycleState;
 import io.gravitee.rest.api.model.log.*;
 import io.gravitee.rest.api.model.log.extended.Request;
 import io.gravitee.rest.api.model.log.extended.Response;

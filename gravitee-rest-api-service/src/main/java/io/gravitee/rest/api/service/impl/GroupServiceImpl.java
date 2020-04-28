@@ -21,11 +21,12 @@ import io.gravitee.repository.management.api.ApplicationRepository;
 import io.gravitee.repository.management.api.GroupRepository;
 import io.gravitee.repository.management.api.search.ApiCriteria;
 import io.gravitee.repository.management.api.search.ApiFieldExclusionFilter;
-import io.gravitee.repository.management.model.ApplicationStatus;
-import io.gravitee.repository.management.model.Group;
-import io.gravitee.repository.management.model.GroupEvent;
-import io.gravitee.repository.management.model.GroupEventRule;
+import io.gravitee.repository.management.model.*;
 import io.gravitee.rest.api.model.*;
+import io.gravitee.rest.api.model.InvitationReferenceType;
+import io.gravitee.rest.api.model.MembershipMemberType;
+import io.gravitee.rest.api.model.MembershipReferenceType;
+import io.gravitee.rest.api.model.Visibility;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RoleScope;
@@ -43,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static io.gravitee.repository.management.model.Audit.AuditProperties.GROUP;
