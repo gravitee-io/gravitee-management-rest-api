@@ -38,6 +38,7 @@ import io.gravitee.repository.management.api.MembershipRepository;
 import io.gravitee.repository.management.model.Api;
 import io.gravitee.repository.management.model.Membership;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -172,14 +173,14 @@ public class ApiService_ExportAsJsonTest {
         RoleEntity poRole = new RoleEntity();
         poRole.setName("PRIMARY_OWNER");
         poRole.setId("API_PRIMARY_OWNER");
-        MemberEntity membership = new MemberEntity();
-        membership.setId("johndoe");
-        membership.setRoles(Collections.singletonList(poRole));
+        MembershipEntity membership = new MembershipEntity();
+        membership.setMemberId("johndoe");
+        membership.setRoleId("API_PRIMARY_OWNER");
         when(membershipService.getPrimaryOwner(eq(MembershipReferenceType.API), eq(API_ID)))
                 .thenReturn(membership);
         
         MemberEntity memberEntity = new MemberEntity();
-        memberEntity.setId(membership.getId());
+        memberEntity.setId(membership.getMemberId());
         memberEntity.setRoles(Collections.singletonList(poRole));
         when(membershipService.getMembersByReference(eq(MembershipReferenceType.API), eq(API_ID)))
                 .thenReturn(Collections.singleton(memberEntity));
@@ -447,7 +448,7 @@ public class ApiService_ExportAsJsonTest {
     private void shouldConvertAsJsonWithoutMetadata(ApiSerializer.Version version, String filename) throws IOException {
         String jsonForExport = apiService.exportAsJson(API_ID, version.getVersion(), SystemRole.PRIMARY_OWNER.name(), "metadata");
 
-        URL url =  Resources.getResource("io/gravitee/management/service/export-convertAsJsonForExportWithoutMetadata" + (filename != null ? "-"+ filename : "") +".json");
+        URL url =  Resources.getResource("io/gravitee/rest/api/management/service/export-convertAsJsonForExportWithoutMetadata" + (filename != null ? "-"+ filename : "") +".json");
         String expectedJson = Resources.toString(url, Charsets.UTF_8);
 
         assertThat(jsonForExport).isNotNull();

@@ -23,6 +23,7 @@ import io.gravitee.definition.model.Endpoint;
 import io.gravitee.definition.model.EndpointGroup;
 import io.gravitee.definition.model.Proxy;
 import io.gravitee.definition.model.VirtualHost;
+import io.gravitee.definition.model.endpoint.HttpEndpoint;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiRepository;
 import io.gravitee.repository.management.api.MembershipRepository;
@@ -169,6 +170,7 @@ public class ApiService_UpdateTest {
         final EndpointGroup group = mock(EndpointGroup.class);
         when(group.getName()).thenReturn("inva:lid");
         when(proxy.getGroups()).thenReturn(singleton(group));
+        when(group.getEndpoints()).thenReturn(singleton(mock(Endpoint.class)));
 
         apiService.update(API_ID, existingApi);
 
@@ -183,8 +185,6 @@ public class ApiService_UpdateTest {
         when(existingApi.getProxy()).thenReturn(proxy);
         when(proxy.getVirtualHosts()).thenReturn(Collections.singletonList(new VirtualHost("/new")));
         final EndpointGroup group = mock(EndpointGroup.class);
-        Endpoint endpoint = new HttpEndpoint(null, null);
-        when(group.getEndpoints()).thenReturn(singleton(endpoint));
         when(group.getName()).thenReturn("group");
         when(proxy.getGroups()).thenReturn(singleton(group));
         Endpoint endpoint = mock(Endpoint.class);

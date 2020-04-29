@@ -26,7 +26,7 @@ public class UserMembership {
 
     private String reference;
     private String type;
-    private Map<Integer, String> roles;
+    private Map<String, String> roles;
     private String source;
 
     public String getReference() {
@@ -45,11 +45,11 @@ public class UserMembership {
         this.type = type;
     }
 
-    public Map<Integer, String> getRoles() {
+    public Map<String, String> getRoles() {
         return roles;
     }
 
-    public void setRoles(Map<Integer, String> roles) {
+    public void setRoles(Map<String, String> roles) {
         this.roles = roles;
     }
 

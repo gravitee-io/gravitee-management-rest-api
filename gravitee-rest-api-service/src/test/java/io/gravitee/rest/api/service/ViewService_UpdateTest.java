@@ -61,7 +61,6 @@ public class ViewService_UpdateTest {
     public void shouldNotUpdateUnknownView_multi_mode() throws TechnicalException {
         UpdateViewEntity mockView = mock(UpdateViewEntity.class);
         when(mockView.getId()).thenReturn("unknown");
-        when(mockView.getName()).thenReturn("Unknown");
         when(mockViewRepository.findById("unknown")).thenReturn(Optional.empty());
 
         List<ViewEntity> list = viewService.update(singletonList(mockView));

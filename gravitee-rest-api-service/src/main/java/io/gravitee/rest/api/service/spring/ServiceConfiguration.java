@@ -15,6 +15,7 @@
  */
 package io.gravitee.rest.api.service.spring;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
@@ -31,6 +32,8 @@ import io.gravitee.plugin.resource.spring.ResourcePluginConfiguration;
 import io.gravitee.rest.api.fetcher.spring.FetcherConfigurationConfiguration;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.service.impl.search.configuration.SearchEngineConfiguration;
+import io.gravitee.rest.api.service.impl.swagger.policy.PolicyOperationVisitorManager;
+import io.gravitee.rest.api.service.impl.swagger.policy.impl.PolicyOperationVisitorManagerImpl;
 import io.gravitee.rest.api.service.jackson.filter.ApiPermissionFilter;
 import io.gravitee.rest.api.service.jackson.ser.api.ApiCompositeSerializer;
 import io.gravitee.rest.api.service.jackson.ser.api.ApiSerializer;

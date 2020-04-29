@@ -23,6 +23,11 @@ import io.gravitee.rest.api.model.PageConfigurationKeys;
 import io.gravitee.rest.api.model.PageEntity;
 import io.gravitee.rest.api.service.SwaggerService;
 import io.gravitee.rest.api.service.impl.SwaggerServiceImpl;
+import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationOAITransformer;
+import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationSwaggerV2Transformer;
+import io.gravitee.rest.api.service.swagger.OAIDescriptor;
+import io.gravitee.rest.api.service.swagger.SwaggerV1Descriptor;
+import io.gravitee.rest.api.service.swagger.SwaggerV2Descriptor;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
 
@@ -33,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,6 +128,7 @@ public class SwaggerService_TransformTest {
 
     @Test
     public void shouldTransformAPIFromSwaggerV3_yaml() throws IOException {
+        PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/openapi.yaml", MediaType.TEXT_PLAIN);
 
         OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
 

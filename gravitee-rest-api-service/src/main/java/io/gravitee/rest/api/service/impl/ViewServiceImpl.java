@@ -322,7 +322,7 @@ public class ViewServiceImpl extends TransactionalService implements ViewService
     public long getTotalApisByView(Set<ApiEntity> apis, ViewEntity view) {
         return apis.stream()
                 .filter(api -> View.ALL_ID.equals(view.getKey())
-                        || (api.getViews() != null && api.getViews().contains(view.getKey)))
+                        || (api.getViews() != null && api.getViews().contains(view.getKey())))
                 .count();
     }
 }

@@ -34,6 +34,7 @@ import io.gravitee.rest.api.service.RoleService;
 import io.gravitee.rest.api.service.SocialIdentityProviderService;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.GroupNotFoundException;
+import io.gravitee.rest.api.service.exceptions.RoleNotFoundException;
 import io.gravitee.rest.api.service.exceptions.UserNotFoundException;
 import io.swagger.annotations.Api;
 import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
@@ -305,11 +306,11 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         if (created || socialProvider.isSyncMappings()) {
             refreshUserMemberships(user.getId(), socialProvider.getId(), groupMemberships, MembershipReferenceType.GROUP);
             refreshUserMemberships(user.getId(), socialProvider.getId(), roleMemberships,
-                    MembershipReferenceType.MANAGEMENT, MembershipReferenceType.PORTAL);
+                    MembershipReferenceType.ENVIRONMENT);
         }
 
-        final Set<RoleEntity> roles = membershipService.getRoles(MembershipReferenceType.ENVIRONMENT, GraviteeContext.getCurrentEnvironment(), MembershipMemberType.USER, userId);
-        roles.addAll(membershipService.getRoles(MembershipReferenceType.ORGANIZATION, GraviteeContext.getCurrentOrganization(), MembershipMemberType.USER, userId));;
+        final Set<RoleEntity> roles = membershipService.getRoles(MembershipReferenceType.ENVIRONMENT, GraviteeContext.getCurrentEnvironment(), MembershipMemberType.USER, user.getId());
+        roles.addAll(membershipService.getRoles(MembershipReferenceType.ORGANIZATION, GraviteeContext.getCurrentOrganization(), MembershipMemberType.USER, user.getId()));;
 
         final Set<GrantedAuthority> authorities = new HashSet<>();
         if (!roles.isEmpty()) {
@@ -365,7 +366,7 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
                 // If defined, get the override default role at the group level
                 if (groupEntity.getRoles() != null) {
-                    String groupDefaultRole = groupEntity.getRoles().get(io.gravitee.management.model.permissions.RoleScope.valueOf(roleEntity.getScope().name()));
+                    String groupDefaultRole = groupEntity.getRoles().get(RoleScope.valueOf(roleEntity.getScope().name()));
                     if (groupDefaultRole != null) {
                         defaultRole = groupDefaultRole;
                     }
@@ -373,7 +374,7 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
                 MembershipService.Membership membership = new MembershipService.Membership(
                         new MembershipService.MembershipReference(MembershipReferenceType.GROUP, groupEntity.getId()),
-                        new MembershipService.MembershipUser(userId, null),
+                        new MembershipService.MembershipMember(userId, null, MembershipMemberType.USER),
                         new MembershipService.MembershipRole(mapScope(roleEntity.getScope()), defaultRole));
 
                 membership.setSource(identityProviderId);
@@ -390,10 +391,13 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
                 .map(roleEntity -> {
                     MembershipService.Membership membership = new MembershipService.Membership(
                             new MembershipService.MembershipReference(
-                            io.gravitee.management.model.permissions.RoleScope.MANAGEMENT == roleEntity.getScope() ?
-                                    MembershipReferenceType.MANAGEMENT : MembershipReferenceType.PORTAL,
-                            MembershipDefaultReferenceId.DEFAULT.name()),
-                            new MembershipService.MembershipUser(userId, null),
+                                    RoleScope.ENVIRONMENT == roleEntity.getScope() ?
+                                            MembershipReferenceType.ENVIRONMENT
+                                            : MembershipReferenceType.ORGANIZATION,
+                                    RoleScope.ENVIRONMENT == roleEntity.getScope() ?
+                                            GraviteeContext.getCurrentEnvironment()
+                                            : GraviteeContext.getCurrentOrganization()),
+                            new MembershipService.MembershipMember(userId, null, MembershipMemberType.USER),
                             new MembershipService.MembershipRole(
                                     RoleScope.valueOf(roleEntity.getScope().name()),
                                     roleEntity.getName()));
@@ -418,24 +422,25 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         List<UserMembership> userMemberships = new ArrayList<>();
 
         for (MembershipReferenceType type : types) {
-            userMemberships.addAll(membershipService.findUserMembership(userId, type));
+            userMemberships.addAll(membershipService.findUserMembership(type, userId));
         }
 
         // Delete existing memberships
         userMemberships.forEach(membership -> {
             // Consider only membership "created by" the identity provider
             if (identityProviderId.equals(membership.getSource())) {
-                membershipService.deleteMember(
+                membershipService.deleteReferenceMember(
                         MembershipReferenceType.valueOf(membership.getType()),
                         membership.getReference(),
+                        MembershipMemberType.USER,
                         userId);
             }
         });
 
         // Create updated memberships
-        memberships.forEach(membership -> membershipService.addOrUpdateMember(
+        memberships.forEach(membership -> membershipService.updateRoleToMemberOnReference(
                 membership.getReference(),
-                membership.getUser(),
+                membership.getMember(),
                 membership.getRole(),
                 membership.getSource()));
     }
@@ -503,21 +508,27 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
             // Get roles
             if (match) {
-                if (mapping.getPortal() != null) {
+                if (mapping.getEnvironments() != null) {
                     try {
-                        RoleEntity roleEntity = roleService.findById(RoleScope.PORTAL, mapping.getPortal());
-                        roles.add(roleEntity);
+                        mapping.getEnvironments().forEach(env ->
+                                roleService
+                                        .findByScopeAndName(RoleScope.ENVIRONMENT, env)
+                                        .ifPresent(roles::add)
+                        );
                     } catch (RoleNotFoundException rnfe) {
-                        LOGGER.error("Unable to create user, missing role in repository : {}", mapping.getPortal());
+                        LOGGER.error("Unable to create user, missing role in repository : {}", mapping.getEnvironments());
                     }
                 }
 
-                if (mapping.getManagement() != null) {
+                if (mapping.getOrganizations() != null) {
                     try {
-                        RoleEntity roleEntity = roleService.findById(RoleScope.MANAGEMENT, mapping.getManagement());
-                        roles.add(roleEntity);
+                        mapping.getOrganizations().forEach(org ->
+                                roleService
+                                        .findByScopeAndName(RoleScope.ORGANIZATION, org)
+                                        .ifPresent(roles::add)
+                        );
                     } catch (RoleNotFoundException rnfe) {
-                        LOGGER.error("Unable to create user, missing role in repository : {}", mapping.getManagement());
+                        LOGGER.error("Unable to create user, missing role in repository : {}", mapping.getOrganizations());
                     }
                 }
             }

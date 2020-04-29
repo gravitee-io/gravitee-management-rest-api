@@ -16,6 +16,7 @@
 package io.gravitee.rest.api.service.impl.upgrade;
 
 import io.gravitee.common.utils.IdGenerator;
+import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiRepository;
 import io.gravitee.repository.management.api.ViewRepository;
 import io.gravitee.repository.management.model.Api;
@@ -70,23 +71,10 @@ public class DefaultViewUpgrader implements Upgrader, Ordered {
                         view.setKey(IdGenerator.generate(view.getName()));
                         viewRepository.update(view);
                     }
-
-                    for (final Api api : apiRepository.search(null)) {
-                        final Set<String> apiViews = api.getViews();
-                        if (apiViews != null) {
-                            final Set<String> newApiViews = new HashSet<>(apiViews.size());
-                            for (final String apiView : apiViews) {
-                                final Optional<View> optionalView = views.stream().filter(v -> apiView.equals(v.getId())).findAny();
-                                optionalView.ifPresent(view -> newApiViews.add(view.getId()));
-                            }
-                            api.setViews(newApiViews);
-                        }
-                        apiRepository.update(api);
-                    }
                 }
             } else {
                 logger.info("Create default View");
-                viewService.createDefaultView();
+                viewService.initialize(GraviteeContext.getDefaultEnvironment());
             }
         } catch (TechnicalException e) {
             e.printStackTrace();

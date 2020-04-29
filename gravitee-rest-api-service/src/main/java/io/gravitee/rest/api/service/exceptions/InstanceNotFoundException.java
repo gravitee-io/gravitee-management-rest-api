@@ -15,6 +15,9 @@
  */
 package io.gravitee.rest.api.service.exceptions;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -28,7 +31,17 @@ public class InstanceNotFoundException extends AbstractNotFoundException {
     }
 
     @Override
+    public String getTechnicalCode() {
+        return "instance.notFound";
+    }
+
+    @Override
     public String getMessage() {
         return "Gateway [" + instanceId + "] can not be found.";
+    }
+
+    @Override
+    public Map<String, String> getParameters() {
+        return Collections.singletonMap("instance", instanceId);
     }
 }

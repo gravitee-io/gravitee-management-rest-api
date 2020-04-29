@@ -29,6 +29,7 @@ import io.gravitee.rest.api.portal.rest.security.Permissions;
 import io.gravitee.rest.api.portal.rest.utils.PortalApiLinkHelper;
 import io.gravitee.rest.api.service.IdentityService;
 import io.gravitee.rest.api.service.UserService;
+import io.gravitee.rest.api.service.exceptions.AbstractManagementException;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -93,10 +94,13 @@ public class UsersResource extends AbstractResource {
     @POST
     @Path("_reset_password")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response resetUserPassword(@NotNull(message = "Input must not be null.") @Valid ResetUserPasswordInput resetUserPasswordInput) {
-        UserEntity user = userService.resetPasswordFromSourceId(resetUserPasswordInput.getUsername(), resetUserPasswordInput.getResetPageUrl());
-        return Response.ok(userMapper.convert(user)).build();
+        try {
+            userService.resetPasswordFromSourceId(resetUserPasswordInput.getUsername(), resetUserPasswordInput.getResetPageUrl());
+        } catch (AbstractManagementException e) {
+            LOGGER.warn("Problem while resetting a password : {}", e.getMessage());
+        }
+        return Response.noContent().build();
     }
 
     @POST
@@ -104,7 +108,11 @@ public class UsersResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Permissions({ @Permission(value = RolePermission.ORGANIZATION_USERS, acls = READ) })
     public Response getUsers(@QueryParam("q") String query, @BeanParam PaginationParam paginationParam) {
-        List<User> users = identityService.search(query).stream()
+        String q = query;
+        if (q == null) {
+            q = "*";
+        }
+        List<User> users = identityService.search(q).stream()
                 .map(searchableUser -> userMapper.convert(searchableUser)
                         .links(userMapper.computeUserLinks(PortalApiLinkHelper.usersURL(uriInfo.getBaseUriBuilder(), searchableUser.getId()), null))
                 )

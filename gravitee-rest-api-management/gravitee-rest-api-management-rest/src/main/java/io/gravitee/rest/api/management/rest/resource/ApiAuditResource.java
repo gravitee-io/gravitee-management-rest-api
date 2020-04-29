@@ -28,6 +28,7 @@ import io.gravitee.rest.api.management.rest.security.Permissions;
 import io.gravitee.rest.api.service.AuditService;
 import io.swagger.annotations.Api;
 
+import io.swagger.annotations.ApiOperation;
 import org.reflections.Reflections;
 
 import javax.inject.Inject;

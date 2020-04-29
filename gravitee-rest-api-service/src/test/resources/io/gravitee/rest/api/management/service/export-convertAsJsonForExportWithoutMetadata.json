@@ -6,7 +6,9 @@
   "members" : [ {
     "source":"johndoe-source",
     "sourceId":"johndoe-sourceId",
-    "role" : "PRIMARY_OWNER"
+    "roles" : [
+      "API_PRIMARY_OWNER"
+    ]
   } ],
   "pages" : [ {
     "name" : "My Title",
@@ -23,7 +25,7 @@
     "security" : "API_KEY",
     "type" : "API",
     "status" : "PUBLISHED",
-    "apis" : [ "id-api" ],
+    "api" : "id-api",
     "order" : 0,
     "paths" : {
       "/" : [ {
@@ -69,8 +71,7 @@
               "pipelining": false,
               "maxConcurrentConnections": 100,
               "useCompression": true,
-              "followRedirects": false,
-              "encodeURI":false
+              "followRedirects": false
             }
           }
         ],
@@ -85,8 +86,7 @@
           "pipelining": false,
           "maxConcurrentConnections": 100,
           "useCompression": true,
-          "followRedirects": false,
-          "encodeURI":false
+          "followRedirects": false
         }
       }
     ]

@@ -222,7 +222,7 @@ public class UserEntity implements Indexable {
             } else {
                 displayName = lastname;
             }
-        } else if (email != null && !email.isEmpty()){
+        } else if (email != null && !email.isEmpty() && !"memory".equals(source)){
             displayName = email;
         } else {
             displayName = sourceId;

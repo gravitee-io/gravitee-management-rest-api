@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.gravitee.definition.jackson.datatype.GraviteeMapper;
+import io.gravitee.repository.management.model.Membership;
 import io.gravitee.rest.api.idp.api.identity.SearchableUser;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
@@ -30,6 +31,7 @@ import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiRepository;
 import io.gravitee.repository.management.api.MembershipRepository;
 import io.gravitee.repository.management.model.Api;
+import io.gravitee.rest.api.service.spring.ServiceConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -288,7 +290,7 @@ public class ApiService_CreateWithDefinitionTest {
 
     @Test
     public void shouldCreateImportApiWithOnlyDefinitionEnumLowerCase() throws IOException, TechnicalException {
-        URL url =  Resources.getResource("io/gravitee/management/service/import-api.definition_enum_lowercase.json");
+        URL url =  Resources.getResource("io/gravitee/rest/api/management/service/import-api.definition_enum_lowercase.json");
         String toBeImport = Resources.toString(url, Charsets.UTF_8);
         ApiEntity apiEntity = new ApiEntity();
         Api api = new Api();
@@ -296,25 +298,19 @@ public class ApiService_CreateWithDefinitionTest {
         apiEntity.setId(API_ID);
         when(apiRepository.findById(anyString())).thenReturn(Optional.empty());
         when(apiRepository.create(any())).thenReturn(api);
-        Membership po = new Membership("admin", API_ID, MembershipReferenceType.API);
-        po.setRoles(Collections.singletonMap(RoleScope.API.getId(), SystemRole.PRIMARY_OWNER.name()));
-        Membership owner = new Membership("user", API_ID, MembershipReferenceType.API);
-        owner.setRoles(Collections.singletonMap(RoleScope.API.getId(), "OWNER"));
         UserEntity admin = new UserEntity();
-        admin.setId(po.getUserId());
+        admin.setId("admin");
         admin.setSource(SOURCE);
-        admin.setSourceId(po.getReferenceId());
-        UserEntity user = new UserEntity();
-        user.setId(owner.getUserId());
-        user.setSource(SOURCE);
-        user.setSourceId(owner.getReferenceId());
+        admin.setSourceId(API_ID);
         when(userService.findById(admin.getId())).thenReturn(admin);
 
         apiService.createOrUpdateWithDefinition(null, toBeImport, "admin");
 
-        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class));
-        verify(membershipRepository, times(1)).create(po);
-        verify(apiRepository, never()).update(any());
+        verify(pageService, times(1)).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(membershipService, times(1)).addRoleToMemberOnReference(
+                new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
+                new MembershipService.MembershipMember("admin", null, MembershipMemberType.USER),
+                new MembershipService.MembershipRole(RoleScope.API, SystemRole.PRIMARY_OWNER.name()));        verify(apiRepository, never()).update(any());
         verify(apiRepository, times(1)).create(any());
     }
 
@@ -348,7 +344,7 @@ public class ApiService_CreateWithDefinitionTest {
 
     @Test
     public void shouldCreateImportApiWithMetadata() throws IOException, TechnicalException {
-        URL url =  Resources.getResource("io/gravitee/management/service/import-api.definition+metadata.json");
+        URL url =  Resources.getResource("io/gravitee/rest/api/management/service/import-api.definition+metadata.json");
         String toBeImport = Resources.toString(url, Charsets.UTF_8);
         ApiEntity apiEntity = new ApiEntity();
         Api api = new Api();
@@ -356,25 +352,20 @@ public class ApiService_CreateWithDefinitionTest {
         apiEntity.setId(API_ID);
         when(apiRepository.findById(anyString())).thenReturn(Optional.empty());
         when(apiRepository.create(any())).thenReturn(api);
-        Membership po = new Membership("admin", API_ID, MembershipReferenceType.API);
-        po.setRoles(Collections.singletonMap(RoleScope.API.getId(), SystemRole.PRIMARY_OWNER.name()));
-        Membership owner = new Membership("user", API_ID, MembershipReferenceType.API);
-        owner.setRoles(Collections.singletonMap(RoleScope.API.getId(), "OWNER"));
         UserEntity admin = new UserEntity();
-        admin.setId(po.getUserId());
+        admin.setId("admin");
         admin.setSource(SOURCE);
-        admin.setSourceId(po.getReferenceId());
-        UserEntity user = new UserEntity();
-        user.setId(owner.getUserId());
-        user.setSource(SOURCE);
-        user.setSourceId(owner.getReferenceId());
+        admin.setSourceId(API_ID);
         when(userService.findById(admin.getId())).thenReturn(admin);
 
         apiService.createOrUpdateWithDefinition(null, toBeImport, "admin");
 
         verify(apiMetadataService, times(1)).create(any(NewApiMetadataEntity.class));
         verify(apiMetadataService, times(2)).update(any(UpdateApiMetadataEntity.class));
-        verify(membershipRepository, times(1)).create(po);
+        verify(membershipService, times(1)).addRoleToMemberOnReference(
+                new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
+                new MembershipService.MembershipMember("admin", null, MembershipMemberType.USER),
+                new MembershipService.MembershipRole(RoleScope.API, SystemRole.PRIMARY_OWNER.name()));
         verify(apiRepository, never()).update(any());
         verify(apiRepository, times(1)).create(any());
         verify(genericNotificationConfigService, times(1)).create(any());

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.service;
+package io.gravitee.rest.api.service;
 
-import io.gravitee.management.model.MetadataFormat;
-import io.gravitee.management.model.PrimaryOwnerEntity;
-import io.gravitee.management.model.UserEntity;
-import io.gravitee.management.model.api.ApiEntity;
-import io.gravitee.management.service.exceptions.TechnicalManagementException;
-import io.gravitee.management.service.impl.MetadataServiceImpl;
+import io.gravitee.rest.api.model.MetadataFormat;
+import io.gravitee.rest.api.model.PrimaryOwnerEntity;
+import io.gravitee.rest.api.model.UserEntity;
+import io.gravitee.rest.api.model.api.ApiEntity;
+import io.gravitee.rest.api.service.MetadataService;
+import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
+import io.gravitee.rest.api.service.impl.MetadataServiceImpl;
 import org.junit.Test;
 
 /**

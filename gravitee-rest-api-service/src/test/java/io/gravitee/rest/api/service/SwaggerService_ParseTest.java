@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.service;
+package io.gravitee.rest.api.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.gravitee.common.http.MediaType;
-import io.gravitee.management.model.PageEntity;
-import io.gravitee.management.service.impl.SwaggerServiceImpl;
-import io.gravitee.management.service.swagger.SwaggerDescriptor;
+import io.gravitee.rest.api.model.PageEntity;
+import io.gravitee.rest.api.service.SwaggerService;
+import io.gravitee.rest.api.service.impl.SwaggerServiceImpl;
+import io.gravitee.rest.api.service.swagger.SwaggerDescriptor;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.core.util.Yaml;
 import org.junit.Before;
@@ -60,7 +61,7 @@ public class SwaggerService_ParseTest {
 
     @Test
     public void shouldParseSwaggerV1_json() throws IOException {
-        PageEntity pageEntity = getPage("io/gravitee/management/service/swagger-v1.json", MediaType.APPLICATION_JSON);
+        PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/swagger-v1.json", MediaType.APPLICATION_JSON);
 
         SwaggerDescriptor descriptor = swaggerService.parse(pageEntity.getContent());
 
@@ -71,7 +72,7 @@ public class SwaggerService_ParseTest {
 
     @Test
     public void shouldParseSwaggerV2_json() throws IOException {
-        PageEntity pageEntity = getPage("io/gravitee/management/service/swagger-v2.json", MediaType.APPLICATION_JSON);
+        PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/swagger-v2.json", MediaType.APPLICATION_JSON);
 
         SwaggerDescriptor descriptor = swaggerService.parse(pageEntity.getContent());
 
@@ -82,7 +83,7 @@ public class SwaggerService_ParseTest {
 
     @Test
     public void shouldParseSwaggerV2_yaml() throws IOException {
-        PageEntity pageEntity = getPage("io/gravitee/management/service/swagger-v2.yaml", MediaType.TEXT_PLAIN);
+        PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/swagger-v2.yaml", MediaType.TEXT_PLAIN);
 
         SwaggerDescriptor descriptor = swaggerService.parse(pageEntity.getContent());
 
@@ -93,7 +94,7 @@ public class SwaggerService_ParseTest {
 
     @Test
     public void shouldParseSwaggerV3_json() throws IOException {
-        PageEntity pageEntity = getPage("io/gravitee/management/service/openapi.json", MediaType.APPLICATION_JSON);
+        PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/openapi.json", MediaType.APPLICATION_JSON);
 
         SwaggerDescriptor descriptor = swaggerService.parse(pageEntity.getContent());
 
@@ -104,7 +105,7 @@ public class SwaggerService_ParseTest {
 
     @Test
     public void shouldParseSwaggerV3_yaml() throws IOException {
-        PageEntity pageEntity = getPage("io/gravitee/management/service/openapi.yaml", MediaType.TEXT_PLAIN);
+        PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/openapi.yaml", MediaType.TEXT_PLAIN);
 
         SwaggerDescriptor descriptor = swaggerService.parse(pageEntity.getContent());
 

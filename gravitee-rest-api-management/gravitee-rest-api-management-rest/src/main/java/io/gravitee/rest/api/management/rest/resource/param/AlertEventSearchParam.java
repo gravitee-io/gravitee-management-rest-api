@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.management.rest.resource.param;
+package io.gravitee.rest.api.management.rest.resource.param;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;

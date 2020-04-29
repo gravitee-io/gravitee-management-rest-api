@@ -20,11 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApplicationRepository;
-import io.gravitee.repository.management.model.Application;
-import io.gravitee.repository.management.model.ApplicationStatus;
-import io.gravitee.repository.management.model.ApplicationType;
-import io.gravitee.repository.management.model.GroupEvent;
+import io.gravitee.repository.management.api.MembershipRepository;
+import io.gravitee.repository.management.model.*;
 import io.gravitee.rest.api.model.*;
+import io.gravitee.rest.api.model.MembershipMemberType;
+import io.gravitee.rest.api.model.MembershipReferenceType;
 import io.gravitee.rest.api.model.application.ApplicationListItem;
 import io.gravitee.rest.api.model.application.ApplicationListItemSettings;
 import io.gravitee.rest.api.model.application.ApplicationSettings;
@@ -76,6 +76,9 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
     private UserService userService;
 
     @Autowired
+    private MembershipRepository membershipRepository;
+
+    @Autowired
     private MembershipService membershipService;
 
     @Autowired
@@ -113,7 +116,7 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
 
             if (applicationOptional.isPresent()) {
                 Application application = applicationOptional.get();
-                MemberEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(MembershipReferenceType.APPLICATION, application.getId());
+                MembershipEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(MembershipReferenceType.APPLICATION, application.getId());
                 if (primaryOwnerMemberEntity == null) {
                     if (!ApplicationStatus.ARCHIVED.equals(application.getStatus())) {
                         LOGGER.error("The Application {} doesn't have any primary owner.", applicationId);
@@ -121,7 +124,7 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
                     return convert(application, null);
                 }
 
-                return convert(application, userService.findById(primaryOwnerMemberEntity.getId()));
+                return convert(application, userService.findById(primaryOwnerMemberEntity.getMemberId()));
             }
 
             throw new ApplicationNotFoundException(applicationId);
@@ -142,15 +145,15 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
                     .map(MembershipEntity::getReferenceId)
                     .collect(Collectors.toSet());
             //find user groups
-            List<String> groupIds = groupService.findByUser(username)
-                    .stream()
-                    .map(GroupEntity::getId)
+            List<String> groupIds = membershipService
+                    .getMembershipsByMemberAndReference(MembershipMemberType.USER, username, MembershipReferenceType.GROUP).stream()
+                    .filter(m -> m.getRoleId() != null && roleService.findById(m.getRoleId()).getScope().equals(RoleScope.APPLICATION))
+                    .map(MembershipEntity::getReferenceId)
                     .collect(Collectors.toList());
+            
             appIds.addAll(
-                    //find applications where group is a member
-                    membershipService.getMembershipsByMembersAndReference(MembershipMemberType.GROUP, groupIds, MembershipReferenceType.APPLICATION)
-                        .stream()
-                        .map(MembershipEntity::getReferenceId)
+                    this.findByGroups(groupIds).stream()
+                        .map(ApplicationListItem::getId)
                         .collect(Collectors.toSet())
                     );
             
@@ -565,7 +568,7 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
             // remove notifications
             genericNotificationConfigService.deleteReference(NotificationReferenceType.APPLICATION, applicationId);
             // remove memberships
-            membershipRepository.deleteMembers(MembershipReferenceType.APPLICATION, applicationId);
+            membershipRepository.deleteMembers(io.gravitee.repository.management.model.MembershipReferenceType.APPLICATION, applicationId);
             // Audit
             auditService.createApplicationAuditLog(
                     application.getId(),
@@ -640,6 +643,7 @@ public class ApplicationServiceImpl extends AbstractService implements Applicati
                 item.setPrimaryOwner(applicationEntity.getPrimaryOwner());
                 item.setType(applicationEntity.getType());
                 item.setStatus(applicationEntity.getStatus());
+                item.setPicture(applicationEntity.getPicture());
 
                 ApplicationListItemSettings settings = new ApplicationListItemSettings();
                 if (applicationEntity.getSettings().getApp() != null) {

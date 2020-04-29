@@ -65,7 +65,6 @@ import org.springframework.stereotype.Component;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.xml.bind.DatatypeConverter;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -543,6 +542,7 @@ public class UserServiceImpl extends AbstractService implements UserService {
 
         return userEntity;
     }
+
     @Override
     public Map<String, Object> getTokenRegistrationParams(final UserEntity userEntity, final String portalUri,
                                                           final ACTION action) {
@@ -677,14 +677,19 @@ public class UserServiceImpl extends AbstractService implements UserService {
     }
 
     private void populatePrimaryOwnerFlag(final List<UserEntity> users) {
-        users.forEach(user -> {
-            final boolean apiPO = membershipService.findUserMembership(user.getId(), MembershipReferenceType.API)
-                    .stream().anyMatch(membership -> membership.getRoles() != null &&
-                            SystemRole.PRIMARY_OWNER.name().equals(membership.getRoles().get(RoleScope.API.getId())));
+        RoleEntity apiPORole = roleService.findByScopeAndName(RoleScope.API, SystemRole.PRIMARY_OWNER.name())
+                .orElseThrow(() -> new TechnicalManagementException("API System Role 'PRIMARY_OWNER' not found."));
+        RoleEntity applicationPORole = roleService.findByScopeAndName(RoleScope.APPLICATION, SystemRole.PRIMARY_OWNER.name())
+                .orElseThrow(() -> new TechnicalManagementException("API System Role 'PRIMARY_OWNER' not found."));
 
-            final boolean appPO = membershipService.findUserMembership(user.getId(), MembershipReferenceType.APPLICATION)
-                    .stream().anyMatch(membership -> membership.getRoles() != null &&
-                            SystemRole.PRIMARY_OWNER.name().equals(membership.getRoles().get(RoleScope.APPLICATION.getId())));
+        users.forEach(user -> {
+            final boolean apiPO = !membershipService.getMembershipsByMemberAndReferenceAndRole(
+                    MembershipMemberType.USER, user.getId(), MembershipReferenceType.API, apiPORole.getId())
+                    .isEmpty();
+            final boolean appPO = !membershipService.getMembershipsByMemberAndReferenceAndRole(
+                    MembershipMemberType.USER, user.getId(), MembershipReferenceType.APPLICATION, applicationPORole.getId())
+                    .isEmpty();
+
             user.setPrimaryOwner(apiPO || appPO);
         });
     }
@@ -793,19 +798,15 @@ public class UserServiceImpl extends AbstractService implements UserService {
             
     @Override
     public UserEntity resetPasswordFromSourceId(String sourceId, String resetPageUrl) {
-        try {
-            if (sourceId.startsWith("deleted")) {
-                throw new UserNotActiveException(sourceId);
-            }
-            UserEntity foundUser = this.findBySource(IDP_SOURCE_GRAVITEE, sourceId, false);
-            if ("ACTIVE".equals(foundUser.getStatus())) {
-                this.resetPassword(foundUser.getId(), resetPageUrl);
-                return foundUser;
-            } else {
-                throw new UserNotActiveException(foundUser.getSourceId());
-            }
-        } catch(UserNotFoundException ex) {
-            throw new UserNotFoundForPasswordResetException(sourceId);
+        if (sourceId.startsWith("deleted")) {
+            throw new UserNotActiveException(sourceId);
+        }
+        UserEntity foundUser = this.findBySource(IDP_SOURCE_GRAVITEE, sourceId, false);
+        if ("ACTIVE".equals(foundUser.getStatus())) {
+            this.resetPassword(foundUser.getId(), resetPageUrl);
+            return foundUser;
+        } else {
+            throw new UserNotActiveException(foundUser.getSourceId());
         }
     }
     

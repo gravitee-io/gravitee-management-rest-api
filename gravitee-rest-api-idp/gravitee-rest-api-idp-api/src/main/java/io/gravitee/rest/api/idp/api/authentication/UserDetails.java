@@ -126,10 +126,12 @@ public class UserDetails extends User implements org.springframework.security.co
             } else {
                 displayName = lastname;
             }
-        } else if (email != null && !email.isEmpty()){
-            displayName = email;
         } else {
-            displayName = sourceId;
+            if (email != null && !email.isEmpty() && !"memory".equals(source)){
+                displayName = email;
+            } else {
+                displayName = sourceId;
+            }
         }
 
         return displayName;

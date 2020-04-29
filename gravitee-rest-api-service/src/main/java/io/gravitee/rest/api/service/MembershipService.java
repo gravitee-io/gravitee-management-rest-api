@@ -51,7 +51,7 @@ public interface MembershipService {
     Set<MembershipEntity>   getMembershipsByReference                   (MembershipReferenceType referenceType, String referenceId);
     Set<MembershipEntity>   getMembershipsByReferenceAndRole            (MembershipReferenceType referenceType, String referenceId, String role);
     Set<MembershipEntity>   getMembershipsByReferencesAndRole           (MembershipReferenceType referenceType, List<String> referenceIds, String role);
-    MembershipEntity            getPrimaryOwner                             (MembershipReferenceType referenceType, String referenceId);
+    MembershipEntity        getPrimaryOwner                             (MembershipReferenceType referenceType, String referenceId);
     Set<RoleEntity>         getRoles                                    (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId);
     MemberEntity            getUserMember                               (MembershipReferenceType referenceType, String referenceId, String userId);
     Map<String, char[]>     getUserMemberPermissions                    (MembershipReferenceType referenceType, String referenceId, String userId);
@@ -63,6 +63,7 @@ public interface MembershipService {
     void                    removeMemberMemberships                     (MembershipMemberType memberType, String memberId);
     void                    transferApiOwnership                        (String apiId, MembershipMember member, List<RoleEntity> newPrimaryOwnerRoles);
     void                    transferApplicationOwnership                (String applicationId, MembershipMember member, List<RoleEntity> newPrimaryOwnerRoles);
+    MemberEntity            updateRoleToMemberOnReference               (MembershipReference reference, MembershipMember member, MembershipRole role, String source);
     MemberEntity            updateRoleToMemberOnReference               (MembershipReference reference, MembershipMember member, MembershipRole role);
 
     class MembershipReference {
@@ -181,13 +182,13 @@ public interface MembershipService {
 
     class Membership {
         final MembershipReference reference;
-        final MembershipUser user;
+        final MembershipMember member;
         final MembershipRole role;
         String source;
 
-        public Membership(MembershipReference reference, MembershipUser user, MembershipRole role) {
+        public Membership(MembershipReference reference, MembershipMember member, MembershipRole role) {
             this.reference = reference;
-            this.user = user;
+            this.member = member;
             this.role = role;
         }
 
@@ -195,8 +196,8 @@ public interface MembershipService {
             return reference;
         }
 
-        public MembershipUser getUser() {
-            return user;
+        public MembershipMember getMember() {
+            return member;
         }
 
         public MembershipRole getRole() {

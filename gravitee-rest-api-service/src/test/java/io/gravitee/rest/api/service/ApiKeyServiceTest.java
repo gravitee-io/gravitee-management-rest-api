@@ -23,6 +23,7 @@ import io.gravitee.rest.api.service.impl.ApiKeyServiceImpl;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiKeyRepository;
 import io.gravitee.repository.management.model.ApiKey;
+import io.gravitee.rest.api.service.notification.ApiHook;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -312,7 +313,7 @@ public class ApiKeyServiceTest {
         //notification mocks
         when(applicationService.findById(any())).thenReturn(mock(ApplicationEntity.class));
         PlanEntity mockedPlan = mock(PlanEntity.class);
-        when(mockedPlan.getApis()).thenReturn(Collections.singleton("api"));
+        when(mockedPlan.getApi()).thenReturn("api");
         when(planService.findById(any())).thenReturn(mockedPlan);
         when(apiService.findByIdForTemplates(any())).thenReturn(mock(ApiModelEntity.class));
 

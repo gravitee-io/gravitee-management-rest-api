@@ -15,8 +15,8 @@
  */
 package io.gravitee.rest.api.management.rest.filter;
 
-import io.gravitee.management.service.ParameterService;
-import io.gravitee.management.service.exceptions.MaintenanceModeException;
+import io.gravitee.rest.api.service.ParameterService;
+import io.gravitee.rest.api.service.exceptions.MaintenanceModeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 
-import static io.gravitee.management.model.parameters.Key.MAINTENANCE_MODE_ENABLED;
+import static io.gravitee.rest.api.model.parameters.Key.MAINTENANCE_MODE_ENABLED;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)

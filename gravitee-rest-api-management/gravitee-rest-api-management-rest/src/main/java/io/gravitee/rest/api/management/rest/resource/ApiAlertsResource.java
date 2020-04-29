@@ -15,7 +15,10 @@
  */
 package io.gravitee.rest.api.management.rest.resource;
 
+import io.gravitee.common.data.domain.Page;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.rest.api.management.rest.resource.param.AlertEventSearchParam;
+import io.gravitee.rest.api.model.AlertEventQuery;
 import io.gravitee.rest.api.model.alert.*;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
@@ -113,7 +116,7 @@ public class ApiAlertsResource extends AbstractResource {
     @ApiOperation(value = "Get the list of events for an alert")
     @Produces(MediaType.APPLICATION_JSON)
     @Permissions({
-            @Permission(value = RolePermission.MANAGEMENT_ALERT, acls = READ)
+            @Permission(value = RolePermission.ENVIRONMENT_ALERT, acls = READ)
     })
     public Page<AlertEventEntity> listEvents(@PathParam("alert") String alert, @BeanParam AlertEventSearchParam param) {
         return alertService.findEvents(
