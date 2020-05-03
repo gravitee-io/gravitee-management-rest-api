@@ -599,7 +599,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             throw new TechnicalException("The API " + api.getId() + " doesn't have any primary owner.");
         }
 
-        return userService.findById(primaryOwnerMemberEntity.getId());
+        return userService.findById(primaryOwnerMemberEntity.getMemberId());
     }
 
     private void calculateEntrypoints(ApiEntity api) {
