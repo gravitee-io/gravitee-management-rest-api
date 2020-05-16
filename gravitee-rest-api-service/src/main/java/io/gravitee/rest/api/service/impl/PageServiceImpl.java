@@ -16,6 +16,7 @@
 package io.gravitee.rest.api.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
@@ -49,7 +50,10 @@ import io.gravitee.rest.api.service.impl.swagger.transformer.entrypoints.Entrypo
 import io.gravitee.rest.api.service.impl.swagger.transformer.entrypoints.EntrypointsSwaggerV2Transformer;
 import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationOAITransformer;
 import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationSwaggerV2Transformer;
+import io.gravitee.rest.api.service.sanitizer.HtmlSanitizer;
+import io.gravitee.rest.api.service.sanitizer.UrlSanitizerUtils;
 import io.gravitee.rest.api.service.search.SearchEngineService;
+import io.gravitee.rest.api.service.spring.ImportConfiguration;
 import io.gravitee.rest.api.service.swagger.OAIDescriptor;
 import io.gravitee.rest.api.service.swagger.SwaggerDescriptor;
 import io.gravitee.rest.api.service.swagger.SwaggerV2Descriptor;
@@ -58,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -92,6 +97,9 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
 	private static final String SENSITIVE_DATA_REPLACEMENT = "********";
 
+    @Value("${documentation.markdown.sanitize:false}")
+    private boolean markdownSanitize;
+
 	@Autowired
 	private PageRepository pageRepository;
 	@Autowired
@@ -119,6 +127,9 @@ public class PageServiceImpl extends TransactionalService implements PageService
 
 	@Autowired
 	private GraviteeDescriptorService graviteeDescriptorService;
+
+	@Autowired
+	private ImportConfiguration importConfiguration;
 
 	private enum PageSituation {
 		ROOT, IN_ROOT, IN_FOLDER_IN_ROOT, IN_FOLDER_IN_FOLDER, SYSTEM_FOLDER, IN_SYSTEM_FOLDER, IN_FOLDER_IN_SYSTEM_FOLDER, TRANSLATION;
@@ -235,9 +246,11 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			transformWithTemplate(pageEntity, apiId);
 		}
 
-		// If swagger page, let's try to apply transformations
-		if (PageType.SWAGGER.name().equalsIgnoreCase(pageEntity.getType())) {
-			SwaggerDescriptor<?> descriptor = swaggerService.parse(pageEntity.getContent());
+        if (markdownSanitize && PageType.MARKDOWN.name().equalsIgnoreCase(pageEntity.getType())) {
+            pageEntity.setContent(HtmlSanitizer.sanitize(pageEntity.getContent()));
+        }else if (PageType.SWAGGER.name().equalsIgnoreCase(pageEntity.getType())) {
+            // If swagger page, let's try to apply transformations
+            SwaggerDescriptor<?> descriptor = swaggerService.parse(pageEntity.getContent());
 
 			if (descriptor.getVersion() == SwaggerDescriptor.Version.SWAGGER_V1 || descriptor.getVersion() == SwaggerDescriptor.Version.SWAGGER_V2) {
 				Collection<SwaggerTransformer<SwaggerV2Descriptor>> transformers = new ArrayList<>();
@@ -483,7 +496,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			page.setCreatedAt(new Date());
 			page.setUpdatedAt(page.getCreatedAt());
 
-			Page createdPage = pageRepository.create(page);
+            Page createdPage = validateContentAndCreate(page);
 
 			//only one homepage is allowed
 			onlyOneHomepage(page);
@@ -696,7 +709,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 				reorderAndSavePages(page);
 				return null;
 			} else {
-				Page updatedPage = pageRepository.update(page);
+                Page updatedPage = validateContentAndUpdate(page);
 
 				if (pageToUpdate.isPublished() != page.isPublished()
 						&& !PageType.LINK.name().equalsIgnoreCase(pageType)
@@ -855,6 +868,9 @@ public class PageServiceImpl extends TransactionalService implements PageService
 	}
 
 	private void fetchPage(final Page page) throws FetcherException {
+
+		validateSafeSource(page);
+
 		Fetcher fetcher = this.getFetcher(page.getSource());
 		if (fetcher != null) {
 			try {
@@ -1192,11 +1208,11 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			page.setReferenceId(apiId);
 			if (searchResult.isEmpty()) {
 				page.setId(RandomString.generate());
-				return pageRepository.create(page);
+                return validateContentAndCreate(page);
 			} else {
 				page.setId(searchResult.get(0).getId());
 				mergeSensitiveData(this.getFetcher(searchResult.get(0).getSource()).getConfiguration(), page);
-				return pageRepository.update(page);
+				return validateContentAndUpdate(page);
 			}
 		} catch (TechnicalException | FetcherException ex) {
 			logger.error("An error occurs while trying to save the configuration", ex);
@@ -1380,7 +1396,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 			page.setUpdatedAt(new Date());
 			page.setLastContributor(contributor);
 
-			Page updatedPage = pageRepository.update(page);
+			Page updatedPage = validateContentAndUpdate(page);
 			createAuditLog(page.getReferenceId(), PAGE_UPDATED, page.getUpdatedAt(), page, page);
 			return convert(updatedPage);
 		} catch (TechnicalException ex) {
@@ -1502,7 +1518,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		pageEntity.setExcludedGroups(page.getExcludedGroups());
 		pageEntity.setParentId("".equals(page.getParentId()) ? null : page.getParentId());
 		pageEntity.setMetadata(page.getMetadata());
-		
+
 		return pageEntity;
 	}
 
@@ -1688,33 +1704,83 @@ public class PageServiceImpl extends TransactionalService implements PageService
 		this.applicationContext = applicationContext;
 	}
 
-	private void createAuditLog(String apiId, Audit.AuditEvent event, Date createdAt, Page oldValue, Page newValue) {
-		String pageId = oldValue != null ? oldValue.getId() : newValue.getId();
-		if (apiId == null ) {
-			auditService.createPortalAuditLog(
-					Collections.singletonMap(PAGE, pageId),
-					event,
-					createdAt,
-					oldValue,
-					newValue
-			);
-		} else {
-			auditService.createApiAuditLog(
-					apiId,
-					Collections.singletonMap(PAGE, pageId),
-					event,
-					createdAt,
-					oldValue,
-					newValue
-			);
-		}
+	private Page validateContentAndCreate(Page page) throws TechnicalException {
+
+        validateSafeContent(page);
+		return pageRepository.create(page);
 	}
 
-	private PageCriteria queryToCriteria(PageQuery query) {
-		final PageCriteria.Builder builder = new PageCriteria.Builder();
-		if (query != null) {
-			builder.homepage(query.getHomepage());
-			if(query.getApi() != null) {
+    private Page validateContentAndUpdate(Page page) throws TechnicalException {
+
+        validateSafeContent(page);
+        return pageRepository.update(page);
+    }
+
+    private void validateSafeContent(Page page) {
+
+        if (markdownSanitize && PageType.MARKDOWN.name().equals(page.getType())) {
+			HtmlSanitizer.SanitizeInfos sanitizeInfos = HtmlSanitizer.isSafe(page.getContent());
+
+			if(!sanitizeInfos.isSafe()) {
+				throw new PageContentUnsafeException(sanitizeInfos.getRejectedMessage());
+			}
+        }
+    }
+
+    private void validateSafeSource(Page page) {
+
+		if (importConfiguration.isAllowImportFromPrivate() || page.getSource() == null || page.getSource().getConfiguration() == null) {
+			return;
+		}
+
+		PageSource source = page.getSource();
+		Map<String, String> map;
+
+		try {
+			map = new ObjectMapper().readValue(source.getConfiguration(), new TypeReference<Map<String, String>>() {
+			});
+		} catch (IOException e) {
+			throw new InvalidDataException("Source is invalid", e);
+		}
+
+		Optional<String> urlOpt = map.entrySet().stream().filter(e -> e.getKey().equals("repository") || e.getKey().matches(".*[uU]rl")).map(Map.Entry::getValue).findFirst();
+
+		if (!urlOpt.isPresent()) {
+			// There is no source to validate.
+			return;
+		}
+
+		// Validate the url is allowed.
+		UrlSanitizerUtils.checkAllowed(urlOpt.get(), importConfiguration.getImportWhitelist(), false);
+	}
+
+    private void createAuditLog(String apiId, Audit.AuditEvent event, Date createdAt, Page oldValue, Page newValue) {
+        String pageId = oldValue != null ? oldValue.getId() : newValue.getId();
+        if (apiId == null) {
+            auditService.createPortalAuditLog(
+                    Collections.singletonMap(PAGE, pageId),
+                    event,
+                    createdAt,
+                    oldValue,
+                    newValue
+            );
+        } else {
+            auditService.createApiAuditLog(
+                    apiId,
+                    Collections.singletonMap(PAGE, pageId),
+                    event,
+                    createdAt,
+                    oldValue,
+                    newValue
+            );
+        }
+    }
+
+    private PageCriteria queryToCriteria(PageQuery query) {
+        final PageCriteria.Builder builder = new PageCriteria.Builder();
+        if (query != null) {
+            builder.homepage(query.getHomepage());
+            if(query.getApi() != null) {
     			builder.referenceId(query.getApi());
     			builder.referenceType(PageReferenceType.API.name());
 			} else {
@@ -1735,17 +1801,17 @@ public class PageServiceImpl extends TransactionalService implements PageService
     @Override
     public Map<SystemFolderType, String> initialize(String environmentId) {
         Map<SystemFolderType, String> result = new HashMap<>();
-        
+
         result.put(SystemFolderType.HEADER,
                 createSystemFolder(null, SystemFolderType.HEADER, 1, environmentId).getId());
         result.put(SystemFolderType.FOOTER,
                 createSystemFolder(null, SystemFolderType.FOOTER, 2, environmentId).getId());
         result.put(SystemFolderType.SUBFOOTER,
                 createSystemFolder(null, SystemFolderType.SUBFOOTER, 3, environmentId).getId());
-        
+
         return result;
     }
-	
+
     @Override
     public PageEntity createSystemFolder(String apiId, SystemFolderType systemFolderType, int order, String environmentId) {
         NewPageEntity newSysFolder = new NewPageEntity();

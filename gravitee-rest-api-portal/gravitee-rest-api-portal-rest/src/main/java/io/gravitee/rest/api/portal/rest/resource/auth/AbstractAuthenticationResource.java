@@ -15,7 +15,8 @@
  */
 package io.gravitee.rest.api.portal.rest.resource.auth;
 
-import com.auth0.jwt.JWTSigner;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.rest.api.idp.api.authentication.UserDetails;
@@ -25,7 +26,7 @@ import io.gravitee.rest.api.model.RoleEntity;
 import io.gravitee.rest.api.model.UserEntity;
 import io.gravitee.rest.api.portal.rest.model.Token;
 import io.gravitee.rest.api.portal.rest.model.Token.TokenTypeEnum;
-import io.gravitee.rest.api.security.cookies.JWTCookieGenerator;
+import io.gravitee.rest.api.security.cookies.CookieGenerator;
 import io.gravitee.rest.api.service.MembershipService;
 import io.gravitee.rest.api.service.UserService;
 import io.gravitee.rest.api.service.common.GraviteeContext;
@@ -41,12 +42,12 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 
 import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_EXPIRE_AFTER;
+import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_ISSUER;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -62,7 +63,7 @@ abstract class AbstractAuthenticationResource {
     @Autowired
     protected MembershipService membershipService;
     @Autowired
-    protected JWTCookieGenerator jwtCookieGenerator;
+    protected CookieGenerator cookieGenerator;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -108,21 +109,22 @@ abstract class AbstractAuthenticationResource {
         }
 
         // JWT signer
-        final Map<String, Object> claims = new HashMap<>();
+        Algorithm algorithm = Algorithm.HMAC256(environment.getProperty("jwt.secret"));
 
-        claims.put(JWTHelper.Claims.ISSUER, environment.getProperty("jwt.issuer", JWTHelper.DefaultValues.DEFAULT_JWT_ISSUER));
-        claims.put(JWTHelper.Claims.SUBJECT, user.getId());
-        claims.put(JWTHelper.Claims.PERMISSIONS, authorities);
-        claims.put(JWTHelper.Claims.EMAIL, user.getEmail());
-        claims.put(JWTHelper.Claims.FIRSTNAME, user.getFirstname());
-        claims.put(JWTHelper.Claims.LASTNAME, user.getLastname());
+        Date issueAt = new Date();
+        Instant expireAt = issueAt.toInstant().plus(Duration.ofSeconds(environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER)));
 
-        final JWTSigner.Options options = new JWTSigner.Options();
-        options.setExpirySeconds(environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
-        options.setIssuedAt(true);
-        options.setJwtId(true);
+        final String sign = JWT.create()
+                .withIssuer(environment.getProperty("jwt.issuer", DEFAULT_JWT_ISSUER))
+                .withIssuedAt(issueAt)
+                .withExpiresAt(Date.from(expireAt))
+                .withSubject(user.getId())
+                .withClaim(JWTHelper.Claims.PERMISSIONS, new ArrayList<>(authorities))
+                .withClaim(JWTHelper.Claims.EMAIL, user.getEmail())
+                .withClaim(JWTHelper.Claims.FIRSTNAME, user.getFirstname())
+                .withClaim(JWTHelper.Claims.LASTNAME, user.getLastname())
+                .sign(algorithm);
 
-        final String sign = new JWTSigner(environment.getProperty("jwt.secret")).sign(claims, options);
         final Token tokenEntity = new Token();
         tokenEntity.setTokenType(TokenTypeEnum.BEARER);
         tokenEntity.setToken(sign);
@@ -131,7 +133,7 @@ abstract class AbstractAuthenticationResource {
             tokenEntity.setState(state);
         }
         
-        final Cookie bearerCookie = jwtCookieGenerator.generate("Bearer%20" + sign);
+        final Cookie bearerCookie = cookieGenerator.generate("Bearer%20" + sign);
         servletResponse.addCookie(bearerCookie);
 
         return Response

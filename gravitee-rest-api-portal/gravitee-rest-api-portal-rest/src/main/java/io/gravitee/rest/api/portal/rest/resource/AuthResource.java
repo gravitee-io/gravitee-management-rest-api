@@ -15,14 +15,14 @@
  */
 package io.gravitee.rest.api.portal.rest.resource;
 
+import static io.gravitee.rest.api.service.common.JWTHelper.ACTION.USER_REGISTRATION;
 import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_EXPIRE_AFTER;
 import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_ISSUER;
 import static javax.ws.rs.core.Response.ok;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +33,9 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import io.gravitee.rest.api.security.cookies.CookieGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.security.core.Authentication;
@@ -40,7 +43,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.auth0.jwt.JWTSigner;
 
 import io.gravitee.common.http.MediaType;
 import io.gravitee.rest.api.idp.api.authentication.UserDetails;
@@ -50,7 +52,6 @@ import io.gravitee.rest.api.model.RoleEntity;
 import io.gravitee.rest.api.portal.rest.model.Token;
 import io.gravitee.rest.api.portal.rest.model.Token.TokenTypeEnum;
 import io.gravitee.rest.api.portal.rest.resource.auth.OAuth2AuthenticationResource;
-import io.gravitee.rest.api.security.cookies.JWTCookieGenerator;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.common.JWTHelper.Claims;
 
@@ -68,7 +69,7 @@ public class AuthResource extends AbstractResource {
     @Autowired
     private ConfigurableEnvironment environment;
     @Autowired
-    private JWTCookieGenerator jwtCookieGenerator;
+    private CookieGenerator cookieGenerator;
 
     @POST
     @Path("/login")
@@ -77,15 +78,12 @@ public class AuthResource extends AbstractResource {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
             // JWT signer
-            final Map<String, Object> claims = new HashMap<>();
-            claims.put(Claims.ISSUER, environment.getProperty("jwt.issuer", DEFAULT_JWT_ISSUER));
-
             final UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
             // Manage authorities, initialize it with dynamic permissions from the IDP
             Set<GrantedAuthority> authorities = new HashSet<>(userDetails.getAuthorities());
 
-         // We must also load permissions from repository for configured environment role
+            // We must also load permissions from repository for configured environment role
             Set<RoleEntity> userRoles = membershipService.getRoles(
                     MembershipReferenceType.ENVIRONMENT,
                     GraviteeContext.getCurrentEnvironment(),
@@ -95,23 +93,27 @@ public class AuthResource extends AbstractResource {
                 userRoles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getScope().toString() + ':' + role.getName())));
             }
 
-            claims.put(Claims.PERMISSIONS, authorities);
-            claims.put(Claims.SUBJECT, userDetails.getUsername());
-            claims.put(Claims.EMAIL, userDetails.getEmail());
-            claims.put(Claims.FIRSTNAME, userDetails.getFirstname());
-            claims.put(Claims.LASTNAME, userDetails.getLastname());
+            Algorithm algorithm = Algorithm.HMAC256(environment.getProperty("jwt.secret"));
 
-            final JWTSigner.Options options = new JWTSigner.Options();
-            options.setExpirySeconds(environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER));
-            options.setIssuedAt(true);
-            options.setJwtId(true);
+            Date issueAt = new Date();
+            Instant expireAt = issueAt.toInstant().plus(Duration.ofSeconds(environment.getProperty("jwt.expire-after", Integer.class, DEFAULT_JWT_EXPIRE_AFTER)));
 
-            final String sign = new JWTSigner(environment.getProperty("jwt.secret")).sign(claims, options);
+            final String sign = JWT.create()
+                    .withIssuer(environment.getProperty("jwt.issuer", DEFAULT_JWT_ISSUER))
+                    .withIssuedAt(issueAt)
+                    .withExpiresAt(Date.from(expireAt))
+                    .withSubject(userDetails.getUsername())
+                    .withClaim(Claims.PERMISSIONS, new ArrayList<>(authorities))
+                    .withClaim(Claims.EMAIL, userDetails.getEmail())
+                    .withClaim(Claims.FIRSTNAME, userDetails.getFirstname())
+                    .withClaim(Claims.LASTNAME, userDetails.getLastname())
+                    .sign(algorithm);
+
             final Token tokenEntity = new Token();
             tokenEntity.setTokenType(TokenTypeEnum.BEARER);
             tokenEntity.setToken(sign);
 
-            final Cookie bearerCookie = jwtCookieGenerator.generate("Bearer%20" + sign);
+            final Cookie bearerCookie = cookieGenerator.generate("Bearer%20" + sign);
             servletResponse.addCookie(bearerCookie);
 
             return ok(tokenEntity).build();
@@ -122,7 +124,7 @@ public class AuthResource extends AbstractResource {
     @POST
     @Path("/logout")
     public Response logout() {
-        response.addCookie(jwtCookieGenerator.generate(null));
+        response.addCookie(cookieGenerator.generate(null));
         return Response.ok().build();
     }
     
