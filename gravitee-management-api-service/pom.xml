@@ -30,7 +30,7 @@
 	<parent>
 		<groupId>io.gravitee.management</groupId>
 		<artifactId>gravitee-management-api</artifactId>
-		<version>1.25.26</version>
+		<version>1.25.27-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>gravitee-management-api-service</artifactId>
