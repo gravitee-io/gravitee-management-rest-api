@@ -32,15 +32,15 @@ import io.gravitee.repository.management.api.ApiQualityRuleRepository;
 import io.gravitee.repository.management.api.ApiRepository;
 import io.gravitee.repository.management.api.search.ApiCriteria;
 import io.gravitee.repository.management.api.search.ApiFieldExclusionFilter;
-import io.gravitee.repository.management.model.*;
 import io.gravitee.repository.management.model.Api;
 import io.gravitee.repository.management.model.ApiLifecycleState;
 import io.gravitee.repository.management.model.Visibility;
-import io.gravitee.rest.api.model.*;
+import io.gravitee.repository.management.model.*;
 import io.gravitee.rest.api.model.EventType;
 import io.gravitee.rest.api.model.MembershipMemberType;
 import io.gravitee.rest.api.model.MembershipReferenceType;
 import io.gravitee.rest.api.model.MetadataFormat;
+import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.alert.AlertReferenceType;
 import io.gravitee.rest.api.model.alert.AlertTriggerEntity;
 import io.gravitee.rest.api.model.api.*;
@@ -179,6 +179,8 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
     private ApplicationService applicationService;
     @Autowired
     private ImportConfiguration importConfiguration;
+    @Autowired
+    private PolicyService policyService;
 
     private static final Pattern LOGGING_MAX_DURATION_PATTERN = Pattern.compile("(?<before>.*)\\#request.timestamp\\s*\\<\\=?\\s*(?<timestamp>\\d*)l(?<after>.*)");
     private static final String LOGGING_MAX_DURATION_CONDITION = "#request.timestamp <= %dl";
@@ -840,6 +842,9 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             // check if there is regex errors in plaintext fields
             validateRegexfields(updateApiEntity);
 
+            // check policy configurations.
+            checkPolicyConfigurations(updateApiEntity);
+
             final ApiEntity apiToCheck = convert(optApiToUpdate.get());
 
             // if user changes sharding tags, then check if he is allowed to do it
@@ -953,6 +958,15 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 }
             }
         }
+    }
+
+    private void checkPolicyConfigurations(final UpdateApiEntity updateApiEntity) {
+
+        updateApiEntity.getPaths().forEach((s, path) ->
+                path.getRules().stream()
+                        .filter(Rule::isEnabled)
+                        .map(Rule::getPolicy)
+                        .forEach(policy -> policyService.validatePolicyConfiguration(policy)));
     }
 
     private void validateRegexfields(final UpdateApiEntity updateApiEntity) {
