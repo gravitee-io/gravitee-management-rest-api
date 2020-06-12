@@ -15,21 +15,6 @@
  */
 package io.gravitee.rest.api.portal.rest.resource;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static io.gravitee.rest.api.model.permissions.RolePermission.API_PLAN;
-import static io.gravitee.rest.api.model.permissions.RolePermissionAction.READ;
-
-import javax.inject.Inject;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-
 import io.gravitee.common.http.MediaType;
 import io.gravitee.rest.api.model.PlanEntity;
 import io.gravitee.rest.api.model.PlanStatus;
@@ -41,7 +26,21 @@ import io.gravitee.rest.api.portal.rest.resource.param.PaginationParam;
 import io.gravitee.rest.api.service.GroupService;
 import io.gravitee.rest.api.service.PlanService;
 import io.gravitee.rest.api.service.exceptions.ApiNotFoundException;
-import io.gravitee.rest.api.service.exceptions.ForbiddenAccessException;
+
+import javax.inject.Inject;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static io.gravitee.rest.api.model.permissions.RolePermission.API_PLAN;
+import static io.gravitee.rest.api.model.permissions.RolePermissionAction.READ;
+import static java.util.Collections.emptyList;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
@@ -79,9 +78,9 @@ public class ApiPlansResource extends AbstractResource {
                         .collect(Collectors.toList());
                 
                 return createListResponse(plans, paginationParam);
+            } else {
+                return createListResponse(emptyList(), paginationParam);
             }
-            throw new ForbiddenAccessException();
-
         }
         throw new ApiNotFoundException(apiId);
     }
