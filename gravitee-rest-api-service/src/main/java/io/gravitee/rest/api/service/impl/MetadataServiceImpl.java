@@ -108,7 +108,7 @@ public class MetadataServiceImpl extends TransactionalService implements Metadat
             metadata.setUpdatedAt(now);
             metadataRepository.create(metadata);
             // Audit
-            auditService.createPortalAuditLog(
+            auditService.createEnvironmentAuditLog(
                     singletonMap(METADATA, metadata.getKey()),
                     METADATA_CREATED,
                     metadata.getCreatedAt(),
@@ -140,7 +140,7 @@ public class MetadataServiceImpl extends TransactionalService implements Metadat
             metadata.setUpdatedAt(now);
             metadataRepository.update(metadata);
             // Audit
-            auditService.createPortalAuditLog(
+            auditService.createEnvironmentAuditLog(
                     singletonMap(METADATA, metadata.getKey()),
                     METADATA_UPDATED,
                     metadata.getCreatedAt(),
@@ -160,7 +160,7 @@ public class MetadataServiceImpl extends TransactionalService implements Metadat
             if (optMetadata.isPresent()) {
                 metadataRepository.delete(key, DEFAULT_REFERENCE_ID, MetadataReferenceType.DEFAULT);
                 // Audit
-                auditService.createPortalAuditLog(
+                auditService.createEnvironmentAuditLog(
                         singletonMap(METADATA, key),
                         METADATA_DELETED,
                         new Date(),
@@ -181,7 +181,7 @@ public class MetadataServiceImpl extends TransactionalService implements Metadat
                             null);
                 }
             }
-        } catch(TechnicalException ex){
+        } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to delete metadata {}", key, ex);
             throw new TechnicalManagementException("An error occurs while trying to delete metadata " + key, ex);
         }
