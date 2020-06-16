@@ -20,10 +20,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.UserRepository;
 import io.gravitee.repository.management.model.User;
-import io.gravitee.repository.management.model.UserReferenceType;
 import io.gravitee.repository.management.model.UserStatus;
 import io.gravitee.rest.api.model.*;
-import io.gravitee.rest.api.model.MembershipMemberType;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.application.ApplicationListItem;
 import io.gravitee.rest.api.model.configuration.identity.GroupMappingEntity;
@@ -76,10 +74,11 @@ public class UserServiceTest {
     private static final String FIRST_NAME = "The";
     private static final String LAST_NAME = "User";
     private static final String PASSWORD = "gh2gyf8!zjfnz";
-    private static final String JWT_SECRET = "VERYSECURE";;
+    private static final String JWT_SECRET = "VERYSECURE";
+    ;
     private static final String ORGANIZATION = "DEFAULT";
-    private static final UserReferenceType USER_REFERENCE_TYPE = UserReferenceType.ORGANIZATION;
     private static final Set<UserRoleEntity> ROLES = Collections.singleton(new UserRoleEntity());
+
     static {
         UserRoleEntity r = ROLES.iterator().next();
         r.setScope(RoleScope.ENVIRONMENT);
@@ -135,6 +134,8 @@ public class UserServiceTest {
     private OrganizationService organizationService;
     @Mock
     private TokenService tokenService;
+    @Mock
+    private EnvironmentService environmentService;
 
     @Test
     public void shouldFindByUsername() throws TechnicalException {
@@ -143,7 +144,7 @@ public class UserServiceTest {
         when(user.getFirstname()).thenReturn(FIRST_NAME);
         when(user.getLastname()).thenReturn(LAST_NAME);
         when(user.getPassword()).thenReturn(PASSWORD);
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(of(user));
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION)).thenReturn(of(user));
 
         final UserEntity userEntity = userService.findBySource(USER_SOURCE, USER_NAME, false);
 
@@ -157,14 +158,14 @@ public class UserServiceTest {
 
     @Test(expected = UserNotFoundException.class)
     public void shouldNotFindByUsernameBecauseNotExists() throws TechnicalException {
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.empty());
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION)).thenReturn(Optional.empty());
 
         userService.findBySource(USER_SOURCE, USER_NAME, false);
     }
 
     @Test(expected = TechnicalManagementException.class)
     public void shouldNotFindByUsernameBecauseTechnicalException() throws TechnicalException {
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION, USER_REFERENCE_TYPE)).thenThrow(TechnicalException.class);
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION)).thenThrow(TechnicalException.class);
 
         userService.findBySource(USER_SOURCE, USER_NAME, false);
     }
@@ -177,7 +178,7 @@ public class UserServiceTest {
         when(newUser.getSource()).thenReturn(USER_SOURCE);
         when(newUser.getSourceId()).thenReturn(USER_NAME);
 
-        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.empty());
+        when(userRepository.findBySource(USER_SOURCE, USER_NAME, ORGANIZATION)).thenReturn(Optional.empty());
 
         when(user.getId()).thenReturn(USER_NAME);
         when(user.getEmail()).thenReturn(EMAIL);
@@ -203,19 +204,20 @@ public class UserServiceTest {
                 "DEFAULT",
                 MembershipMemberType.USER,
                 user.getId())).thenReturn(new HashSet<>(Arrays.asList(roleOrg)));
-        
+
         when(organizationService.findById(ORGANIZATION)).thenReturn(new OrganizationEntity());
+        mockDefaultEnvironment();
 
         final UserEntity createdUserEntity = userService.create(newUser, false);
 
         verify(userRepository).create(argThat(userToCreate -> USER_NAME.equals(userToCreate.getSourceId()) &&
-            USER_SOURCE.equals(userToCreate.getSource()) &&
-            EMAIL.equals(userToCreate.getEmail()) &&
-            FIRST_NAME.equals(userToCreate.getFirstname()) &&
-            LAST_NAME.equals(userToCreate.getLastname()) &&
-            userToCreate.getCreatedAt() != null &&
-            userToCreate.getUpdatedAt() != null &&
-            userToCreate.getCreatedAt().equals(userToCreate.getUpdatedAt())));
+                USER_SOURCE.equals(userToCreate.getSource()) &&
+                EMAIL.equals(userToCreate.getEmail()) &&
+                FIRST_NAME.equals(userToCreate.getFirstname()) &&
+                LAST_NAME.equals(userToCreate.getLastname()) &&
+                userToCreate.getCreatedAt() != null &&
+                userToCreate.getUpdatedAt() != null &&
+                userToCreate.getCreatedAt().equals(userToCreate.getUpdatedAt())));
 
         assertEquals(USER_NAME, createdUserEntity.getId());
         assertEquals(FIRST_NAME, createdUserEntity.getFirstname());
@@ -235,10 +237,10 @@ public class UserServiceTest {
 
         verify(userRepository, never()).create(any());
     }
-    
+
     @Test(expected = UserAlreadyExistsException.class)
     public void shouldNotCreateBecauseExists() throws TechnicalException {
-        when(userRepository.findBySource(nullable(String.class), nullable(String.class), nullable(String.class), eq(USER_REFERENCE_TYPE))).thenReturn(of(new User()));
+        when(userRepository.findBySource(nullable(String.class), nullable(String.class), nullable(String.class))).thenReturn(of(new User()));
 
         userService.create(newUser, false);
 
@@ -301,7 +303,7 @@ public class UserServiceTest {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
 
         RegisterUserEntity userEntity = new RegisterUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100));
 
         userService.finalizeRegistration(userEntity);
     }
@@ -312,14 +314,14 @@ public class UserServiceTest {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
 
         RegisterUserEntity userEntity = new RegisterUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeRegistration(userEntity);
 
     }
 
-    @Test (expected = PasswordFormatInvalidException.class)
+    @Test(expected = PasswordFormatInvalidException.class)
     public void createAlreadyPreRegisteredUser_invalidPassword() throws TechnicalException {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
         when(mockParameterService.findAsBoolean(Key.PORTAL_USERCREATION_ENABLED)).thenReturn(Boolean.TRUE);
@@ -332,7 +334,7 @@ public class UserServiceTest {
         when(userRepository.findById(USER_NAME)).thenReturn(Optional.of(user));
 
         RegisterUserEntity userEntity = new RegisterUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeRegistration(userEntity);
@@ -354,7 +356,7 @@ public class UserServiceTest {
         when(userRepository.update(any(User.class))).thenReturn(user);
 
         RegisterUserEntity userEntity = new RegisterUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeRegistration(userEntity);
@@ -370,10 +372,10 @@ public class UserServiceTest {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
 
         RegisterUserEntity userEntity = new RegisterUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 - 100));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 - 100));
         userEntity.setPassword(PASSWORD);
 
-        verify(userRepository, never()).findBySource(USER_SOURCE, USER_NAME, ORGANIZATION, USER_REFERENCE_TYPE);
+        verify(userRepository, never()).findBySource(USER_SOURCE, USER_NAME, ORGANIZATION);
 
         userService.finalizeRegistration(userEntity);
     }
@@ -402,33 +404,33 @@ public class UserServiceTest {
 
     @Test(expected = UserNotFoundException.class)
     public void shouldFailWhileResettingPassword() throws TechnicalException {
-        when(userRepository.findBySource(any(), any(), any(), any())).thenReturn(Optional.empty());
+        when(userRepository.findBySource(any(), any(), any())).thenReturn(Optional.empty());
         userService.resetPasswordFromSourceId("my@email.com", "HTTP://MY-RESET-PAGE");
     }
-    
+
     @Test(expected = UserNotActiveException.class)
     public void shouldFailWhileResettingPasswordWhenUserFoundIsNotActive() throws TechnicalException {
         User user = new User();
         user.setId(USER_NAME);
         user.setSource("gravitee");
         user.setStatus(UserStatus.ARCHIVED);
-        when(userRepository.findBySource(any(), any(), any(), any())).thenReturn(Optional.of(user));
+        when(userRepository.findBySource(any(), any(), any())).thenReturn(Optional.of(user));
 
         userService.resetPasswordFromSourceId("my@email.com", "HTTP://MY-RESET-PAGE");
     }
-    
+
     @Test(expected = UserNotInternallyManagedException.class)
     public void shouldFailWhileResettingPasswordWhenUserFoundIsNotInternallyManaged() throws TechnicalException {
         User user = new User();
         user.setId(USER_NAME);
         user.setSource("not gravitee");
         user.setStatus(UserStatus.ACTIVE);
-        when(userRepository.findBySource(any(), any(), any(), any())).thenReturn(Optional.of(user));
+        when(userRepository.findBySource(any(), any(), any())).thenReturn(Optional.of(user));
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
 
         userService.resetPasswordFromSourceId("my@email.com", "HTTP://MY-RESET-PAGE");
     }
-    
+
     @Test(expected = UserNotInternallyManagedException.class)
     public void shouldNotResetPasswordCauseUserNotInternallyManaged() throws TechnicalException {
         when(user.getSource()).thenReturn("external");
@@ -593,11 +595,11 @@ public class UserServiceTest {
         verify(genericNotificationConfigService, times(1)).deleteByUser(eq(user));
         verify(tokenService, times(1)).revokeByUser(userId);
     }
-    
+
     @Test(expected = EmailRequiredException.class)
     public void shouldThrowEmailRequiredExceptionWhenMissingMailInUserInfo() throws IOException {
         reset(identityProvider);
-        
+
         Map<String, String> wrongUserProfileMapping = new HashMap<>();
         wrongUserProfileMapping.put(SocialIdentityProviderEntity.UserProfile.EMAIL, "theEmail");
         wrongUserProfileMapping.put(SocialIdentityProviderEntity.UserProfile.ID, "theEmail");
@@ -607,16 +609,16 @@ public class UserServiceTest {
         wrongUserProfileMapping.put(SocialIdentityProviderEntity.UserProfile.PICTURE, "picture");
         when(identityProvider.getUserProfileMapping()).thenReturn(wrongUserProfileMapping);
         when(identityProvider.isEmailRequired()).thenReturn(Boolean.TRUE);
-        
+
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
     }
-    
+
     @Test(expected = SpelEvaluationException.class)
     public void shouldSpelEvaluationExceptionWhenWrongELGroupsMapping() throws IOException, TechnicalException {
         reset(identityProvider, userRepository);
         mockDefaultEnvironment();
-        
+
         GroupMappingEntity condition1 = new GroupMappingEntity();
         condition1.setCondition("Some Soup");
         condition1.setGroups(Arrays.asList("Example group", "soft user"));
@@ -632,9 +634,9 @@ public class UserServiceTest {
         when(identityProvider.getGroupMappings()).thenReturn(Arrays.asList(condition1, condition2, condition3));
 
         when(identityProvider.getId()).thenReturn("oauth2");
-        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.empty());
+        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
 
-        
+
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
     }
@@ -644,10 +646,10 @@ public class UserServiceTest {
         reset(identityProvider, userRepository);
 
         mockDefaultEnvironment();
-        
+
         User user = mockUser();
 
-        when(userRepository.findBySource(null,user.getSourceId(), ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.of(user));
+        when(userRepository.findBySource(null, user.getSourceId(), ORGANIZATION)).thenReturn(Optional.of(user));
         when(userRepository.findById(user.getSourceId())).thenReturn(Optional.of(user));
 
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
@@ -673,31 +675,31 @@ public class UserServiceTest {
         reset(identityProvider, userRepository, roleService);
 
         mockDefaultEnvironment();
-        
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION,"USER"), mockRoleEntity(RoleScope.ENVIRONMENT,"USER")));
+
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
 
         User createdUser = mockUser();
         when(userRepository.create(any(User.class))).thenReturn(createdUser);
-        
+
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
 
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
         verify(userRepository, times(1)).create(any(User.class));
     }
-    
+
     @Test
     public void shouldCreateNewUserWithNoMatchingGroupsMappingFromUserInfo() throws IOException, TechnicalException {
         reset(identityProvider, userRepository, membershipService);
         mockDefaultEnvironment();
         mockGroupsMapping();
-        
+
         User createdUser = mockUser();
         when(userRepository.create(any(User.class))).thenReturn(createdUser);
-        
-        when(identityProvider.getId()).thenReturn("oauth2");
-        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.empty());
 
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION,"USER"), mockRoleEntity(RoleScope.ENVIRONMENT,"USER")));
+        when(identityProvider.getId()).thenReturn("oauth2");
+        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
+
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
 
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body_no_matching.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
@@ -718,25 +720,25 @@ public class UserServiceTest {
 
         User createdUser = mockUser();
         when(userRepository.create(any(User.class))).thenReturn(createdUser);
-        
+
         when(identityProvider.getId()).thenReturn("oauth2");
-        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.empty());
+        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
 
         //mock group search and association
-        when(groupService.findById("Example group")).thenReturn(mockGroupEntity("group_id_1","Example group"));
-        when(groupService.findById("soft user")).thenReturn(mockGroupEntity("group_id_2","soft user"));
-        when(groupService.findById("Api consumer")).thenReturn(mockGroupEntity("group_id_4","Api consumer"));
+        when(groupService.findById("Example group")).thenReturn(mockGroupEntity("group_id_1", "Example group"));
+        when(groupService.findById("soft user")).thenReturn(mockGroupEntity("group_id_2", "soft user"));
+        when(groupService.findById("Api consumer")).thenReturn(mockGroupEntity("group_id_4", "Api consumer"));
 
         // mock role search
-        RoleEntity roleOrganizationAdmin = mockRoleEntity(RoleScope.ORGANIZATION,"ADMIN");
-        RoleEntity roleOrganizationUser = mockRoleEntity(RoleScope.ORGANIZATION,"USER");
-        RoleEntity roleEnvironmentAdmin = mockRoleEntity(RoleScope.ENVIRONMENT,"ADMIN");
-        RoleEntity roleApiUser = mockRoleEntity(RoleScope.API,"USER");
-        RoleEntity roleApplicationAdmin = mockRoleEntity(RoleScope.APPLICATION,"ADMIN");
+        RoleEntity roleOrganizationAdmin = mockRoleEntity(RoleScope.ORGANIZATION, "ADMIN");
+        RoleEntity roleOrganizationUser = mockRoleEntity(RoleScope.ORGANIZATION, "USER");
+        RoleEntity roleEnvironmentAdmin = mockRoleEntity(RoleScope.ENVIRONMENT, "ADMIN");
+        RoleEntity roleApiUser = mockRoleEntity(RoleScope.API, "USER");
+        RoleEntity roleApplicationAdmin = mockRoleEntity(RoleScope.APPLICATION, "ADMIN");
 
         when(roleService.findByScopeAndName(RoleScope.ORGANIZATION, "ADMIN")).thenReturn(Optional.of(roleOrganizationAdmin));
         when(roleService.findByScopeAndName(RoleScope.ORGANIZATION, "USER")).thenReturn(Optional.of(roleOrganizationUser));
-        when(roleService.findDefaultRoleByScopes(RoleScope.API,RoleScope.APPLICATION)).thenReturn(Arrays.asList(roleApiUser,roleApplicationAdmin));
+        when(roleService.findDefaultRoleByScopes(RoleScope.API, RoleScope.APPLICATION)).thenReturn(Arrays.asList(roleApiUser, roleApplicationAdmin));
         when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(roleOrganizationAdmin, roleEnvironmentAdmin));
 
         when(membershipService.addRoleToMemberOnReference(
@@ -768,7 +770,7 @@ public class UserServiceTest {
                 new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, "DEFAULT"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
                 new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "ADMIN"))).thenReturn(mockMemberEntity());
-        
+
         when(membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, "DEFAULT"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
@@ -777,7 +779,7 @@ public class UserServiceTest {
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
 
-      //verify group creations
+        //verify group creations
         verify(membershipService, times(1)).addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_1"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
@@ -837,11 +839,11 @@ public class UserServiceTest {
 
         User createdUser = mockUser();
         when(userRepository.create(any(User.class))).thenReturn(createdUser);
-        
-        when(identityProvider.getId()).thenReturn("oauth2");
-        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION, USER_REFERENCE_TYPE)).thenReturn(Optional.empty());
 
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION,"USER"), mockRoleEntity(RoleScope.ENVIRONMENT,"USER")));
+        when(identityProvider.getId()).thenReturn("oauth2");
+        when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
+
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
 
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
@@ -853,7 +855,7 @@ public class UserServiceTest {
                 any(MembershipService.MembershipMember.class),
                 any(MembershipService.MembershipRole.class));
     }
-    
+
     private void mockDefaultEnvironment() {
         Map<String, String> userProfileMapping = new HashMap<>();
         userProfileMapping.put(SocialIdentityProviderEntity.UserProfile.EMAIL, "email");
@@ -863,6 +865,10 @@ public class UserServiceTest {
         userProfileMapping.put(SocialIdentityProviderEntity.UserProfile.LASTNAME, "family_name");
         userProfileMapping.put(SocialIdentityProviderEntity.UserProfile.PICTURE, "picture");
         when(identityProvider.getUserProfileMapping()).thenReturn(userProfileMapping);
+
+        EnvironmentEntity defaultEnv = new EnvironmentEntity();
+        defaultEnv.setId("DEFAULT");
+        when(environmentService.findByOrganization(ORGANIZATION)).thenReturn(Arrays.asList(defaultEnv));
     }
 
     private void mockGroupsMapping() {
@@ -877,7 +883,7 @@ public class UserServiceTest {
         GroupMappingEntity condition3 = new GroupMappingEntity();
         condition3.setCondition("{#jsonPath(#profile, '$.job_id') != 'API_BREAKER'}");
         condition3.setGroups(Collections.singletonList("Api consumer"));
-        
+
         when(identityProvider.getGroupMappings()).thenReturn(Arrays.asList(condition1, condition2, condition3));
     }
 
@@ -899,13 +905,13 @@ public class UserServiceTest {
 
     private RoleEntity mockRoleEntity(RoleScope scope, String name) {
         RoleEntity role = new RoleEntity();
-        role.setId(scope.name()+"_"+name);
+        role.setId(scope.name() + "_" + name);
         role.setScope(scope);
         role.setName(name);
         return role;
     }
 
-    private GroupEntity mockGroupEntity( String id, String name) {
+    private GroupEntity mockGroupEntity(String id, String name) {
         GroupEntity groupEntity = new GroupEntity();
         groupEntity.setId(id);
         groupEntity.setName(name);

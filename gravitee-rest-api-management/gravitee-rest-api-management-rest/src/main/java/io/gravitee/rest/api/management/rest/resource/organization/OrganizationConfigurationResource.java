@@ -13,44 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.management.rest.resource;
+package io.gravitee.rest.api.management.rest.resource.organization;
 
-import io.gravitee.rest.api.model.EnvironmentEntity;
-import io.gravitee.rest.api.service.EnvironmentService;
+import io.gravitee.rest.api.management.rest.resource.configuration.identity.IdentityProvidersResource;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import java.util.Collection;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api
-public class EnvironmentsResource extends AbstractResource {
+@Api(tags = {"Configuration"})
+public class OrganizationConfigurationResource {
 
     @Context
     private ResourceContext resourceContext;
 
-    @Inject
-    private EnvironmentService environmentService;
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List available environments for current organization")
-    public Collection<EnvironmentEntity> list() {
-        return this.environmentService.findAll();
+    @Path("rolescopes")
+    public RoleScopesResource getRoleScopesResource() {
+        return resourceContext.getResource(RoleScopesResource.class);
     }
 
-    @Path("{envId}")
-    public EnvironmentResource getEnvironmentResource() {
-        return resourceContext.getResource(EnvironmentResource.class);
+    @Path("identities")
+    public IdentityProvidersResource getAuthenticationProvidersResource() {
+        return resourceContext.getResource(IdentityProvidersResource.class);
     }
 }
