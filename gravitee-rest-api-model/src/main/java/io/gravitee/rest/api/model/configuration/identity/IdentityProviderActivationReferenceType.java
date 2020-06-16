@@ -13,35 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.model.permissions;
+package io.gravitee.rest.api.model.configuration.identity;
 
 /**
- * @author Florent CHAMFROY (forent.chamfroy at graviteesource.com)
+ * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum OrganizationPermission implements Permission {
-    USER("USER", 1000),
-    ENVIRONMENT("ENVIRONMENT", 1100),
-    ROLE("ROLE", 1200),
-    IDENTITY_PROVIDER("IDENTITY_PROVIDER", 1300),
-    IDENTITY_PROVIDER_ACTIVATION("IDENTITY_PROVIDER_ACTIVATION", 1400);
-
-    String name;
-    int mask;
-
-    OrganizationPermission(String name, int mask) {
-        this.name = name;
-        this.mask = mask;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int getMask() {
-        return mask;
-    }
-
+public enum IdentityProviderActivationReferenceType {
+    ENVIRONMENT, ORGANIZATION;
 }

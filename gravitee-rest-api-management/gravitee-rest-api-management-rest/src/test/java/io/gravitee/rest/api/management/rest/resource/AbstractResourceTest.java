@@ -21,6 +21,8 @@ import io.gravitee.rest.api.security.authentication.AuthenticationProviderManage
 import io.gravitee.rest.api.security.cookies.CookieGenerator;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.configuration.application.ApplicationTypeService;
+import io.gravitee.rest.api.service.configuration.identity.IdentityProviderActivationService;
+import io.gravitee.rest.api.service.configuration.identity.IdentityProviderService;
 import io.gravitee.rest.api.service.impl.swagger.policy.PolicyOperationVisitorManager;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +45,7 @@ import static org.mockito.Mockito.mock;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(loader=AnnotationConfigContextLoader.class)
+@ContextConfiguration(loader = AnnotationConfigContextLoader.class)
 public abstract class AbstractResourceTest extends JerseySpringTest {
 
     public AbstractResourceTest() {
@@ -146,6 +148,12 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
     @Autowired
     protected EnvironmentService environmentService;
 
+    @Autowired
+    protected IdentityProviderActivationService identityProviderActivationService;
+
+    @Autowired
+    protected IdentityProviderService identityProviderService;
+
     @Configuration
     @PropertySource("classpath:/io/gravitee/rest/api/management/rest/resource/jwt.properties")
     static class ContextConfiguration {
@@ -232,7 +240,7 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
 
         @Bean
         public CookieGenerator jwtCookieGenerator() {
-    	    return mock(CookieGenerator.class);
+            return mock(CookieGenerator.class);
         }
 
         @Bean
@@ -272,7 +280,7 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
 
         @Bean
         public ApiMetadataService apiMetadataService() {
-    	    return mock(ApiMetadataService.class);
+            return mock(ApiMetadataService.class);
         }
 
         @Bean
@@ -287,7 +295,7 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
 
         @Bean
         public PolicyOperationVisitorManager policyOperationVisitorManager() {
-    	    return mock(PolicyOperationVisitorManager.class);
+            return mock(PolicyOperationVisitorManager.class);
         }
 
         @Bean
@@ -303,6 +311,16 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
         @Bean
         public EnvironmentService environmentService() {
             return mock(EnvironmentService.class);
+        }
+
+        @Bean
+        public IdentityProviderActivationService identityProviderActivationService() {
+            return mock(IdentityProviderActivationService.class);
+        }
+
+        @Bean
+        public IdentityProviderService identityProviderService() {
+            return mock(IdentityProviderService.class);
         }
     }
 }

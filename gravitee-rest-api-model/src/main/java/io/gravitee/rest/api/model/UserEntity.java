@@ -116,6 +116,7 @@ public class UserEntity implements Indexable {
 
     private Boolean newsletterSubscribed;
 
+    @Override
     public String getId() {
         return id;
     }

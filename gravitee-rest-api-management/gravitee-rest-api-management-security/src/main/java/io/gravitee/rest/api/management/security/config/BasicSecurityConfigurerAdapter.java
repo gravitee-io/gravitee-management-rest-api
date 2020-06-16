@@ -234,6 +234,7 @@ public class BasicSecurityConfigurerAdapter extends WebSecurityConfigurerAdapter
                  */
                 // Auth resource
                 .antMatchers(HttpMethod.POST, uriOrgPrefix + "/auth/**").permitAll()
+                .antMatchers(HttpMethod.GET, uriOrgPrefix + "/social-identities").permitAll()
 
                 // Current user
                 .antMatchers(HttpMethod.POST, uriOrgPrefix + "/user/login").permitAll()

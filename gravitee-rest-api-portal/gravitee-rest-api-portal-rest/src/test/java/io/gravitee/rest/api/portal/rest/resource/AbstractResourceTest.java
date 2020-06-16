@@ -22,6 +22,7 @@ import io.gravitee.rest.api.security.authentication.AuthenticationProviderManage
 import io.gravitee.rest.api.security.cookies.CookieGenerator;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.configuration.application.ApplicationTypeService;
+import io.gravitee.rest.api.service.configuration.identity.IdentityProviderActivationService;
 import io.gravitee.rest.api.service.filtering.FilteringService;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +107,7 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
         reset(applicationTypeService);
         reset(identityService);
         reset(filteringService);
+        reset(identityProviderActivationService);
     }
 
     public AbstractResourceTest() {
@@ -291,6 +293,9 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
 
     @Autowired
     protected FilteringService filteringService;
+
+    @Autowired
+    protected IdentityProviderActivationService identityProviderActivationService;
 
     @Configuration
     @PropertySource("classpath:/io/gravitee/rest/api/portal/rest/resource/jwt.properties")
@@ -574,6 +579,11 @@ public abstract class AbstractResourceTest extends JerseySpringTest {
         @Bean
         public FilteringService filteringService() {
             return mock(FilteringService.class);
+        }
+
+        @Bean
+        public IdentityProviderActivationService identityProviderActivationService() {
+            return mock(IdentityProviderActivationService.class);
         }
     }
 }
