@@ -39,15 +39,28 @@ public class UriBuilderRequestFilter implements ContainerRequestFilter {
         UriBuilder baseBuilder = ctx.getUriInfo().getBaseUriBuilder();
         UriBuilder requestBuilder = ctx.getUriInfo().getRequestUriBuilder();
 
+        String scheme = null;
         if (schemes != null && !schemes.isEmpty()) {
-            String scheme = schemes.get(0);
+            scheme = schemes.get(0);
             baseBuilder.scheme(scheme);
             requestBuilder.scheme(scheme);
 
             ctx.setRequestUri(baseBuilder.build(), requestBuilder.build());
         }
 
+        // determine port:
+        int port = -1;
+        List<String> ports = ctx.getHeaders().get(HttpHeaders.X_FORWARDED_PORT);
+        if (ports != null && !ports.isEmpty()) {
+            try {
+                port = Integer.parseInt(ports.get(0));
+            } catch(NumberFormatException e) {
+                throw new IOException("Invalid port in X-Forwarded-Port header: "+ports.get(0), e);
+            }
+        }
+
         List<String> hosts = ctx.getHeaders().get(HttpHeaders.X_FORWARDED_HOST);
+
         if (hosts != null && !hosts.isEmpty()) {
             String host = hosts.get(0);
 
@@ -59,6 +72,16 @@ public class UriBuilderRequestFilter implements ContainerRequestFilter {
             } else {
                 baseBuilder.host(host);
                 requestBuilder.host(host);
+                if (port > 0) {
+                    baseBuilder.port(port);
+                    requestBuilder.port(port);
+                } else if ("https".equals(scheme)) {
+                    baseBuilder.port(443);
+                    requestBuilder.port(443);
+                } else if ("http".equals(scheme)) {
+                    baseBuilder.port(80);
+                    requestBuilder.port(80);
+                }
             }
 
             ctx.setRequestUri(baseBuilder.build(), requestBuilder.build());
