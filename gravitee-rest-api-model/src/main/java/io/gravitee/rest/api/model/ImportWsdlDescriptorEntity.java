@@ -22,18 +22,16 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ImportSwaggerDescriptorEntity {
-
-    private Format format = Format.API;
+public class ImportWsdlDescriptorEntity {
 
     private Type type = Type.INLINE;
 
     @NotNull
     @ApiModelProperty(
-            value = "The swagger/openapi content.")
+            value = "The swagger/wsdl content.")
     private String payload;
 
     @JsonProperty("with_documentation")
@@ -62,14 +60,6 @@ public class ImportSwaggerDescriptorEntity {
 
     public void setType(Type type) {
         this.type = type;
-    }
-
-    public Format getFormat() {
-        return format;
-    }
-
-    public void setFormat(Format format) {
-        this.format = format;
     }
 
     public String getPayload() {
@@ -115,10 +105,5 @@ public class ImportSwaggerDescriptorEntity {
     public enum Type {
         INLINE,
         URL
-    }
-
-    public enum Format {
-        WSDL,
-        API
     }
 }
