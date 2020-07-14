@@ -85,7 +85,9 @@ public class SoapMessageBuilder {
         try (StringWriter writer = new StringWriter()){
 
             Optional<SoapVersion> optVersion = detectSoapVersion(binding.getExtensibilityElements());
-            if (optVersion.isEmpty()) return Optional.empty();
+            if (!optVersion.isPresent()) {
+                return Optional.empty();
+            }
 
             SoapVersion version = optVersion.get();
 

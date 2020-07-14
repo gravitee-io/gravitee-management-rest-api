@@ -19,13 +19,13 @@ import javax.wsdl.BindingOperation;
 import javax.wsdl.extensions.soap12.SOAP12Body;
 import javax.wsdl.extensions.soap12.SOAP12Header;
 import javax.xml.namespace.QName;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.rest.api.spec.converter.wsdl.WsdlMapperUtils.extractAllElements;
 import static io.gravitee.rest.api.spec.converter.wsdl.WsdlMapperUtils.extractFirstElement;
+import static java.util.Collections.emptyList;
 
 public class Soap12Binding extends AbstractBinding {
     public static final String SOAP12_ENVELOPE_NS = "http://www.w3.org/2003/05/soap-envelope";
@@ -40,16 +40,21 @@ public class Soap12Binding extends AbstractBinding {
         Optional<SOAP12Body> optBody12 = extractFirstElement(elements, SOAP12Body.class);
         return optBody12.isPresent();
     }
+
     @Override
     public BobyParts extractBodyParts(List<Object> elements) {
         Optional<SOAP12Body> optBody12 = extractFirstElement(elements, SOAP12Body.class);
-        return optBody12.map(body -> new BobyParts(body.getParts() == null ? Collections.EMPTY_LIST : body.getParts(), body.getUse())).get();
+        final Optional<BobyParts> optionalBobyParts =
+                optBody12.map(body -> new BobyParts(body.getParts() == null ? emptyList() : body.getParts(), body.getUse()));
+        return optionalBobyParts.orElse(null);
     }
+
     @Override
     public boolean hasHeadersElement(List<Object> elements) {
         Optional<SOAP12Header> optHeader12 = extractFirstElement(elements, SOAP12Header.class);
         return optHeader12.isPresent();
     }
+
     @Override
     public List<HeaderDef> extractHeaderParts(List<Object> elements) {
         return extractAllElements(elements, SOAP12Header.class)
