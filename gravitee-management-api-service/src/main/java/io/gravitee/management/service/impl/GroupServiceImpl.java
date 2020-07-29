@@ -166,6 +166,7 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
             updatedGroupEntity.setLockApplicationRole(group.isLockApplicationRole());
             updatedGroupEntity.setSystemInvitation(group.isSystemInvitation());
             updatedGroupEntity.setEmailInvitation(group.isEmailInvitation());
+            updatedGroupEntity.setDisableMembershipNotifications(group.isDisableMembershipNotifications());
 
             Group updatedGroup = this.map(updatedGroupEntity);
             GroupEntity grp = this.map(groupRepository.update(updatedGroup));
@@ -530,6 +531,7 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
         group.setLockApplicationRole(entity.isLockApplicationRole());
         group.setSystemInvitation(entity.isSystemInvitation());
         group.setEmailInvitation(entity.isEmailInvitation());
+        group.setDisableMembershipNotifications(entity.isDisableMembershipNotifications());
 
         return group;
     }
@@ -555,6 +557,7 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
         group.setLockApplicationRole(entity.isLockApplicationRole());
         group.setSystemInvitation(entity.isSystemInvitation());
         group.setEmailInvitation(entity.isEmailInvitation());
+        group.setDisableMembershipNotifications(entity.isDisableMembershipNotifications());
         return group;
     }
 
@@ -595,6 +598,7 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
         entity.setLockApplicationRole(group.isLockApplicationRole());
         entity.setSystemInvitation(group.isSystemInvitation());
         entity.setEmailInvitation(group.isEmailInvitation());
+        entity.setDisableMembershipNotifications(group.isDisableMembershipNotifications());
 
         return entity;
     }
