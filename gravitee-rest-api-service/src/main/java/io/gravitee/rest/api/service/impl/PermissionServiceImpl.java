@@ -61,6 +61,9 @@ public class PermissionServiceImpl extends AbstractService implements Permission
             case ENVIRONMENT:
                 membershipReferenceType = MembershipReferenceType.ENVIRONMENT;
                 break;
+            case ORGANIZATION:
+                membershipReferenceType = MembershipReferenceType.ORGANIZATION;
+                break;
             default:
                 membershipReferenceType = null;
         }
