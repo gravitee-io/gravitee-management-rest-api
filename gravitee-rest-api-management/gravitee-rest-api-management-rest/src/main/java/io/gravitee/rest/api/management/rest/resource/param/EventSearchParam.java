@@ -17,33 +17,15 @@ package io.gravitee.rest.api.management.rest.resource.param;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import java.util.Date;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EventSearchParam {
+public class EventSearchParam extends AbstractSearchParam {
 
     @QueryParam("type")
     @DefaultValue("all")
     private EventTypeListParam eventTypeListParam;
-
-    @QueryParam("from")
-    private Long from;
-
-    @QueryParam("to")
-    private Long to;
-
-    @QueryParam("page")
-    @DefaultValue("0")
-    private Integer page;
-
-    @QueryParam("size")
-    @DefaultValue("10")
-    private Integer size;
 
     @QueryParam("api_ids")
     private ApiIdsParam apiIdsParam;
@@ -56,80 +38,11 @@ public class EventSearchParam {
         this.eventTypeListParam = eventTypeListParam;
     }
 
-    public Long getFrom() {
-        return from;
-    }
-
-    public void setFrom(Long from) {
-        this.from = from;
-    }
-
-    public Long getTo() {
-        return to;
-    }
-
-    public void setTo(Long to) {
-        this.to = to;
-    }
-
-    public Integer getPage() {
-        return page;
-    }
-
-    public void setPage(Integer page) {
-        this.page = page;
-    }
-
-    public Integer getSize() {
-        return size;
-    }
-
-    public void setSize(Integer size) {
-        this.size = size;
-    }
-
     public ApiIdsParam getApiIdsParam() {
         return apiIdsParam;
     }
 
     public void setApiIdsParam(ApiIdsParam apiIdsParam) {
         this.apiIdsParam = apiIdsParam;
-    }
-
-    public void validate() throws WebApplicationException {
-        if (from == -1) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'from' is not valid")
-                    .build());
-        }
-
-        if (to == -1) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'to' is not valid")
-                    .build());
-        }
-
-        if (page == -1) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'page' is not valid")
-                    .build());
-        }
-
-        if (size < 0 || size > 100) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("Query parameter 'size' must be >= 0 and <= 100")
-                    .build());
-        }
-
-        if (from >= to) {
-            throw new WebApplicationException(Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity("'from' query parameter value must be greater than 'to'")
-                    .build());
-        }
     }
 }
