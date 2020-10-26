@@ -75,7 +75,7 @@ public class SwaggerService_TransformTest {
     public void shouldTransformAPIFromSwaggerV3_json() throws IOException {
         PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/openapi.json", MediaType.APPLICATION_JSON);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         swaggerService.transform(descriptor,
                 Collections.singleton(new PageConfigurationOAITransformer(pageEntity)));
@@ -91,7 +91,7 @@ public class SwaggerService_TransformTest {
         pageConfigurationEntity.put(SwaggerProperties.ENTRYPOINTS_AS_SERVERS, "true");
         pageEntity.setConfiguration(pageConfigurationEntity);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         final ApiEntity apiEntity = getApiEntity();
 
@@ -111,7 +111,7 @@ public class SwaggerService_TransformTest {
         pageConfigurationEntity.put(SwaggerProperties.ENTRYPOINT_AS_BASEPATH, "true");
         pageEntity.setConfiguration(pageConfigurationEntity);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         final ApiEntity apiEntity = getApiEntity();
 
@@ -131,7 +131,7 @@ public class SwaggerService_TransformTest {
         pageConfigurationEntity.put(SwaggerProperties.ENTRYPOINT_AS_BASEPATH, "false");
         pageEntity.setConfiguration(pageConfigurationEntity);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         final ApiEntity apiEntity = getApiEntity();
 
@@ -151,7 +151,7 @@ public class SwaggerService_TransformTest {
         pageConfigurationEntity.put(SwaggerProperties.ENTRYPOINT_AS_BASEPATH, "true");
         pageEntity.setConfiguration(pageConfigurationEntity);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         final ApiEntity apiEntity = getApiEntity();
 
@@ -171,7 +171,7 @@ public class SwaggerService_TransformTest {
         pageConfigurationEntity.put(SwaggerProperties.TRY_IT, "https://custom.gravitee.io/tryit?q=test");
         pageEntity.setConfiguration(pageConfigurationEntity);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         final ApiEntity apiEntity = getApiEntity();
 
@@ -191,7 +191,7 @@ public class SwaggerService_TransformTest {
         pageConfigurationEntity.put(SwaggerProperties.TRY_IT, "https://custom.gravitee.io/tryit?q=test");
         pageEntity.setConfiguration(pageConfigurationEntity);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         final ApiEntity apiEntity = getApiEntity();
 
@@ -207,7 +207,7 @@ public class SwaggerService_TransformTest {
     public void shouldTransformAPIFromSwaggerV3_yaml() throws IOException {
         PageEntity pageEntity = getPage("io/gravitee/rest/api/management/service/openapi.yaml", MediaType.TEXT_PLAIN);
 
-        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent());
+        OAIDescriptor descriptor = (OAIDescriptor) swaggerService.parse(pageEntity.getContent(), true);
 
         swaggerService.transform(descriptor,
                 Collections.singleton(new PageConfigurationOAITransformer(pageEntity)));

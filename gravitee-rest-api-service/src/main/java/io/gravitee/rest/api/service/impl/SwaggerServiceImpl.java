@@ -62,7 +62,7 @@ public class SwaggerServiceImpl implements SwaggerService {
 
     @Override
     public SwaggerApiEntity createAPI(ImportSwaggerDescriptorEntity swaggerDescriptor) {
-        SwaggerDescriptor descriptor = parse(swaggerDescriptor.getPayload());
+        SwaggerDescriptor descriptor = parse(swaggerDescriptor.getPayload(), true);
         if (descriptor != null) {
             List<OAIOperationVisitor> visitors = policyOperationVisitorManager.getPolicyVisitors().stream()
                     .filter(operationVisitor -> swaggerDescriptor.getWithPolicies() != null
@@ -85,12 +85,12 @@ public class SwaggerServiceImpl implements SwaggerService {
     }
 
     @Override
-    public SwaggerDescriptor parse(String content) {
+    public SwaggerDescriptor parse(String content, boolean failIfErrors) {
         if (isUrl(content)) {
             UrlSanitizerUtils.checkAllowed(content, importConfiguration.getImportWhitelist(), importConfiguration.isAllowImportFromPrivate());
         }
 
-        OpenAPI descriptor = new OAIParser().parse(content);
+        OpenAPI descriptor = new OAIParser().parse(content, failIfErrors);
 
         if (descriptor != null) {
             return new OAIDescriptor(descriptor);

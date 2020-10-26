@@ -35,7 +35,7 @@ public class OAIParser extends AbstractSwaggerParser<OpenAPI> {
     }
 
     @Override
-    public OpenAPI parse(String content) {
+    public OpenAPI parse(String content, boolean failIfErrors) {
         OpenAPIParser parser = new OpenAPIParser();
         SwaggerParseResult parseResult;
         String path = content;
@@ -47,7 +47,7 @@ public class OAIParser extends AbstractSwaggerParser<OpenAPI> {
 
         parseResult = parser.readLocation(path, null, null);
 
-        if (parseResult != null && parseResult.getOpenAPI() != null &&
+        if (failIfErrors && parseResult != null && parseResult.getOpenAPI() != null &&
                 (parseResult.getMessages() != null && !parseResult.getMessages().isEmpty())) {
             throw new SwaggerDescriptorException(parseResult.getMessages());
         }

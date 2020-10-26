@@ -48,6 +48,7 @@ import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.common.RandomString;
 import io.gravitee.rest.api.service.exceptions.*;
+import io.gravitee.rest.api.service.impl.swagger.parser.OAIParser;
 import io.gravitee.rest.api.service.impl.swagger.transformer.SwaggerTransformer;
 import io.gravitee.rest.api.service.impl.swagger.transformer.entrypoints.EntrypointsOAITransformer;
 import io.gravitee.rest.api.service.impl.swagger.transformer.page.PageConfigurationOAITransformer;
@@ -255,7 +256,7 @@ public class PageServiceImpl extends TransactionalService implements PageService
             // If swagger page, let's try to apply transformations
             SwaggerDescriptor<?> descriptor;
             try {
-                descriptor = swaggerService.parse(pageEntity.getContent());
+                descriptor = swaggerService.parse(pageEntity.getContent(), false);
             } catch (SwaggerDescriptorException sde) {
                 if (apiId != null) {
                     LOGGER.error("Parsing error for API: {}", apiId);
@@ -1754,6 +1755,8 @@ public class PageServiceImpl extends TransactionalService implements PageService
             if (!sanitizeInfos.isSafe()) {
                 throw new PageContentUnsafeException(sanitizeInfos.getRejectedMessage());
             }
+        } else if (PageType.SWAGGER.name().equals(page.getType())) {
+            new OAIParser().parse(page.getContent(), true);
         }
     }
 
