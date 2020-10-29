@@ -92,6 +92,8 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
     private GroupService groupService;
     @Autowired
     private ParameterService parameterService;
+    @Autowired
+    private UserService userService;
 
     @Override
     public SubscriptionEntity findById(String subscription) {
@@ -353,7 +355,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                 // Update the expiration date for not yet revoked api-keys relative to this subscription
                 Date endingAt = subscription.getEndingAt();
                 if (plan.getSecurity() == PlanSecurityType.API_KEY && endingAt != null) {
-                    Set<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
+                    List<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
                     for (ApiKeyEntity apiKey : apiKeys) {
                         Date expireAt = apiKey.getExpireAt();
                         if (!apiKey.isRevoked() && (expireAt == null || expireAt.compareTo(endingAt) > 0)) {
@@ -440,9 +442,15 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             if (subscription.getStatus() == Subscription.Status.ACCEPTED) {
                 notifierService.trigger(ApiHook.SUBSCRIPTION_ACCEPTED, apiId, params);
                 notifierService.trigger(ApplicationHook.SUBSCRIPTION_ACCEPTED, application.getId(), params);
+                searchSubscriberEmail(subscriptionEntity).ifPresent(subscriberEmail -> {
+                    notifierService.triggerEmail(ApplicationHook.SUBSCRIPTION_ACCEPTED, apiId, params, subscriberEmail);
+                });
             } else {
                 notifierService.trigger(ApiHook.SUBSCRIPTION_REJECTED, apiId, params);
                 notifierService.trigger(ApplicationHook.SUBSCRIPTION_REJECTED, application.getId(), params);
+                searchSubscriberEmail(subscriptionEntity).ifPresent(subscriberEmail -> {
+                    notifierService.triggerEmail(ApplicationHook.SUBSCRIPTION_REJECTED, apiId, params, subscriberEmail);
+                });
             }
 
             if (plan.getSecurity() == PlanSecurityType.API_KEY &&
@@ -457,6 +465,16 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             throw new TechnicalManagementException(String.format(
                     "An error occurs while trying to process subscription %s by %s",
                     processSubscription.getId(), userId), ex);
+        }
+    }
+
+    private Optional<String> searchSubscriberEmail(SubscriptionEntity subscriptionEntity) {
+        try {
+            UserEntity subscriber = userService.findById(subscriptionEntity.getSubscribedBy());
+            return Optional.ofNullable(subscriber.getEmail());
+        } catch (UserNotFoundException e) {
+            logger.warn("Subscriber '{}' not found, unable to retrieve email", subscriptionEntity.getSubscribedBy());
+            return Optional.empty();
         }
     }
 
@@ -508,7 +526,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                             subscription);
 
                     // API Keys are automatically revoked
-                    Set<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
+                    List<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
                     for (ApiKeyEntity apiKey : apiKeys) {
                         Date expireAt = apiKey.getExpireAt();
                         if (!apiKey.isRevoked() && (expireAt == null || expireAt.equals(now) || expireAt.before(now))) {
@@ -581,7 +599,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                         subscription);
 
                 // API Keys are automatically paused
-                Set<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
+                List<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
                 for (ApiKeyEntity apiKey : apiKeys) {
                     Date expireAt = apiKey.getExpireAt();
                     if (!apiKey.isRevoked() && (expireAt == null || expireAt.equals(now) || expireAt.after(now))) {
@@ -647,7 +665,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                         subscription);
 
                 // API Keys are automatically revoked
-                Set<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
+                List<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
                 for (ApiKeyEntity apiKey : apiKeys) {
                     Date expireAt = apiKey.getExpireAt();
                     if (!apiKey.isRevoked() && (expireAt == null || expireAt.equals(now) || expireAt.after(now))) {
@@ -722,7 +740,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                     subscriptionRepository.search(builder.build()).stream().map(this::convert);
             if (query.getApiKey() != null && !query.getApiKey().isEmpty()) {
                 subscriptionsStream = subscriptionsStream.filter(subscriptionEntity -> {
-                    final Set<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscriptionEntity.getId());
+                    final List<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscriptionEntity.getId());
                     return apiKeys.stream().anyMatch(apiKeyEntity -> apiKeyEntity.getKey().equals(query.getApiKey()));
                 });
             }
@@ -817,7 +835,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             subscription.setPlan(transferSubscription.getPlan());
 
             subscription = subscriptionRepository.update(subscription);
-            final Set<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
+            final List<ApiKeyEntity> apiKeys = apiKeyService.findBySubscription(subscription.getId());
             for (final ApiKeyEntity apiKey : apiKeys) {
                 apiKey.setPlan(transferSubscription.getPlan());
                 apiKeyService.update(apiKey);

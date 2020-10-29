@@ -16,6 +16,7 @@
 package io.gravitee.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -39,6 +40,8 @@ public class UpdateCategoryEntity {
     private int order;
     private String highlightApi;
     private String picture;
+    @JsonProperty("picture_url")
+    private String pictureUrl;
     private String background;
 
     public String getId() {
@@ -105,6 +108,14 @@ public class UpdateCategoryEntity {
         this.picture = picture;
     }
 
+    public String getPictureUrl() {
+        return pictureUrl;
+    }
+
+    public void setPictureUrl(String pictureUrl) {
+        this.pictureUrl = pictureUrl;
+    }
+
     public String getBackground() {
         return background;
     }
@@ -135,6 +146,7 @@ public class UpdateCategoryEntity {
                 ", defaultCategory='" + defaultCategory + '\'' +
                 ", hidden='" + hidden + '\'' +
                 ", order='" + order + '\'' +
+                ", pictureUrl='" + pictureUrl + '\'' +
                 '}';
     }
 }

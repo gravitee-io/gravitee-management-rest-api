@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.service.swagger;
+package io.gravitee.rest.api.portal.rest.security;
 
-import io.swagger.models.Swagger;
+import javax.ws.rs.NameBinding;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * This annotation is used to protect public resources when the administration requires login on the portal.
+ * When the 'forceLogin' is enable, method without permissions but annotated with RequirePortalAuth are rejected for anonymous user.
+ *
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SwaggerV2Descriptor extends AbstractDescriptor<Swagger> {
-
-    private final Swagger swagger;
-
-    public SwaggerV2Descriptor(final Swagger swagger) {
-        this.swagger = swagger;
-    }
-
-    @Override
-    public Version getVersion() {
-        return Version.SWAGGER_V2;
-    }
-
-    @Override
-    public Swagger getSpecification() {
-        return swagger;
-    }
+@NameBinding
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RequirePortalAuth {
 }

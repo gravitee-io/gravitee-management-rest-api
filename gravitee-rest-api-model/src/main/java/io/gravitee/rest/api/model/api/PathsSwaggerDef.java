@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.service.impl.swagger.transformer;
+package io.gravitee.rest.api.model.api;
 
-import io.gravitee.rest.api.service.swagger.SwaggerV2Descriptor;
+import io.gravitee.definition.model.Rule;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * /!\ This class shouldn't be used.
+ * It was created to fix the issue https://github.com/gravitee-io/issues/issues/4406
+ * and allow a correct swagger generation without modifying the ApiEntity/UpdateApiEntity structure
+ *
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface SwaggerV2Transformer extends SwaggerTransformer<SwaggerV2Descriptor> {
-
+class PathsSwaggerDef extends HashMap<String, ArrayList<Rule>> {
 }

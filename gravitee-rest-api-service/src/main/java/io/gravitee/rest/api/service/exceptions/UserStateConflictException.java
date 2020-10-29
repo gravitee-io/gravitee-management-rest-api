@@ -13,27 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.service.impl.swagger.parser;
+package io.gravitee.rest.api.service.exceptions;
 
-import io.swagger.models.Swagger;
-import io.swagger.parser.util.RemoteUrl;
+import java.util.Map;
+
+import static io.gravitee.common.http.HttpStatusCode.CONFLICT_409;
+import static io.gravitee.common.http.HttpStatusCode.SERVICE_UNAVAILABLE_503;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class SwaggerV2Parser extends AbstractSwaggerParser<Swagger> {
+public class UserStateConflictException extends AbstractManagementException {
 
-    static {
-        System.setProperty(String.format("%s.trustAll", RemoteUrl.class.getName()), Boolean.TRUE.toString());
+    public UserStateConflictException(String message) {
+        super(message);
     }
 
     @Override
-    public Swagger parse(String content) {
-        if (isLocationUrl(content)) {
-            return new io.swagger.parser.SwaggerParser().read(content);
-        } else {
-            return new io.swagger.parser.SwaggerParser().parse(content.replaceAll("\t", "  "));
-        }
+    public int getHttpStatusCode() {
+        return CONFLICT_409;
+    }
+
+    @Override
+    public String getTechnicalCode() {
+        return "user.state.conflict";
+    }
+
+    @Override
+    public Map<String, String> getParameters() {
+        return null;
     }
 }

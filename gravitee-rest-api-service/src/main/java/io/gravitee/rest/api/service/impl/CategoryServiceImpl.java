@@ -153,6 +153,12 @@ public class CategoryServiceImpl extends TransactionalService implements Categor
 
             Category category = convert(updateCategoryEntity, optCategoryToUpdate.get().getEnvironmentId());
 
+            // check if picture has been set
+            // If no new picture and the current picture url is not the default one, keep the current picture
+            if (updateCategoryEntity.getPicture() == null && updateCategoryEntity.getPictureUrl() != null && updateCategoryEntity.getPictureUrl().indexOf("?hash") > 0) {
+                category.setPicture(optCategoryToUpdate.get().getPicture());
+            }
+
             CategoryEntity updatedCategory = convert(categoryRepository.update(category));
             auditService.createPortalAuditLog(
                     Collections.singletonMap(CATEGORY, category.getId()),

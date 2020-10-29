@@ -16,13 +16,13 @@
 package io.gravitee.rest.api.management.rest.resource;
 
 import io.gravitee.common.data.domain.Page;
-import io.gravitee.rest.api.model.NewExternalUserEntity;
-import io.gravitee.rest.api.model.UserEntity;
-import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.management.rest.model.Pageable;
 import io.gravitee.rest.api.management.rest.model.PagedResult;
 import io.gravitee.rest.api.management.rest.security.Permission;
 import io.gravitee.rest.api.management.rest.security.Permissions;
+import io.gravitee.rest.api.model.NewExternalUserEntity;
+import io.gravitee.rest.api.model.UserEntity;
+import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.service.UserService;
 import io.swagger.annotations.*;
 
@@ -65,7 +65,7 @@ public class UsersResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(code = 200, message = "List users matching the query criteria", response = UserEntity.class, responseContainer = "PagedResult"),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public PagedResult<UserEntity> findAll(
+    public PagedResult<UserEntity> getAllUsers(
             @ApiParam(name = "q")
             @QueryParam("q") String query,
             @Valid @BeanParam Pageable pageable) {
@@ -94,7 +94,7 @@ public class UsersResource extends AbstractResource {
         return Response.serverError().build();
     }
 
-    @Path("{id}")
+    @Path("{userId}")
     public UserResource getUserResource() {
         return resourceContext.getResource(UserResource.class);
     }
@@ -103,4 +103,5 @@ public class UsersResource extends AbstractResource {
     public UsersRegistrationResource getUsersRegistrationResource() {
         return resourceContext.getResource(UsersRegistrationResource.class);
     }
+
 }
