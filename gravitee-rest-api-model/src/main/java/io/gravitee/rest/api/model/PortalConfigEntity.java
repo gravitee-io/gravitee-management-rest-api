@@ -19,14 +19,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.rest.api.model.annotations.ParameterKey;
 import io.gravitee.rest.api.model.parameters.Key;
-
 import java.util.List;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@JsonIgnoreProperties(value = {"baseURL", "orgBaseURL", "envBaseURL"})
+@JsonIgnoreProperties(value = { "baseURL", "orgBaseURL", "envBaseURL" })
 public class PortalConfigEntity {
 
     private Company company;
@@ -214,6 +213,7 @@ public class PortalConfigEntity {
     }
 
     public static class GoogleAuthentication {
+
         //        @ParameterKey(Key.AUTHENTICATION_GOOGLE_CLIENTID)
         private String clientId;
 
@@ -227,6 +227,7 @@ public class PortalConfigEntity {
     }
 
     public static class GithubAuthentication {
+
         //        @ParameterKey(Key.AUTHENTICATION_GITHUB_CLIENTID)
         private String clientId;
 
@@ -241,16 +242,22 @@ public class PortalConfigEntity {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class OAuth2Authentication {
+
         //        @ParameterKey(Key.AUTHENTICATION_OAUTH2_CLIENTID)
         private String clientId;
+
         @ParameterKey(Key.AUTHENTICATION_OAUTH2_NAME)
         private String name;
+
         @ParameterKey(Key.AUTHENTICATION_OAUTH2_COLOR)
         private String color;
+
         @ParameterKey(Key.AUTHENTICATION_OAUTH2_AUTHORIZATION_ENDPOINT)
         private String authorizationEndpoint;
+
         @ParameterKey(Key.AUTHENTICATION_OAUTH2_USER_LOGOUT_ENDPOINT)
         private String userLogoutEndpoint;
+
         @ParameterKey(Key.AUTHENTICATION_OAUTH2_SCOPE)
         private List<String> scope;
 
@@ -304,10 +311,10 @@ public class PortalConfigEntity {
     }
 
     public static class Enabled {
+
         private boolean enabled;
 
-        Enabled() {
-        }
+        Enabled() {}
 
         public Enabled(boolean enabled) {
             this.enabled = enabled;
@@ -326,6 +333,7 @@ public class PortalConfigEntity {
 
         @ParameterKey(Key.PORTAL_ANALYTICS_ENABLED)
         private Boolean enabled;
+
         @ParameterKey(Key.PORTAL_ANALYTICS_TRACKINGID)
         private String trackingId;
 
@@ -344,10 +352,10 @@ public class PortalConfigEntity {
         public void setTrackingId(String trackingId) {
             this.trackingId = trackingId;
         }
-
     }
 
     public static class Alert {
+
         @ParameterKey(Key.ALERT_ENABLED)
         private Boolean enabled;
 
@@ -361,6 +369,7 @@ public class PortalConfigEntity {
     }
 
     public static class PortalApis {
+
         @ParameterKey(Key.PORTAL_APIS_TILESMODE_ENABLED)
         private Enabled tilesMode;
 
@@ -407,6 +416,7 @@ public class PortalConfigEntity {
     }
 
     public static class PlanSecurity {
+
         @ParameterKey(Key.PLAN_SECURITY_APIKEY_ENABLED)
         private Enabled apikey;
 
@@ -453,6 +463,7 @@ public class PortalConfigEntity {
     }
 
     public static class Newsletter {
+
         @ParameterKey(Key.NEWSLETTER_ENABLED)
         private Boolean enabled;
 
@@ -466,8 +477,10 @@ public class PortalConfigEntity {
     }
 
     public static class ReCaptcha {
+
         @ParameterKey(Key.RECAPTCHA_ENABLED)
         private Boolean enabled;
+
         @ParameterKey(Key.RECAPTCHA_SITE_KEY)
         private String siteKey;
 
@@ -503,12 +516,16 @@ public class PortalConfigEntity {
     }
 
     public class Portal {
+
         @ParameterKey(Key.PORTAL_ENTRYPOINT)
         private String entrypoint;
+
         @ParameterKey(Key.PORTAL_APIKEY_HEADER)
         private String apikeyHeader;
+
         @ParameterKey(Key.PORTAL_SUPPORT_ENABLED)
         private Enabled support;
+
         @ParameterKey(Key.PORTAL_URL)
         private String url;
 
@@ -601,6 +618,7 @@ public class PortalConfigEntity {
         }
 
         public class PortalRating {
+
             @ParameterKey(Key.PORTAL_RATING_ENABLED)
             private Boolean enabled;
 
@@ -627,6 +645,7 @@ public class PortalConfigEntity {
             }
 
             public class RatingComment {
+
                 @ParameterKey(Key.PORTAL_RATING_COMMENT_MANDATORY)
                 private Boolean mandatory;
 
@@ -641,8 +660,10 @@ public class PortalConfigEntity {
         }
 
         public class PortalUploadMedia {
+
             @ParameterKey(Key.PORTAL_UPLOAD_MEDIA_ENABLED)
             private Boolean enabled;
+
             @ParameterKey(Key.PORTAL_UPLOAD_MEDIA_MAXSIZE)
             private Integer maxSizeInOctet;
 
@@ -664,8 +685,10 @@ public class PortalConfigEntity {
         }
 
         public class PortalUserCreation {
+
             @ParameterKey(Key.PORTAL_USERCREATION_ENABLED)
             private Boolean enabled;
+
             @ParameterKey(Key.PORTAL_USERCREATION_AUTOMATICVALIDATION_ENABLED)
             private Enabled automaticValidation;
 
@@ -688,8 +711,10 @@ public class PortalConfigEntity {
     }
 
     public class Management {
+
         @ParameterKey(Key.MANAGEMENT_TITLE)
         private String title;
+
         @ParameterKey(Key.MANAGEMENT_URL)
         private String url;
 
@@ -711,12 +736,16 @@ public class PortalConfigEntity {
     }
 
     public class Theme {
+
         @ParameterKey(Key.THEME_NAME)
         private String name;
+
         @ParameterKey(Key.THEME_LOGO)
         private String logo;
+
         @ParameterKey(Key.THEME_LOADER)
         private String loader;
+
         @ParameterKey(Key.THEME_CSS)
         private String css;
 
@@ -754,10 +783,13 @@ public class PortalConfigEntity {
     }
 
     public class Authentication {
+
         @ParameterKey(Key.AUTHENTICATION_FORCELOGIN_ENABLED)
         private Enabled forceLogin;
+
         @ParameterKey(Key.AUTHENTICATION_LOCALLOGIN_ENABLED)
         private Enabled localLogin;
+
         private GoogleAuthentication google;
         private GithubAuthentication github;
         private OAuth2Authentication oauth2;
@@ -810,6 +842,7 @@ public class PortalConfigEntity {
     }
 
     public class Scheduler {
+
         @JsonProperty("tasks")
         @ParameterKey(Key.SCHEDULER_TASKS)
         private Integer tasksInSeconds;
@@ -836,6 +869,7 @@ public class PortalConfigEntity {
     }
 
     public class Documentation {
+
         @ParameterKey(Key.DOCUMENTATION_URL)
         String url;
 
@@ -849,11 +883,16 @@ public class PortalConfigEntity {
     }
 
     public class OpenAPIDocViewer {
+
         private OpenAPIDocType openAPIDocType;
 
-        public OpenAPIDocViewer() { openAPIDocType = new OpenAPIDocType(); }
+        public OpenAPIDocViewer() {
+            openAPIDocType = new OpenAPIDocType();
+        }
 
-        public OpenAPIDocType getOpenAPIDocType() { return openAPIDocType; }
+        public OpenAPIDocType getOpenAPIDocType() {
+            return openAPIDocType;
+        }
 
         public void setOpenAPIDocType(OpenAPIDocType openAPIDocType) {
             this.openAPIDocType = openAPIDocType;
@@ -861,6 +900,7 @@ public class PortalConfigEntity {
     }
 
     public static class OpenAPIDocType {
+
         @ParameterKey(Key.OPEN_API_DOC_TYPE_SWAGGER_ENABLED)
         private Enabled swagger;
 
@@ -896,6 +936,7 @@ public class PortalConfigEntity {
     }
 
     public class Plan {
+
         private PlanSecurity security;
 
         public Plan() {
@@ -1014,6 +1055,7 @@ public class PortalConfigEntity {
     }
 
     public class ApiReview {
+
         @ParameterKey(Key.API_REVIEW_ENABLED)
         private Boolean enabled;
 
@@ -1027,8 +1069,10 @@ public class PortalConfigEntity {
     }
 
     public class Logging {
+
         @ParameterKey(Key.LOGGING_DEFAULT_MAX_DURATION)
         private Long maxDurationMillis;
+
         private Audit audit = new Audit();
         private User user = new User();
 
@@ -1057,8 +1101,10 @@ public class PortalConfigEntity {
         }
 
         public class Audit {
+
             @ParameterKey(Key.LOGGING_AUDIT_ENABLED)
             private Boolean enabled;
+
             private AuditTrail trail = new AuditTrail();
 
             public Boolean getEnabled() {
@@ -1078,6 +1124,7 @@ public class PortalConfigEntity {
             }
 
             public class AuditTrail {
+
                 @ParameterKey(Key.LOGGING_AUDIT_TRAIL_ENABLED)
                 private Boolean enabled;
 
@@ -1092,6 +1139,7 @@ public class PortalConfigEntity {
         }
 
         public class User {
+
             @ParameterKey(Key.LOGGING_USER_DISPLAYED)
             private Boolean displayed;
 
@@ -1106,6 +1154,7 @@ public class PortalConfigEntity {
     }
 
     public class Analytics {
+
         @ParameterKey(Key.ANALYTICS_CLIENT_TIMEOUT)
         private Long clientTimeout;
 
@@ -1136,6 +1185,7 @@ public class PortalConfigEntity {
         }
 
         public class ApplicationTypes {
+
             @JsonProperty("simple")
             @ParameterKey(Key.APPLICATION_TYPE_SIMPLE_ENABLED)
             private Enabled simpleType;
@@ -1198,6 +1248,7 @@ public class PortalConfigEntity {
         }
 
         public class ClientRegistration {
+
             @ParameterKey(Key.APPLICATION_REGISTRATION_ENABLED)
             private Boolean enabled;
 
@@ -1212,6 +1263,7 @@ public class PortalConfigEntity {
     }
 
     public class Maintenance {
+
         @ParameterKey(Key.MAINTENANCE_MODE_ENABLED)
         private Boolean enabled;
 

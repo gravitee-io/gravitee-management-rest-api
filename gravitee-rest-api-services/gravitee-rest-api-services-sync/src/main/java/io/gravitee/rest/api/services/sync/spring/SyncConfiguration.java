@@ -15,13 +15,12 @@
  */
 package io.gravitee.rest.api.services.sync.spring;
 
+import io.gravitee.rest.api.services.sync.ApiManager;
+import io.gravitee.rest.api.services.sync.SyncManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-
-import io.gravitee.rest.api.services.sync.ApiManager;
-import io.gravitee.rest.api.services.sync.SyncManager;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -39,6 +38,7 @@ public class SyncConfiguration {
     public ApiManager apiManager() {
         return new ApiManager();
     }
+
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();

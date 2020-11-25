@@ -15,29 +15,6 @@
  */
 package io.gravitee.rest.api.service;
 
-import io.gravitee.common.data.domain.Page;
-import io.gravitee.common.util.Maps;
-import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.repository.management.api.MetadataRepository;
-import io.gravitee.repository.management.api.UserRepository;
-import io.gravitee.repository.management.model.*;
-import io.gravitee.rest.api.model.MetadataFormat;
-import io.gravitee.rest.api.model.NewUserMetadataEntity;
-import io.gravitee.rest.api.model.UpdateUserMetadataEntity;
-import io.gravitee.rest.api.model.UserMetadataEntity;
-import io.gravitee.rest.api.service.impl.UserMetadataServiceImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import static io.gravitee.repository.management.model.Audit.AuditProperties.METADATA;
 import static io.gravitee.repository.management.model.Metadata.AuditEvent.METADATA_CREATED;
 import static io.gravitee.repository.management.model.Metadata.AuditEvent.METADATA_UPDATED;
@@ -50,6 +27,28 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+
+import io.gravitee.common.data.domain.Page;
+import io.gravitee.common.util.Maps;
+import io.gravitee.repository.exceptions.TechnicalException;
+import io.gravitee.repository.management.api.MetadataRepository;
+import io.gravitee.repository.management.api.UserRepository;
+import io.gravitee.repository.management.model.*;
+import io.gravitee.rest.api.model.MetadataFormat;
+import io.gravitee.rest.api.model.NewUserMetadataEntity;
+import io.gravitee.rest.api.model.UpdateUserMetadataEntity;
+import io.gravitee.rest.api.model.UserMetadataEntity;
+import io.gravitee.rest.api.service.impl.UserMetadataServiceImpl;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -90,7 +89,6 @@ public class UserMetadataServiceTest {
         userMetadata.setValue(METADATA_VALUE);
         when(metadataRepository.findByReferenceTypeAndReferenceId(USER, USER_ID)).thenReturn(singletonList(userMetadata));
 
-
         toUserMetadata = new Metadata();
         toUserMetadata.setKey("key-metadata-toupdate");
         toUserMetadata.setReferenceType(USER);
@@ -126,11 +124,12 @@ public class UserMetadataServiceTest {
         newUserMetadata.setValue(METADATA_VALUE);
 
         verify(metadataRepository).create(newUserMetadata);
-        final Map<Audit.AuditProperties, String> properties = Maps.<Audit.AuditProperties, String>builder()
-                .put(Audit.AuditProperties.USER, USER_ID)
-                .put(METADATA, newUserMetadata.getKey()).build();
-        verify(auditService).createPortalAuditLog(eq(properties),
-                eq(METADATA_CREATED), any(), eq(null), eq(newUserMetadata));
+        final Map<Audit.AuditProperties, String> properties = Maps
+            .<Audit.AuditProperties, String>builder()
+            .put(Audit.AuditProperties.USER, USER_ID)
+            .put(METADATA, newUserMetadata.getKey())
+            .build();
+        verify(auditService).createPortalAuditLog(eq(properties), eq(METADATA_CREATED), any(), eq(null), eq(newUserMetadata));
     }
 
     @Test
@@ -140,16 +139,15 @@ public class UserMetadataServiceTest {
         updateUserMetadataEntity.setFormat(MetadataFormat.STRING);
         updateUserMetadataEntity.setName(toUserMetadata.getName());
         updateUserMetadataEntity.setKey(toUserMetadata.getKey());
-        updateUserMetadataEntity.setValue(METADATA_VALUE+"updated");
+        updateUserMetadataEntity.setValue(METADATA_VALUE + "updated");
         when(metadataRepository.update(any())).thenAnswer(a -> a.getArgument(0));
-
 
         final UserMetadataEntity updatedUserMetadata = userMetadataService.update(updateUserMetadataEntity);
 
         assertEquals(toUserMetadata.getKey(), updatedUserMetadata.getKey());
         assertEquals(MetadataFormat.STRING, updatedUserMetadata.getFormat());
         assertEquals(toUserMetadata.getKey(), updatedUserMetadata.getName());
-        assertEquals(METADATA_VALUE+"updated", updatedUserMetadata.getValue());
+        assertEquals(METADATA_VALUE + "updated", updatedUserMetadata.getValue());
 
         final Metadata updatableMetadata = new Metadata();
         updatableMetadata.setKey(toUserMetadata.getKey());
@@ -157,15 +155,16 @@ public class UserMetadataServiceTest {
         updatableMetadata.setReferenceId(USER_ID);
         updatableMetadata.setFormat(STRING);
         updatableMetadata.setName(toUserMetadata.getName());
-        updatableMetadata.setValue(METADATA_VALUE+"updated");
+        updatableMetadata.setValue(METADATA_VALUE + "updated");
 
         verify(metadataRepository).update(updatableMetadata);
 
-        final Map<Audit.AuditProperties, String> properties = Maps.<Audit.AuditProperties, String>builder()
-                .put(Audit.AuditProperties.USER, USER_ID)
-                .put(METADATA, toUserMetadata.getKey()).build();
-        verify(auditService).createPortalAuditLog(eq(properties),
-                eq(METADATA_UPDATED), any(), any(), any());
+        final Map<Audit.AuditProperties, String> properties = Maps
+            .<Audit.AuditProperties, String>builder()
+            .put(Audit.AuditProperties.USER, USER_ID)
+            .put(METADATA, toUserMetadata.getKey())
+            .build();
+        verify(auditService).createPortalAuditLog(eq(properties), eq(METADATA_UPDATED), any(), any(), any());
     }
 
     @Test
@@ -195,8 +194,8 @@ public class UserMetadataServiceTest {
         User user2 = new User();
         user2.setId(USER_ID_WITHOUT_META);
 
-        Page<User> pageOfUser = new Page<>(Arrays.asList(user, user2), 1,2,2);
-        Page<User> emptyPage = new Page<>(Collections.emptyList(), 2,0,2);
+        Page<User> pageOfUser = new Page<>(Arrays.asList(user, user2), 1, 2, 2);
+        Page<User> emptyPage = new Page<>(Collections.emptyList(), 2, 0, 2);
         when(userRepository.search(any(), any())).thenReturn(pageOfUser, emptyPage);
 
         Metadata md = new Metadata();

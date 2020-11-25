@@ -19,7 +19,7 @@ import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.rest.api.model.PageEntity;
 import io.gravitee.rest.api.model.search.Indexable;
 import io.gravitee.rest.api.service.impl.search.SearchResult;
-
+import java.util.List;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -31,8 +31,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -40,14 +38,11 @@ import java.util.List;
 @Component
 public class PageDocumentSearcher extends AbstractDocumentSearcher {
 
-    protected final static String FIELD_TYPE_VALUE = "page";
+    protected static final String FIELD_TYPE_VALUE = "page";
 
     @Override
     public SearchResult search(io.gravitee.rest.api.service.search.query.Query query) throws TechnicalException {
-        QueryParser parser = new MultiFieldQueryParser(new String[]{
-                "name",
-                "content"
-        }, analyzer);
+        QueryParser parser = new MultiFieldQueryParser(new String[] { "name", "content" }, analyzer);
         parser.setFuzzyMinSim(0.6f);
 
         try {

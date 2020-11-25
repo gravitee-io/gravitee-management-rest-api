@@ -38,18 +38,16 @@ import io.gravitee.rest.api.service.notification.Hook;
 import io.gravitee.rest.api.service.notification.PortalHook;
 import io.gravitee.rest.api.service.notifiers.EmailNotifierService;
 import io.gravitee.rest.api.service.notifiers.WebhookNotifierService;
-
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
@@ -129,12 +127,18 @@ public class NotifierServiceImpl extends AbstractService implements NotifierServ
         triggerGenericNotifications(hook, NotificationReferenceType.PORTAL, PortalNotificationDefaultReferenceId.DEFAULT.name(), params);
     }
 
-    private void triggerPortalNotifications(final Hook hook, final NotificationReferenceType refType, final String refId, final Map<String, Object> params) {
+    private void triggerPortalNotifications(
+        final Hook hook,
+        final NotificationReferenceType refType,
+        final String refId,
+        final Map<String, Object> params
+    ) {
         try {
-            List<String> userIds = portalNotificationConfigRepository.findByReferenceAndHook(hook.name(), refType, refId).
-                    stream().
-                    map(PortalNotificationConfig::getUser).
-                    collect(Collectors.toList());
+            List<String> userIds = portalNotificationConfigRepository
+                .findByReferenceAndHook(hook.name(), refType, refId)
+                .stream()
+                .map(PortalNotificationConfig::getUser)
+                .collect(Collectors.toList());
             if (!userIds.isEmpty()) {
                 portalNotificationService.create(hook, userIds, params);
             }
@@ -143,9 +147,18 @@ public class NotifierServiceImpl extends AbstractService implements NotifierServ
         }
     }
 
-    private void triggerGenericNotifications(final Hook hook, final NotificationReferenceType refType, final String refId, final Map<String, Object> params) {
+    private void triggerGenericNotifications(
+        final Hook hook,
+        final NotificationReferenceType refType,
+        final String refId,
+        final Map<String, Object> params
+    ) {
         try {
-            for (GenericNotificationConfig genericNotificationConfig : genericNotificationConfigRepository.findByReferenceAndHook(hook.name(), refType, refId)) {
+            for (GenericNotificationConfig genericNotificationConfig : genericNotificationConfigRepository.findByReferenceAndHook(
+                hook.name(),
+                refType,
+                refId
+            )) {
                 switch (genericNotificationConfig.getNotifier()) {
                     case DEFAULT_EMAIL_NOTIFIER_ID:
                         emailNotifierService.trigger(hook, genericNotificationConfig, params);
@@ -183,9 +196,10 @@ public class NotifierServiceImpl extends AbstractService implements NotifierServ
             LOGGER.debug("List all notifiers");
             final Collection<NotifierPlugin> plugins = notifierManager.findAll();
 
-            Set<io.gravitee.rest.api.model.NotifierEntity> notifiers = plugins.stream()
-                    .map(plugin -> convert(plugin, false))
-                    .collect(Collectors.toSet());
+            Set<io.gravitee.rest.api.model.NotifierEntity> notifiers = plugins
+                .stream()
+                .map(plugin -> convert(plugin, false))
+                .collect(Collectors.toSet());
             notifiers.add(DEFAULT_EMAIL_NOTIFIER);
 
             return notifiers;

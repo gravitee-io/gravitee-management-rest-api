@@ -16,139 +16,141 @@
 package io.gravitee.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author Guillaume GILLON 
+ * @author Guillaume GILLON
  * @author GraviteeSource Team
  */
 public class NewPageEntity {
 
-	@NotNull
-	@Size(min = 1)
-	private String name;
+    @NotNull
+    @Size(min = 1)
+    private String name;
 
-	@NotNull
-	private PageType type;
-	
-	private String content;
-	
-	private int order;
+    @NotNull
+    private PageType type;
 
-	private boolean published;
+    private String content;
 
-	private String lastContributor;
+    private int order;
 
-	private PageSourceEntity source;
+    private boolean published;
 
-	private Map<String, String> configuration;
+    private String lastContributor;
 
-	private boolean homepage;
+    private PageSourceEntity source;
 
-	@JsonProperty("excluded_groups")
-	private List<String> excludedGroups;
+    private Map<String, String> configuration;
 
-	private String parentId;
+    private boolean homepage;
 
-	public String getName() {
-		return name;
-	}
+    @JsonProperty("excluded_groups")
+    private List<String> excludedGroups;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    private String parentId;
 
-	public PageType getType() {
-		return type;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setType(PageType type) {
-		this.type = type;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getContent() {
-		return content;
-	}
+    public PageType getType() {
+        return type;
+    }
 
-	public void setContent(String content) {
-		this.content = content;
-	}
+    public void setType(PageType type) {
+        this.type = type;
+    }
 
-	public int getOrder() {
-		return order;
-	}
+    public String getContent() {
+        return content;
+    }
 
-	public void setOrder(int order) {
-		this.order = order;
-	}
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-	public boolean isPublished() {
-		return published;
-	}
+    public int getOrder() {
+        return order;
+    }
 
-	public void setPublished(boolean published) {
-		this.published = published;
-	}
+    public void setOrder(int order) {
+        this.order = order;
+    }
 
-	public String getLastContributor() {
-		return lastContributor;
-	}
+    public boolean isPublished() {
+        return published;
+    }
 
-	public void setLastContributor(String lastContributor) {
-		this.lastContributor = lastContributor;
-	}
+    public void setPublished(boolean published) {
+        this.published = published;
+    }
 
-	public PageSourceEntity getSource() {
-		return source;
-	}
+    public String getLastContributor() {
+        return lastContributor;
+    }
 
-	public void setSource(PageSourceEntity source) {
-		this.source = source;
-	}
+    public void setLastContributor(String lastContributor) {
+        this.lastContributor = lastContributor;
+    }
 
-	public Map<String, String> getConfiguration() {
-		return configuration;
-	}
+    public PageSourceEntity getSource() {
+        return source;
+    }
 
-	public void setConfiguration(Map<String, String> configuration) {
-		this.configuration = configuration;
-	}
+    public void setSource(PageSourceEntity source) {
+        this.source = source;
+    }
 
-	public boolean isHomepage() {
-		return homepage;
-	}
+    public Map<String, String> getConfiguration() {
+        return configuration;
+    }
 
-	public void setHomepage(boolean homepage) {
-		this.homepage = homepage;
-	}
+    public void setConfiguration(Map<String, String> configuration) {
+        this.configuration = configuration;
+    }
 
-	public List<String> getExcludedGroups() {
-		return excludedGroups;
-	}
+    public boolean isHomepage() {
+        return homepage;
+    }
 
-	public void setExcludedGroups(List<String> excludedGroups) {
-		this.excludedGroups = excludedGroups;
-	}
+    public void setHomepage(boolean homepage) {
+        this.homepage = homepage;
+    }
 
-	public String getParentId() { return parentId; }
+    public List<String> getExcludedGroups() {
+        return excludedGroups;
+    }
 
-	public void setParentId(String parentId) { this.parentId = parentId; }
+    public void setExcludedGroups(List<String> excludedGroups) {
+        this.excludedGroups = excludedGroups;
+    }
 
-	@Override
+    public String getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Page{");
         sb.append("name='").append(name).append('\'');
         sb.append(", type='").append(type).append('\'');
         sb.append(", order='").append(order).append('\'');
-		sb.append(", homepage='").append(homepage).append('\'');
+        sb.append(", homepage='").append(homepage).append('\'');
         sb.append(", lastContributor='").append(lastContributor).append('\'');
         sb.append('}');
         return sb.toString();
     }
-	
 }

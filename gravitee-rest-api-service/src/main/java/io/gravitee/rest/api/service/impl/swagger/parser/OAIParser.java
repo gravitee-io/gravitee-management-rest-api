@@ -22,15 +22,14 @@ import io.swagger.v3.core.util.Yaml;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -70,16 +69,17 @@ public class OAIParser extends AbstractSwaggerParser<OAIDescriptor> {
          * See https://github.com/swagger-api/swagger-parser/issues/1451
          */
         if (parseResult.getMessages() != null) {
-            final List<String> filteredMessages = parseResult.getMessages().stream()
-                    .filter(message -> !message.matches("^attribute info.contact.*"))
-                    .collect(Collectors.toList());
+            final List<String> filteredMessages = parseResult
+                .getMessages()
+                .stream()
+                .filter(message -> !message.matches("^attribute info.contact.*"))
+                .collect(Collectors.toList());
             parseResult.setMessages(filteredMessages);
         }
 
         if (parseResult == null || parseResult.getOpenAPI() == null) {
             throw new SwaggerDescriptorException("Malformed descriptor");
         }
-
 
         if (parseResult != null && parseResult.getOpenAPI() != null && parseResult.getOpenAPI().getInfo() != null) {
             /* ugly hack for swagger v2 $ref resolving & avoid NPE in resolveFully
@@ -91,13 +91,11 @@ public class OAIParser extends AbstractSwaggerParser<OAIDescriptor> {
 
                 return this.parse(Yaml.pretty(parseResult.getOpenAPI()), false, reparseOptions);
             }
-
         }
         OAIDescriptor descriptor = new OAIDescriptor(parseResult.getOpenAPI());
         descriptor.setMessages(parseResult.getMessages());
         return descriptor;
     }
-
 
     private File createTempFile(String content) {
         File temp = null;
@@ -116,17 +114,14 @@ public class OAIParser extends AbstractSwaggerParser<OAIDescriptor> {
             if (bw != null) {
                 try {
                     bw.close();
-                } catch (IOException e) {
-                }
+                } catch (IOException e) {}
             }
             if (out != null) {
                 try {
                     out.close();
-                } catch (IOException e) {
-                }
+                } catch (IOException e) {}
             }
         }
         return temp;
     }
-
 }

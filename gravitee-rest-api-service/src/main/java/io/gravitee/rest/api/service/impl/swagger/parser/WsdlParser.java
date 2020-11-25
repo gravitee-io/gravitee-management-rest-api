@@ -19,16 +19,16 @@ import io.gravitee.rest.api.spec.converter.wsdl.WSDLToOpenAPIConverter;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.core.models.AuthorizationValue;
 import io.swagger.v3.parser.util.RemoteUrl;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class WsdlParser extends AbstractSwaggerParser<OpenAPI> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(WsdlParser.class);
 
     @Override

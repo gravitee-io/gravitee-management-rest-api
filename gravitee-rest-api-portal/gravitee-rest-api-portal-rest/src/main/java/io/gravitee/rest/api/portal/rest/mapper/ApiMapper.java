@@ -31,15 +31,14 @@ import io.gravitee.rest.api.service.CategoryService;
 import io.gravitee.rest.api.service.ParameterService;
 import io.gravitee.rest.api.service.RatingService;
 import io.gravitee.rest.api.service.exceptions.CategoryNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
@@ -63,13 +62,11 @@ public class ApiMapper {
 
         List<ApiEntrypointEntity> apiEntrypoints = api.getEntrypoints();
         if (apiEntrypoints != null) {
-            List<String> entrypoints = apiEntrypoints.stream().map(ApiEntrypointEntity::getTarget)
-                    .collect(Collectors.toList());
+            List<String> entrypoints = apiEntrypoints.stream().map(ApiEntrypointEntity::getTarget).collect(Collectors.toList());
             apiItem.setEntrypoints(entrypoints);
         }
 
-        apiItem.setDraft(api.getLifecycleState() == ApiLifecycleState.UNPUBLISHED
-                || api.getLifecycleState() == ApiLifecycleState.CREATED);
+        apiItem.setDraft(api.getLifecycleState() == ApiLifecycleState.UNPUBLISHED || api.getLifecycleState() == ApiLifecycleState.CREATED);
         apiItem.setRunning(api.getState() == Lifecycle.State.STARTED);
         apiItem.setPublic(api.getVisibility() == Visibility.PUBLIC);
         apiItem.setId(api.getId());
@@ -96,8 +93,9 @@ public class ApiMapper {
 
         if (ratingService.isEnabled()) {
             final RatingSummaryEntity ratingSummaryEntity = ratingService.findSummaryByApi(api.getId());
-            RatingSummary ratingSummary = new RatingSummary().average(ratingSummaryEntity.getAverageRate())
-                    .count(BigDecimal.valueOf(ratingSummaryEntity.getNumberOfRatings()));
+            RatingSummary ratingSummary = new RatingSummary()
+                .average(ratingSummaryEntity.getAverageRate())
+                .count(BigDecimal.valueOf(ratingSummaryEntity.getNumberOfRatings()));
             apiItem.setRatingSummary(ratingSummary);
         }
 
@@ -109,14 +107,22 @@ public class ApiMapper {
 
         boolean isCategoryModeEnabled = this.parameterService.findAsBoolean(Key.PORTAL_APIS_CATEGORY_ENABLED);
         if (isCategoryModeEnabled && api.getCategories() != null) {
-            apiItem.setCategories(api.getCategories().stream().filter(categoryId -> {
-                try {
-                    categoryService.findNotHiddenById(categoryId);
-                    return true;
-                } catch (CategoryNotFoundException v) {
-                    return false;
-                }
-            }).collect(Collectors.toList()));
+            apiItem.setCategories(
+                api
+                    .getCategories()
+                    .stream()
+                    .filter(
+                        categoryId -> {
+                            try {
+                                categoryService.findNotHiddenById(categoryId);
+                                return true;
+                            } catch (CategoryNotFoundException v) {
+                                return false;
+                            }
+                        }
+                    )
+                    .collect(Collectors.toList())
+            );
         } else {
             apiItem.setCategories(new ArrayList<>());
         }

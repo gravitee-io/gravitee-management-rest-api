@@ -20,7 +20,6 @@ import io.gravitee.rest.api.model.notification.NotifierEntity;
 import io.gravitee.rest.api.service.notification.ApiHook;
 import io.gravitee.rest.api.service.notification.ApplicationHook;
 import io.gravitee.rest.api.service.notification.PortalHook;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,12 +30,12 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface NotifierService {
-     void trigger(final ApiHook hook, final String apiId, Map<String, Object> params);
-     void trigger(final ApplicationHook hook, final String applicationId, Map<String, Object> params);
-     void trigger(final PortalHook hook, Map<String, Object> params);
-     void triggerEmail(final ApplicationHook hook, final String apiId, Map<String, Object> params, final String recipient);
-     List<NotifierEntity> list(NotificationReferenceType referenceType, String referenceId);
-     Set<io.gravitee.rest.api.model.NotifierEntity> findAll();
-     io.gravitee.rest.api.model.NotifierEntity findById(String notifier);
-     String getSchema(String notifier);
+    void trigger(final ApiHook hook, final String apiId, Map<String, Object> params);
+    void trigger(final ApplicationHook hook, final String applicationId, Map<String, Object> params);
+    void trigger(final PortalHook hook, Map<String, Object> params);
+    void triggerEmail(final ApplicationHook hook, final String apiId, Map<String, Object> params, final String recipient);
+    List<NotifierEntity> list(NotificationReferenceType referenceType, String referenceId);
+    Set<io.gravitee.rest.api.model.NotifierEntity> findAll();
+    io.gravitee.rest.api.model.NotifierEntity findById(String notifier);
+    String getSchema(String notifier);
 }

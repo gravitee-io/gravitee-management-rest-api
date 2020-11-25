@@ -21,7 +21,6 @@ import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.common.Pageable;
 import io.gravitee.rest.api.model.configuration.identity.SocialIdentityProviderEntity;
 import io.gravitee.rest.api.service.common.JWTHelper.ACTION;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +32,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface UserService {
-
     UserEntity connect(String userId);
 
     UserEntity findById(String id);

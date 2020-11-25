@@ -17,16 +17,16 @@ package io.gravitee.rest.api.service.validator;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class PolicyCleaner {
+
     private static Logger LOGGER = LoggerFactory.getLogger(PolicyCleaner.class);
 
     private static ObjectMapper objectMapper = new ObjectMapper();
@@ -35,7 +35,7 @@ public class PolicyCleaner {
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
-    public static String clearNullValues(String jsonPayload){
+    public static String clearNullValues(String jsonPayload) {
         if (jsonPayload == null) {
             return jsonPayload;
         }

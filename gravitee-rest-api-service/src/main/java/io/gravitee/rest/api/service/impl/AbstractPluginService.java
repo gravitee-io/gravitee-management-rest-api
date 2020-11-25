@@ -22,20 +22,21 @@ import io.gravitee.rest.api.model.platform.plugin.PluginEntity;
 import io.gravitee.rest.api.service.PluginService;
 import io.gravitee.rest.api.service.exceptions.PluginNotFoundException;
 import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractPluginService<T extends ConfigurablePlugin, E extends PluginEntity> extends TransactionalService implements PluginService<E> {
+public abstract class AbstractPluginService<T extends ConfigurablePlugin, E extends PluginEntity>
+    extends TransactionalService
+    implements PluginService<E> {
 
     /**
      * Logger.

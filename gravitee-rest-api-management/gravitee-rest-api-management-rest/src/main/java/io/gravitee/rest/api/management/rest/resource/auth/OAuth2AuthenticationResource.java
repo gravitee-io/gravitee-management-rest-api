@@ -35,15 +35,11 @@ import io.gravitee.rest.api.service.exceptions.GroupNotFoundException;
 import io.gravitee.rest.api.service.exceptions.RoleNotFoundException;
 import io.gravitee.rest.api.service.exceptions.UserNotFoundException;
 import io.swagger.annotations.Api;
-import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import javax.net.ssl.SSLContext;
@@ -58,11 +54,14 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.stream.Collectors;
+import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -70,33 +69,38 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Singleton
-@Api(tags = {"Authentication"})
+@Api(tags = { "Authentication" })
 public class OAuth2AuthenticationResource extends AbstractAuthenticationResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2AuthenticationResource.class);
 
-    private final static String TEMPLATE_ENGINE_PROFILE_ATTRIBUTE = "profile";
+    private static final String TEMPLATE_ENGINE_PROFILE_ATTRIBUTE = "profile";
     private static final String ACCESS_TOKEN_PROPERTY = "access_token";
 
     // Dirty hack: only used to force class loading
     static {
         try {
-            LOGGER.trace("Loading class to initialize properly JsonPath Cache provider: " +
-                    Class.forName(JsonPathFunction.class.getName()));
-        } catch (ClassNotFoundException ignored) {
-        }
+            LOGGER.trace(
+                "Loading class to initialize properly JsonPath Cache provider: " + Class.forName(JsonPathFunction.class.getName())
+            );
+        } catch (ClassNotFoundException ignored) {}
     }
 
     @Autowired
     private SocialIdentityProviderService socialIdentityProviderService;
+
     @Autowired
     private GroupService groupService;
+
     @Autowired
     private RoleService roleService;
+
     @Autowired
     private EnvironmentService environmentService;
+
     @Autowired
     private Environment environment;
+
     @Autowired
     private AuthoritiesProvider authoritiesProvider;
 
@@ -108,7 +112,7 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         final ClientBuilder builder = ClientBuilder.newBuilder();
         if (trustAllEnabled) {
             SSLContext sc = SSLContext.getInstance("TLSv1.2");
-            sc.init(null, new TrustManager[]{new BlindTrustManager()}, null);
+            sc.init(null, new TrustManager[] { new BlindTrustManager() }, null);
             builder.sslContext(sc);
         }
 
@@ -119,9 +123,11 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
     @Path("exchange")
     @Produces(MediaType.APPLICATION_JSON)
     public Response tokenExchange(
-            @PathParam(value = "identity") final String identity,
-            @QueryParam(value = "token") final String token,
-            @Context final HttpServletResponse servletResponse) throws IOException {
+        @PathParam(value = "identity") final String identity,
+        @QueryParam(value = "token") final String token,
+        @Context final HttpServletResponse servletResponse
+    )
+        throws IOException {
         SocialIdentityProviderEntity identityProvider = socialIdentityProviderService.findById(identity);
 
         if (identityProvider != null) {
@@ -130,14 +136,19 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
                 final MultivaluedStringMap introspectData = new MultivaluedStringMap();
                 introspectData.add(TOKEN, token);
                 Response response = client
-                        //TODO: what is the correct introspection URL here ?
-                        .target(identityProvider.getTokenIntrospectionEndpoint())
-                        .request(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                        .header(HttpHeaders.AUTHORIZATION,
-                                String.format("Basic %s",
-                                        Base64.getEncoder().encodeToString(
-                                                (identityProvider.getClientId() + ':' + identityProvider.getClientSecret()).getBytes())))
-                        .post(Entity.form(introspectData));
+                    //TODO: what is the correct introspection URL here ?
+                    .target(identityProvider.getTokenIntrospectionEndpoint())
+                    .request(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                    .header(
+                        HttpHeaders.AUTHORIZATION,
+                        String.format(
+                            "Basic %s",
+                            Base64
+                                .getEncoder()
+                                .encodeToString((identityProvider.getClientId() + ':' + identityProvider.getClientSecret()).getBytes())
+                        )
+                    )
+                    .post(Entity.form(introspectData));
                 introspectData.clear();
 
                 if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -147,23 +158,23 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
                     if (active) {
                         return authenticateUser(identityProvider, servletResponse, token, null);
                     } else {
-                        return Response
-                                .status(Response.Status.UNAUTHORIZED)
-                                .entity(introspectPayload)
-                                .build();
+                        return Response.status(Response.Status.UNAUTHORIZED).entity(introspectPayload).build();
                     }
                 } else {
-                    LOGGER.error("Token exchange failed with status {}: {}\n{}", response.getStatus(), response.getStatusInfo(), getResponseEntityAsString(response));
+                    LOGGER.error(
+                        "Token exchange failed with status {}: {}\n{}",
+                        response.getStatus(),
+                        response.getStatusInfo(),
+                        getResponseEntityAsString(response)
+                    );
                 }
 
-                return Response
-                        .status(response.getStatusInfo())
-                        .entity(response.getEntity())
-                        .build();
+                return Response.status(response.getStatusInfo()).entity(response.getEntity()).build();
             } else {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("Token exchange is not supported for this identity provider")
-                        .build();
+                return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("Token exchange is not supported for this identity provider")
+                    .build();
             }
         }
 
@@ -173,9 +184,11 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response exchangeAuthorizationCode(
-            @PathParam(value = "identity") String identity,
-            @Valid @NotNull final Payload payload,
-            @Context final HttpServletResponse servletResponse) throws IOException {
+        @PathParam(value = "identity") String identity,
+        @Valid @NotNull final Payload payload,
+        @Context final HttpServletResponse servletResponse
+    )
+        throws IOException {
         SocialIdentityProviderEntity identityProvider = socialIdentityProviderService.findById(identity);
 
         if (identityProvider != null) {
@@ -187,20 +200,24 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
             accessData.add(CODE_KEY, payload.getCode());
             accessData.add(GRANT_TYPE_KEY, AUTH_CODE);
 
-            Response response = client.target(identityProvider.getTokenEndpoint())
-                    .request(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                    .post(Entity.form(accessData));
+            Response response = client
+                .target(identityProvider.getTokenEndpoint())
+                .request(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.form(accessData));
             accessData.clear();
 
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 final String accessToken = (String) getResponseEntity(response).get(ACCESS_TOKEN_PROPERTY);
                 return authenticateUser(identityProvider, servletResponse, accessToken, payload.getState());
             } else {
-                LOGGER.error("Exchange authorization code failed with status {}: {}\n{}", response.getStatus(), response.getStatusInfo(), getResponseEntityAsString(response));
+                LOGGER.error(
+                    "Exchange authorization code failed with status {}: {}\n{}",
+                    response.getStatus(),
+                    response.getStatusInfo(),
+                    getResponseEntityAsString(response)
+                );
             }
-            return Response
-                    .status(Response.Status.UNAUTHORIZED)
-                    .build();
+            return Response.status(Response.Status.UNAUTHORIZED).build();
         }
 
         return Response.status(Response.Status.NOT_FOUND).build();
@@ -211,17 +228,19 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
      *
      * @return Response
      */
-    private Response authenticateUser(final SocialIdentityProviderEntity socialProvider,
-                                      final HttpServletResponse servletResponse,
-                                      final String accessToken,
-                                      final String state) throws IOException {
+    private Response authenticateUser(
+        final SocialIdentityProviderEntity socialProvider,
+        final HttpServletResponse servletResponse,
+        final String accessToken,
+        final String state
+    )
+        throws IOException {
         // Step 2. Retrieve profile information about the authenticated end-user.
         Response response = client
-                .target(socialProvider.getUserInfoEndpoint())
-                .request(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
-                .header(HttpHeaders.AUTHORIZATION, String.format(socialProvider.getAuthorizationHeader(), accessToken))
-                .get();
-
+            .target(socialProvider.getUserInfoEndpoint())
+            .request(javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE)
+            .header(HttpHeaders.AUTHORIZATION, String.format(socialProvider.getAuthorizationHeader(), accessToken))
+            .get();
 
         // Step 3. Process the authenticated user.
         final String userInfo = getResponseEntityAsString(response);
@@ -229,13 +248,17 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
             return processUser(socialProvider, servletResponse, userInfo, state);
         } else {
             LOGGER.error("User info failed with status {}: {}\n{}", response.getStatus(), response.getStatusInfo(), userInfo);
-
         }
 
         return Response.status(response.getStatusInfo()).build();
     }
 
-    private Response processUser(final SocialIdentityProviderEntity socialProvider, final HttpServletResponse servletResponse, final String userInfo, final String state) {
+    private Response processUser(
+        final SocialIdentityProviderEntity socialProvider,
+        final HttpServletResponse servletResponse,
+        final String userInfo,
+        final String state
+    ) {
         Map<String, String> attrs = extractUserProfileAttributes(socialProvider.getUserProfileMapping(), userInfo);
 
         String email = attrs.get(SocialIdentityProviderEntity.UserProfile.EMAIL);
@@ -302,8 +325,7 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
 
         if (created || socialProvider.isSyncMappings()) {
             refreshUserMemberships(userId, socialProvider.getId(), groupMemberships, MembershipReferenceType.GROUP);
-            refreshUserMemberships(userId, socialProvider.getId(), roleMemberships,
-                    MembershipReferenceType.ORGANIZATION);
+            refreshUserMemberships(userId, socialProvider.getId(), roleMemberships, MembershipReferenceType.ORGANIZATION);
         }
 
         final Set<GrantedAuthority> authorities = authoritiesProvider.retrieveAuthorities(user.getId());
@@ -343,7 +365,11 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         return map;
     }
 
-    private List<MembershipService.Membership> refreshUserGroups(String userId, String identityProviderId, Collection<GroupEntity> userGroups) {
+    private List<MembershipService.Membership> refreshUserGroups(
+        String userId,
+        String identityProviderId,
+        Collection<GroupEntity> userGroups
+    ) {
         List<MembershipService.Membership> memberships = new ArrayList<>();
 
         // Get the default group roles from system
@@ -363,9 +389,10 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
                 }
 
                 MembershipService.Membership membership = new MembershipService.Membership(
-                        new MembershipService.MembershipReference(MembershipReferenceType.GROUP, groupEntity.getId()),
-                        new MembershipService.MembershipMember(userId, null, MembershipMemberType.USER),
-                        new MembershipService.MembershipRole(mapScope(roleEntity.getScope()), defaultRole));
+                    new MembershipService.MembershipReference(MembershipReferenceType.GROUP, groupEntity.getId()),
+                    new MembershipService.MembershipMember(userId, null, MembershipMemberType.USER),
+                    new MembershipService.MembershipRole(mapScope(roleEntity.getScope()), defaultRole)
+                );
 
                 membership.setSource(identityProviderId);
 
@@ -376,20 +403,30 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         return memberships;
     }
 
-    private List<MembershipService.Membership> refreshUserRoles(String userId, String identityProviderId, Collection<RoleEntity> userRoles) {
-        return userRoles.stream()
-                .map(roleEntity -> {
+    private List<MembershipService.Membership> refreshUserRoles(
+        String userId,
+        String identityProviderId,
+        Collection<RoleEntity> userRoles
+    ) {
+        return userRoles
+            .stream()
+            .map(
+                roleEntity -> {
                     MembershipService.Membership membership = new MembershipService.Membership(
-                            new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, GraviteeContext.getCurrentOrganization()),
-                            new MembershipService.MembershipMember(userId, null, MembershipMemberType.USER),
-                            new MembershipService.MembershipRole(
-                                    RoleScope.valueOf(roleEntity.getScope().name()),
-                                    roleEntity.getName()));
+                        new MembershipService.MembershipReference(
+                            MembershipReferenceType.ORGANIZATION,
+                            GraviteeContext.getCurrentOrganization()
+                        ),
+                        new MembershipService.MembershipMember(userId, null, MembershipMemberType.USER),
+                        new MembershipService.MembershipRole(RoleScope.valueOf(roleEntity.getScope().name()), roleEntity.getName())
+                    );
 
                     membership.setSource(identityProviderId);
 
                     return membership;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     /**
@@ -400,8 +437,12 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
      * @param memberships List of memberships to associate to the user
      * @param types The types of user memberships to manage
      */
-    private void refreshUserMemberships(String userId, String identityProviderId, List<MembershipService.Membership> memberships,
-                                        MembershipReferenceType... types) {
+    private void refreshUserMemberships(
+        String userId,
+        String identityProviderId,
+        List<MembershipService.Membership> memberships,
+        MembershipReferenceType... types
+    ) {
         // Get existing memberships for a given type
         List<UserMembership> userMemberships = new ArrayList<>();
 
@@ -410,24 +451,31 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         }
 
         // Delete existing memberships
-        userMemberships.forEach(membership -> {
-            // Consider only membership "created by" the identity provider
-            if (identityProviderId.equals(membership.getSource())) {
-                membershipService.deleteReferenceMember(
+        userMemberships.forEach(
+            membership -> {
+                // Consider only membership "created by" the identity provider
+                if (identityProviderId.equals(membership.getSource())) {
+                    membershipService.deleteReferenceMember(
                         MembershipReferenceType.valueOf(membership.getType()),
                         membership.getReference(),
                         MembershipMemberType.USER,
-                        userId);
+                        userId
+                    );
+                }
             }
-        });
+        );
 
         // Create updated memberships
-        memberships.forEach(membership -> membershipService.updateRoleToMemberOnReference(
-                membership.getReference(),
-                membership.getMember(),
-                membership.getRole(),
-                membership.getSource(),
-                false));
+        memberships.forEach(
+            membership ->
+                membershipService.updateRoleToMemberOnReference(
+                    membership.getReference(),
+                    membership.getMember(),
+                    membership.getRole(),
+                    membership.getSource(),
+                    false
+                )
+        );
     }
 
     /**
@@ -495,11 +543,9 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
             if (match) {
                 if (mapping.getOrganizations() != null) {
                     try {
-                        mapping.getOrganizations().forEach(org ->
-                                roleService
-                                        .findByScopeAndName(RoleScope.ORGANIZATION, org)
-                                        .ifPresent(roles::add)
-                        );
+                        mapping
+                            .getOrganizations()
+                            .forEach(org -> roleService.findByScopeAndName(RoleScope.ORGANIZATION, org).ifPresent(roles::add));
                     } catch (RoleNotFoundException rnfe) {
                         LOGGER.error("Unable to create user, missing role in repository : {}", mapping.getOrganizations());
                     }
@@ -527,5 +573,4 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
             return RoleScope.APPLICATION;
         }
     }
-
 }

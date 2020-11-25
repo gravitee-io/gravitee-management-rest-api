@@ -29,7 +29,7 @@ public class MediaEntity {
     private String fileName;
     private Date createAt;
     private long size;
-    private byte [] data;
+    private byte[] data;
 
     public String getId() {
         return id;
@@ -106,13 +106,25 @@ public class MediaEntity {
 
     @Override
     public String toString() {
-        return "MediaEntity{" +
-            "id='" + id + '\'' +
-            ", type='" + type + '\'' +
-            ", subType='" + subType + '\'' +
-            ", filename='" + fileName + '\'' +
-            ", createAt=" + createAt +
-            ", size=" + size +
-            '}';
+        return (
+            "MediaEntity{" +
+            "id='" +
+            id +
+            '\'' +
+            ", type='" +
+            type +
+            '\'' +
+            ", subType='" +
+            subType +
+            '\'' +
+            ", filename='" +
+            fileName +
+            '\'' +
+            ", createAt=" +
+            createAt +
+            ", size=" +
+            size +
+            '}'
+        );
     }
 }

@@ -20,6 +20,6 @@ package io.gravitee.rest.api.service.event;
  * @author GraviteeSource Team
  */
 public enum DictionaryEvent {
-
-    START, STOP;
+    START,
+    STOP,
 }

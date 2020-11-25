@@ -15,6 +15,8 @@
  */
 package io.gravitee.rest.api.service.impl;
 
+import static io.gravitee.rest.api.service.validator.PolicyCleaner.clearNullValues;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
@@ -28,14 +30,11 @@ import io.gravitee.rest.api.model.PolicyDevelopmentEntity;
 import io.gravitee.rest.api.model.PolicyEntity;
 import io.gravitee.rest.api.service.PolicyService;
 import io.gravitee.rest.api.service.exceptions.InvalidDataException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static io.gravitee.rest.api.service.validator.PolicyCleaner.clearNullValues;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -49,10 +48,7 @@ public class PolicyServiceImpl extends AbstractPluginService<PolicyPlugin, Polic
 
     @Override
     public Set<PolicyEntity> findAll() {
-        return super.list()
-                .stream()
-                .map(policyDefinition -> convert(policyDefinition, false))
-                .collect(Collectors.toSet());
+        return super.list().stream().map(policyDefinition -> convert(policyDefinition, false)).collect(Collectors.toSet());
     }
 
     @Override
@@ -63,7 +59,6 @@ public class PolicyServiceImpl extends AbstractPluginService<PolicyPlugin, Polic
 
     @Override
     public void validatePolicyConfiguration(Policy policy) {
-
         if (policy != null && policy.getConfiguration() != null) {
             String schema = getSchema(policy.getName());
 
@@ -75,7 +70,9 @@ public class PolicyServiceImpl extends AbstractPluginService<PolicyPlugin, Polic
                 if (schema != null && !schema.equals("")) {
                     // Validate json against schema when defined.
                     JsonNode jsonSchema = JsonLoader.fromString(schema);
-                    ListProcessingReport report = (ListProcessingReport) jsonSchemaFactory.getValidator().validate(jsonSchema, jsonConfiguration, true);
+                    ListProcessingReport report = (ListProcessingReport) jsonSchemaFactory
+                        .getValidator()
+                        .validate(jsonSchema, jsonConfiguration, true);
                     if (!report.isSuccess()) {
                         String msg = "";
                         if (report.iterator().hasNext()) {
@@ -86,7 +83,6 @@ public class PolicyServiceImpl extends AbstractPluginService<PolicyPlugin, Polic
                 }
 
                 policy.setConfiguration(safePolicyConfiguration);
-
             } catch (IOException | ProcessingException e) {
                 throw new InvalidDataException("Unable to validate policy configuration", e);
             }

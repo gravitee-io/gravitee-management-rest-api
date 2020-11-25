@@ -15,6 +15,12 @@
  */
 package io.gravitee.rest.api.service;
 
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
@@ -35,6 +41,9 @@ import io.gravitee.rest.api.model.permissions.SystemRole;
 import io.gravitee.rest.api.service.impl.ApiServiceImpl;
 import io.gravitee.rest.api.service.jackson.filter.ApiPermissionFilter;
 import io.gravitee.rest.api.service.search.SearchEngineService;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,16 +57,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Optional;
-
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
@@ -100,6 +99,7 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
     @Mock
     private ParameterService parameterService;
+
     @Mock
     private CategoryService categoryService;
 
@@ -115,9 +115,11 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
     private ApiMetadataService apiMetadataService;
 
     @Before
-    public void setUp()  throws TechnicalException {
+    public void setUp() throws TechnicalException {
         PropertyFilter apiMembershipTypeFilter = new ApiPermissionFilter();
-        objectMapper.setFilterProvider(new SimpleFilterProvider(Collections.singletonMap("apiMembershipTypeFilter", apiMembershipTypeFilter)));
+        objectMapper.setFilterProvider(
+            new SimpleFilterProvider(Collections.singletonMap("apiMembershipTypeFilter", apiMembershipTypeFilter))
+        );
         when(apiRepository.findById(API_ID)).thenReturn(Optional.of(api));
         when(apiRepository.update(any())).thenReturn(api);
         when(api.getName()).thenReturn(API_NAME);
@@ -147,7 +149,6 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
         po.setRoles(Collections.singletonList(poRoleEntity));
         when(membershipService.getMembersByReferencesAndRole(any(), any(), any())).thenReturn(singleton(po));
 
-
         mockStatic(System.class);
         when(System.currentTimeMillis()).thenReturn(0L);
 
@@ -159,35 +160,41 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
     @AfterClass
     public static void cleanSecurityContextHolder() {
         // reset authentication to avoid side effect during test executions.
-        SecurityContextHolder.setContext(new SecurityContext() {
-            @Override
-            public Authentication getAuthentication() {
-                return null;
+        SecurityContextHolder.setContext(
+            new SecurityContext() {
+                @Override
+                public Authentication getAuthentication() {
+                    return null;
+                }
+
+                @Override
+                public void setAuthentication(Authentication authentication) {}
             }
-            @Override
-            public void setAuthentication(Authentication authentication) {
-            }
-        });
+        );
     }
 
     @Test
     public void shouldNotAddDefaultConditionIfNoLogging() throws TechnicalException {
-
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging = proxy.get("logging");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging = proxy.get("logging");
 
-                return logging == null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return logging == null;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -200,21 +207,26 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "NONE".equals(mode.asText()) && condition == null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return "NONE".equals(mode.asText()) && condition == null;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -227,21 +239,26 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText()) && "true".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return "CLIENT_PROXY".equals(mode.asText()) && "true".equals(condition.asText());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -254,22 +271,26 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l && true".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return "CLIENT_PROXY".equals(mode.asText()) && "#request.timestamp <= 1l && true".equals(condition.asText());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -282,22 +303,26 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return "CLIENT_PROXY".equals(mode.asText()) && "#request.timestamp <= 1l".equals(condition.asText());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -310,22 +335,26 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return "CLIENT_PROXY".equals(mode.asText()) && "#request.timestamp <= 1l".equals(condition.asText());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -338,22 +367,31 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2)".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "#request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2)".equals(
+                                        condition.asText()
+                                    )
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -366,134 +404,187 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l".equals(
+                                        condition.asText()
+                                    )
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldHandleAfter_doubleParenthesis() throws TechnicalException {
         Logging logging = new Logging();
         logging.setMode(LoggingMode.CLIENT_PROXY);
-        logging.setCondition("#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2' && #request.timestamp <= 2550166583090l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')");
+        logging.setCondition(
+            "#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2' && #request.timestamp <= 2550166583090l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')"
+        );
         existingApi.getProxy().setLogging(logging);
         when(parameterService.findAll(eq(Key.LOGGING_DEFAULT_MAX_DURATION), any())).thenReturn(singletonList(1L));
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(
+                                        condition.asText()
+                                    )
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldHandleBefore_doubleParenthesis() throws TechnicalException {
         Logging logging = new Logging();
         logging.setMode(LoggingMode.CLIENT_PROXY);
-        logging.setCondition("(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 2550166583090l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')");
+        logging.setCondition(
+            "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 2550166583090l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')"
+        );
         existingApi.getProxy().setLogging(logging);
         when(parameterService.findAll(eq(Key.LOGGING_DEFAULT_MAX_DURATION), any())).thenReturn(singletonList(1L));
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(
+                                        condition.asText()
+                                    )
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldHandleBefore_multipleParenthesis() throws TechnicalException {
         Logging logging = new Logging();
         logging.setMode(LoggingMode.CLIENT_PROXY);
-        logging.setCondition("((#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')) && #request.timestamp <= 2550166583090l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')");
+        logging.setCondition(
+            "((#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')) && #request.timestamp <= 2550166583090l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')"
+        );
         existingApi.getProxy().setLogging(logging);
         when(parameterService.findAll(eq(Key.LOGGING_DEFAULT_MAX_DURATION), any())).thenReturn(singletonList(1L));
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "((#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')) && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "((#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')) && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(
+                                        condition.asText()
+                                    )
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
     public void shouldOverrideTimestampCaseBeforeAndTimestampAndAfter() throws TechnicalException {
         Logging logging = new Logging();
         logging.setMode(LoggingMode.CLIENT_PROXY);
-        logging.setCondition("#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2' && #request.timestamp <= 2550166583090l && #context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2'");
+        logging.setCondition(
+            "#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2' && #request.timestamp <= 2550166583090l && #context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2'"
+        );
         existingApi.getProxy().setLogging(logging);
         when(parameterService.findAll(eq(Key.LOGGING_DEFAULT_MAX_DURATION), any())).thenReturn(singletonList(1L));
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "(#context.application == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2') && #request.timestamp <= 1l && (#context.plan == '5aada00c-cd25-41f0-ada0-0ccd25b1f0f2')".equals(
+                                        condition.asText()
+                                    )
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -506,22 +597,26 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 2l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return "CLIENT_PROXY".equals(mode.asText()) && "#request.timestamp <= 2l".equals(condition.asText());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -534,22 +629,29 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l && #request.timestamp >= 5l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "#request.timestamp <= 1l && #request.timestamp >= 5l".equals(condition.asText())
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -562,22 +664,29 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l && #request.timestamp > 5l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "#request.timestamp <= 1l && #request.timestamp > 5l".equals(condition.asText())
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -590,22 +699,29 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         apiService.update(API_ID, existingApi);
 
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode condition = logging1.get("condition");
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode condition = logging1.get("condition");
 
-                return "CLIENT_PROXY".equals(mode.asText())
-                        && "#request.timestamp <= 1l && #request.timestamp >= 0l".equals(condition.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+                            return (
+                                "CLIENT_PROXY".equals(mode.asText()) &&
+                                "#request.timestamp <= 1l && #request.timestamp >= 0l".equals(condition.asText())
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 
     @Test
@@ -617,8 +733,16 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         checkCondition(logging, "true || #request.timestamp <= 2l", "(true) && #request.timestamp <= 1l");
         checkCondition(logging, "#request.timestamp <= 2l || true", "#request.timestamp <= 1l && (true)");
-        checkCondition(logging, "#request.timestamp <= 2l || #request.timestamp >= 1l", "#request.timestamp <= 1l && (#request.timestamp >= 1l)");
-        checkCondition(logging, "#request.timestamp <= 1234l  || #request.timestamp > 2l", "#request.timestamp <= 1l && (#request.timestamp > 2l)");
+        checkCondition(
+            logging,
+            "#request.timestamp <= 2l || #request.timestamp >= 1l",
+            "#request.timestamp <= 1l && (#request.timestamp >= 1l)"
+        );
+        checkCondition(
+            logging,
+            "#request.timestamp <= 1234l  || #request.timestamp > 2l",
+            "#request.timestamp <= 1l && (#request.timestamp > 2l)"
+        );
         checkCondition(logging, "#request.timestamp <= 1l || true", "#request.timestamp <= 1l && (true)");
         checkCondition(logging, "#request.timestamp <= 0l", "#request.timestamp <= 0l");
     }
@@ -630,19 +754,24 @@ public class ApiService_Update_DefaultLoggingMaxDurationTest {
 
         logging.setCondition(condition);
         apiService.update(API_ID, existingApi);
-        verify(apiRepository, times(1)).update(argThat(api -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                JsonNode json = objectMapper.readTree(api.getDefinition());
-                JsonNode proxy = json.get("proxy");
-                JsonNode logging1 = proxy.get("logging");
-                JsonNode mode = logging1.get("mode");
-                JsonNode cond = logging1.get("condition");
-                return "CLIENT_PROXY".equals(mode.asText()) && expectedCondition.equals(cond.asText());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }));
+        verify(apiRepository, times(1))
+            .update(
+                argThat(
+                    api -> {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        try {
+                            JsonNode json = objectMapper.readTree(api.getDefinition());
+                            JsonNode proxy = json.get("proxy");
+                            JsonNode logging1 = proxy.get("logging");
+                            JsonNode mode = logging1.get("mode");
+                            JsonNode cond = logging1.get("condition");
+                            return "CLIENT_PROXY".equals(mode.asText()) && expectedCondition.equals(cond.asText());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                    }
+                )
+            );
     }
 }

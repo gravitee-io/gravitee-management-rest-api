@@ -34,18 +34,17 @@ import io.gravitee.rest.api.service.spring.ImportConfiguration;
 import io.gravitee.rest.api.service.swagger.OAIDescriptor;
 import io.gravitee.rest.api.service.swagger.SwaggerDescriptor;
 import io.swagger.v3.oas.models.OpenAPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -84,15 +83,19 @@ public class SwaggerServiceImpl implements SwaggerService {
         if (descriptor != null) {
             List<OAIOperationVisitor> visitors = new ArrayList<>();
             if (swaggerDescriptor.isWithPolicyPaths()) {
-                visitors = policyOperationVisitorManager.getPolicyVisitors().stream()
-                        .filter(operationVisitor -> swaggerDescriptor.getWithPolicies() != null
-                                && swaggerDescriptor.getWithPolicies().contains(operationVisitor.getId()))
+                visitors =
+                    policyOperationVisitorManager
+                        .getPolicyVisitors()
+                        .stream()
+                        .filter(
+                            operationVisitor ->
+                                swaggerDescriptor.getWithPolicies() != null &&
+                                swaggerDescriptor.getWithPolicies().contains(operationVisitor.getId())
+                        )
                         .map(operationVisitor -> policyOperationVisitorManager.getOAIOperationVisitor(operationVisitor.getId()))
                         .collect(Collectors.toList());
             }
-            return new OAIToAPIConverter(visitors, groupService, tagService)
-                    .convert((OAIDescriptor) descriptor);
-
+            return new OAIToAPIConverter(visitors, groupService, tagService).convert((OAIDescriptor) descriptor);
         }
 
         throw new SwaggerDescriptorException();
@@ -140,7 +143,11 @@ public class SwaggerServiceImpl implements SwaggerService {
         OpenAPI descriptor;
 
         if (isUrl(content)) {
-            UrlSanitizerUtils.checkAllowed(content, importConfiguration.getImportWhitelist(), importConfiguration.isAllowImportFromPrivate());
+            UrlSanitizerUtils.checkAllowed(
+                content,
+                importConfiguration.getImportWhitelist(),
+                importConfiguration.isAllowImportFromPrivate()
+            );
         }
 
         if (wsdl) {

@@ -15,11 +15,23 @@
  */
 package io.gravitee.rest.api.service;
 
+import static io.gravitee.rest.api.service.common.JWTHelper.ACTION.RESET_PASSWORD;
+import static io.gravitee.rest.api.service.common.JWTHelper.ACTION.USER_REGISTRATION;
+import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_EMAIL_REGISTRATION_EXPIRE_AFTER;
+import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_ISSUER;
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
+import static org.junit.Assert.*;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import io.gravitee.common.data.domain.MetadataPage;
-import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.gravitee.common.util.Maps;
+import io.gravitee.el.exceptions.ExpressionEvaluationException;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.UserRepository;
 import io.gravitee.repository.management.model.User;
@@ -37,6 +49,13 @@ import io.gravitee.rest.api.service.common.JWTHelper;
 import io.gravitee.rest.api.service.exceptions.*;
 import io.gravitee.rest.api.service.impl.UserServiceImpl;
 import io.gravitee.rest.api.service.search.SearchEngineService;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -47,26 +66,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.ConfigurableEnvironment;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.nio.charset.Charset;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-
-import static io.gravitee.rest.api.service.common.JWTHelper.ACTION.RESET_PASSWORD;
-import static io.gravitee.rest.api.service.common.JWTHelper.ACTION.USER_REGISTRATION;
-import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_EMAIL_REGISTRATION_EXPIRE_AFTER;
-import static io.gravitee.rest.api.service.common.JWTHelper.DefaultValues.DEFAULT_JWT_ISSUER;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
-import static org.junit.Assert.*;
-import static org.mockito.AdditionalAnswers.returnsFirstArg;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author Azize Elamrani (azize dot elamrani at gmail dot com)
@@ -82,7 +81,7 @@ public class UserServiceTest {
     private static final String LAST_NAME = "User";
     private static final String PASSWORD = "gh2gyf8!zjfnz";
     private static final String JWT_SECRET = "VERYSECURE";
-    ;
+
     private static final String ORGANIZATION = "DEFAULT";
     private static final Set<UserRoleEntity> ROLES = Collections.singleton(new UserRoleEntity());
 
@@ -97,52 +96,76 @@ public class UserServiceTest {
 
     @Mock
     private PasswordValidator passwordValidator;
+
     @Mock
     private UserRepository userRepository;
+
     @Mock
     private ApplicationService applicationService;
+
     @Mock
     private RoleService roleService;
+
     @Mock
     private MembershipService membershipService;
+
     @Mock
     private ConfigurableEnvironment environment;
+
     @Mock
     private NewExternalUserEntity newUser;
+
     @Mock
     private User user;
+
     @Mock
     private Date date;
+
     @Mock
     private AuditService auditService;
+
     @Mock
     private NotifierService notifierService;
+
     @Mock
     private EmailService emailService;
+
     @Mock
     private ParameterService mockParameterService;
+
     @Mock
     private SearchEngineService searchEngineService;
+
     @Mock
     private InvitationService invitationService;
+
     @Mock
     private ApiService apiService;
+
     @Mock
     private PortalNotificationService portalNotificationService;
+
     @Mock
     private PortalNotificationConfigService portalNotificationConfigService;
+
     @Mock
     private GenericNotificationConfigService genericNotificationConfigService;
+
     @Mock
     private GroupService groupService;
+
     @Mock
     private SocialIdentityProviderEntity identityProvider;
+
     @Mock
     private OrganizationService organizationService;
+
     @Mock
     private TokenService tokenService;
+
     @Mock
     private UserMetadataService userMetadataService;
+
     @Mock
     private EnvironmentService environmentService;
 
@@ -186,9 +209,7 @@ public class UserServiceTest {
 
     @Test
     public void shouldCreateWithCustomFields() throws TechnicalException {
-        Map<String, Object> customFields = Maps.<String, Object>builder()
-                .put("md1", "value1")
-                .put("md2", "value2").build();
+        Map<String, Object> customFields = Maps.<String, Object>builder().put("md1", "value1").put("md2", "value2").build();
         innerShoudCreate(customFields);
     }
 
@@ -216,37 +237,37 @@ public class UserServiceTest {
         RoleEntity roleEnv = mock(RoleEntity.class);
         when(roleEnv.getScope()).thenReturn(RoleScope.ENVIRONMENT);
         when(roleEnv.getName()).thenReturn("USER");
-        when(membershipService.getRoles(
-                MembershipReferenceType.ENVIRONMENT,
-                "DEFAULT",
-                MembershipMemberType.USER,
-                user.getId())).thenReturn(new HashSet<>(Arrays.asList(roleEnv)));
+        when(membershipService.getRoles(MembershipReferenceType.ENVIRONMENT, "DEFAULT", MembershipMemberType.USER, user.getId()))
+            .thenReturn(new HashSet<>(Arrays.asList(roleEnv)));
         RoleEntity roleOrg = mock(RoleEntity.class);
         when(roleOrg.getScope()).thenReturn(RoleScope.ORGANIZATION);
         when(roleOrg.getName()).thenReturn("USER");
-        when(membershipService.getRoles(
-                MembershipReferenceType.ORGANIZATION,
-                "DEFAULT",
-                MembershipMemberType.USER,
-                user.getId())).thenReturn(new HashSet<>(Arrays.asList(roleOrg)));
+        when(membershipService.getRoles(MembershipReferenceType.ORGANIZATION, "DEFAULT", MembershipMemberType.USER, user.getId()))
+            .thenReturn(new HashSet<>(Arrays.asList(roleOrg)));
 
         when(organizationService.findById(ORGANIZATION)).thenReturn(new OrganizationEntity());
         mockDefaultEnvironment();
 
         if (customFields != null) {
-            when(userMetadataService.create(any())).thenAnswer((x) -> convertNewUserMetadataEntity(x.getArgument(0)));
+            when(userMetadataService.create(any())).thenAnswer(x -> convertNewUserMetadataEntity(x.getArgument(0)));
         }
 
         final UserEntity createdUserEntity = userService.create(newUser, false);
 
-        verify(userRepository).create(argThat(userToCreate -> USER_NAME.equals(userToCreate.getSourceId()) &&
-                USER_SOURCE.equals(userToCreate.getSource()) &&
-                EMAIL.equals(userToCreate.getEmail()) &&
-                FIRST_NAME.equals(userToCreate.getFirstname()) &&
-                LAST_NAME.equals(userToCreate.getLastname()) &&
-                userToCreate.getCreatedAt() != null &&
-                userToCreate.getUpdatedAt() != null &&
-                userToCreate.getCreatedAt().equals(userToCreate.getUpdatedAt())));
+        verify(userRepository)
+            .create(
+                argThat(
+                    userToCreate ->
+                        USER_NAME.equals(userToCreate.getSourceId()) &&
+                        USER_SOURCE.equals(userToCreate.getSource()) &&
+                        EMAIL.equals(userToCreate.getEmail()) &&
+                        FIRST_NAME.equals(userToCreate.getFirstname()) &&
+                        LAST_NAME.equals(userToCreate.getLastname()) &&
+                        userToCreate.getCreatedAt() != null &&
+                        userToCreate.getUpdatedAt() != null &&
+                        userToCreate.getCreatedAt().equals(userToCreate.getUpdatedAt())
+                )
+            );
 
         assertEquals(USER_NAME, createdUserEntity.getId());
         assertEquals(FIRST_NAME, createdUserEntity.getFirstname());
@@ -290,7 +311,8 @@ public class UserServiceTest {
 
     @Test(expected = UserAlreadyExistsException.class)
     public void shouldNotCreateBecauseExists() throws TechnicalException {
-        when(userRepository.findBySource(nullable(String.class), nullable(String.class), nullable(String.class))).thenReturn(of(new User()));
+        when(userRepository.findBySource(nullable(String.class), nullable(String.class), nullable(String.class)))
+            .thenReturn(of(new User()));
 
         userService.create(newUser, false);
 
@@ -368,7 +390,6 @@ public class UserServiceTest {
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeRegistration(userEntity);
-
     }
 
     @Test(expected = UserStateConflictException.class)
@@ -376,11 +397,10 @@ public class UserServiceTest {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
 
         RegisterUserEntity userEntity = new RegisterUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100, RESET_PASSWORD.name()));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100, RESET_PASSWORD.name()));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeRegistration(userEntity);
-
     }
 
     @Test
@@ -397,15 +417,16 @@ public class UserServiceTest {
         when(userRepository.update(any())).thenAnswer(returnsFirstArg());
 
         ResetPasswordUserEntity userEntity = new ResetPasswordUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100, RESET_PASSWORD.name()));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100, RESET_PASSWORD.name()));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeResetPassword(userEntity);
 
-        verify(auditService).createPortalAuditLog(anyMap(), argThat(evt -> evt.equals(User.AuditEvent.PASSWORD_CHANGED)), any(), any(), any());
+        verify(auditService)
+            .createPortalAuditLog(anyMap(), argThat(evt -> evt.equals(User.AuditEvent.PASSWORD_CHANGED)), any(), any(), any());
     }
 
-    @Test (expected = PasswordFormatInvalidException.class)
+    @Test(expected = PasswordFormatInvalidException.class)
     public void changePassword_invalidPwd() throws TechnicalException {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
 
@@ -417,18 +438,18 @@ public class UserServiceTest {
         when(userRepository.findById(USER_NAME)).thenReturn(Optional.of(user));
 
         ResetPasswordUserEntity userEntity = new ResetPasswordUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100, RESET_PASSWORD.name()));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100, RESET_PASSWORD.name()));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeResetPassword(userEntity);
     }
 
-    @Test (expected = UserStateConflictException.class)
+    @Test(expected = UserStateConflictException.class)
     public void changePassword_withInvalidAction() throws TechnicalException {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
 
         ResetPasswordUserEntity userEntity = new ResetPasswordUserEntity();
-        userEntity.setToken(createJWT(System.currentTimeMillis()/1000 + 100));
+        userEntity.setToken(createJWT(System.currentTimeMillis() / 1000 + 100));
         userEntity.setPassword(PASSWORD);
 
         userService.finalizeResetPassword(userEntity);
@@ -474,10 +495,16 @@ public class UserServiceTest {
 
         userService.finalizeRegistration(userEntity);
 
-        verify(userRepository).update(argThat(userToCreate -> "CUSTOM_LONG_ID".equals(userToCreate.getId()) &&
-                EMAIL.equals(userToCreate.getEmail()) &&
-                FIRST_NAME.equals(userToCreate.getFirstname()) &&
-                LAST_NAME.equals(userToCreate.getLastname())));
+        verify(userRepository)
+            .update(
+                argThat(
+                    userToCreate ->
+                        "CUSTOM_LONG_ID".equals(userToCreate.getId()) &&
+                        EMAIL.equals(userToCreate.getEmail()) &&
+                        FIRST_NAME.equals(userToCreate.getFirstname()) &&
+                        LAST_NAME.equals(userToCreate.getLastname())
+                )
+            );
     }
 
     @Test(expected = UserRegistrationUnavailableException.class)
@@ -497,12 +524,13 @@ public class UserServiceTest {
     public void shouldResetPassword() throws TechnicalException {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
         when(environment.getProperty("user.creation.token.expire-after", Integer.class, DEFAULT_JWT_EMAIL_REGISTRATION_EXPIRE_AFTER))
-                .thenReturn(1000);
+            .thenReturn(1000);
         when(user.getId()).thenReturn(USER_NAME);
         when(user.getSource()).thenReturn("gravitee");
         when(userRepository.findById(USER_NAME)).thenReturn(of(user));
 
-        when(auditService.search(argThat(arg -> arg.getEvents().contains(User.AuditEvent.PASSWORD_RESET.name())))).thenReturn(mock(MetadataPage.class));
+        when(auditService.search(argThat(arg -> arg.getEvents().contains(User.AuditEvent.PASSWORD_RESET.name()))))
+            .thenReturn(mock(MetadataPage.class));
 
         userService.resetPassword(USER_NAME);
 
@@ -515,7 +543,7 @@ public class UserServiceTest {
     public void shouldResetPassword_auditEventNotMatch() throws TechnicalException {
         when(environment.getProperty("jwt.secret")).thenReturn(JWT_SECRET);
         when(environment.getProperty("user.creation.token.expire-after", Integer.class, DEFAULT_JWT_EMAIL_REGISTRATION_EXPIRE_AFTER))
-                .thenReturn(1000);
+            .thenReturn(1000);
         when(user.getId()).thenReturn(USER_NAME);
         when(user.getSource()).thenReturn("gravitee");
         when(userRepository.findById(USER_NAME)).thenReturn(of(user));
@@ -557,7 +585,6 @@ public class UserServiceTest {
         when(userRepository.findById(USER_NAME)).thenReturn(empty());
         userService.resetPassword(USER_NAME);
     }
-
 
     @Test(expected = UserNotFoundException.class)
     public void shouldFailWhileResettingPassword() throws TechnicalException {
@@ -602,17 +629,17 @@ public class UserServiceTest {
         Date issueAt = new Date();
         Instant expireAt = issueAt.toInstant().plus(Duration.ofSeconds(expirationSeconds));
 
-        return JWT.create()
-                .withIssuer(environment.getProperty("jwt.issuer", DEFAULT_JWT_ISSUER))
-                .withIssuedAt(issueAt)
-                .withExpiresAt(Date.from(expireAt))
-                .withSubject(USER_NAME)
-                .withClaim(JWTHelper.Claims.EMAIL, EMAIL)
-                .withClaim(JWTHelper.Claims.FIRSTNAME, FIRST_NAME)
-                .withClaim(JWTHelper.Claims.LASTNAME, LAST_NAME)
-                .withClaim(JWTHelper.Claims.ACTION, action)
-                .sign(algorithm);
-
+        return JWT
+            .create()
+            .withIssuer(environment.getProperty("jwt.issuer", DEFAULT_JWT_ISSUER))
+            .withIssuedAt(issueAt)
+            .withExpiresAt(Date.from(expireAt))
+            .withSubject(USER_NAME)
+            .withClaim(JWTHelper.Claims.EMAIL, EMAIL)
+            .withClaim(JWTHelper.Claims.FIRSTNAME, FIRST_NAME)
+            .withClaim(JWTHelper.Claims.LASTNAME, LAST_NAME)
+            .withClaim(JWTHelper.Claims.ACTION, action)
+            .sign(algorithm);
         /*
         HashMap<String, Object> claims = new HashMap<>();
         claims.put(JWTHelper.Claims.SUBJECT, USER_NAME);
@@ -647,9 +674,9 @@ public class UserServiceTest {
         toUpdate.setEmail(user.getEmail());
         toUpdate.setFirstname(user.getFirstname());
         toUpdate.setLastname(user.getLastname());
-        toUpdate.setCustomFields(Maps.<String, Object>builder()
-                .put("fieldToUpdate", "valueUpdated")
-                .put("fieldToCreate", "newValue").build());
+        toUpdate.setCustomFields(
+            Maps.<String, Object>builder().put("fieldToUpdate", "valueUpdated").put("fieldToCreate", "newValue").build()
+        );
 
         UserMetadataEntity existingField = new UserMetadataEntity();
         existingField.setValue("value1");
@@ -662,15 +689,26 @@ public class UserServiceTest {
 
         userService.update(USER_ID, toUpdate);
 
-        verify(userMetadataService).update(argThat(entity -> entity.getKey().equals(existingField.getKey()) &&
-                    entity.getName().equals(existingField.getName()) &&
-                    entity.getUserId().equals(existingField.getUserId()) &&
-                    entity.getValue().equals(toUpdate.getCustomFields().get(existingField.getKey()))));
+        verify(userMetadataService)
+            .update(
+                argThat(
+                    entity ->
+                        entity.getKey().equals(existingField.getKey()) &&
+                        entity.getName().equals(existingField.getName()) &&
+                        entity.getUserId().equals(existingField.getUserId()) &&
+                        entity.getValue().equals(toUpdate.getCustomFields().get(existingField.getKey()))
+                )
+            );
 
-
-        verify(userMetadataService).create(argThat(entity -> entity.getName().equals("fieldToCreate") &&
-                entity.getUserId().equals(existingField.getUserId()) &&
-                entity.getValue().equals(toUpdate.getCustomFields().get("fieldToCreate"))));
+        verify(userMetadataService)
+            .create(
+                argThat(
+                    entity ->
+                        entity.getName().equals("fieldToCreate") &&
+                        entity.getUserId().equals(existingField.getUserId()) &&
+                        entity.getValue().equals(toUpdate.getCustomFields().get("fieldToCreate"))
+                )
+            );
     }
 
     @Test
@@ -709,7 +747,6 @@ public class UserServiceTest {
             verify(userRepository, never()).update(any());
             verify(searchEngineService, never()).delete(any(), eq(false));
         }
-
     }
 
     @Test
@@ -735,18 +772,25 @@ public class UserServiceTest {
         verify(apiService, times(1)).findByUser(userId, null, false);
         verify(applicationService, times(1)).findByUser(userId);
         verify(membershipService, times(1)).removeMemberMemberships(MembershipMemberType.USER, userId);
-        verify(userRepository, times(1)).update(argThat(new ArgumentMatcher<User>() {
-            @Override
-            public boolean matches(User user) {
-                return userId.equals(user.getId())
-                        && UserStatus.ARCHIVED.equals(user.getStatus())
-                        && "deleted-sourceId".equals(user.getSourceId())
-                        && !updatedAt.equals(user.getUpdatedAt())
-                        && firstName.equals(user.getFirstname())
-                        && lastName.equals(user.getLastname())
-                        && email.equals(user.getEmail());
-            }
-        }));
+        verify(userRepository, times(1))
+            .update(
+                argThat(
+                    new ArgumentMatcher<User>() {
+                        @Override
+                        public boolean matches(User user) {
+                            return (
+                                userId.equals(user.getId()) &&
+                                UserStatus.ARCHIVED.equals(user.getStatus()) &&
+                                "deleted-sourceId".equals(user.getSourceId()) &&
+                                !updatedAt.equals(user.getUpdatedAt()) &&
+                                firstName.equals(user.getFirstname()) &&
+                                lastName.equals(user.getLastname()) &&
+                                email.equals(user.getEmail())
+                            );
+                        }
+                    }
+                )
+            );
         verify(searchEngineService, times(1)).delete(any(), eq(false));
         verify(portalNotificationService, times(1)).deleteAll(user.getId());
         verify(portalNotificationConfigService, times(1)).deleteByUser(user.getId());
@@ -780,19 +824,26 @@ public class UserServiceTest {
         verify(apiService, times(1)).findByUser(userId, null, false);
         verify(applicationService, times(1)).findByUser(userId);
         verify(membershipService, times(1)).removeMemberMemberships(MembershipMemberType.USER, userId);
-        verify(userRepository, times(1)).update(argThat(new ArgumentMatcher<User>() {
-            @Override
-            public boolean matches(User user) {
-                return userId.equals(user.getId())
-                        && UserStatus.ARCHIVED.equals(user.getStatus())
-                        && ("deleted-" + userId).equals(user.getSourceId())
-                        && !updatedAt.equals(user.getUpdatedAt())
-                        && "Unknown".equals(user.getFirstname())
-                        && user.getLastname().isEmpty()
-                        && user.getEmail() == null
-                        && user.getPicture() == null;
-            }
-        }));
+        verify(userRepository, times(1))
+            .update(
+                argThat(
+                    new ArgumentMatcher<User>() {
+                        @Override
+                        public boolean matches(User user) {
+                            return (
+                                userId.equals(user.getId()) &&
+                                UserStatus.ARCHIVED.equals(user.getStatus()) &&
+                                ("deleted-" + userId).equals(user.getSourceId()) &&
+                                !updatedAt.equals(user.getUpdatedAt()) &&
+                                "Unknown".equals(user.getFirstname()) &&
+                                user.getLastname().isEmpty() &&
+                                user.getEmail() == null &&
+                                user.getPicture() == null
+                            );
+                        }
+                    }
+                )
+            );
         verify(searchEngineService, times(1)).delete(any(), eq(false));
         verify(portalNotificationService, times(1)).deleteAll(user.getId());
         verify(portalNotificationConfigService, times(1)).deleteByUser(user.getId());
@@ -840,7 +891,6 @@ public class UserServiceTest {
         when(identityProvider.getId()).thenReturn("oauth2");
         when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
 
-
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
     }
@@ -880,7 +930,8 @@ public class UserServiceTest {
 
         mockDefaultEnvironment();
 
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT))
+            .thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
 
         User createdUser = mockUser();
         when(userRepository.create(any(User.class))).thenReturn(createdUser);
@@ -903,16 +954,19 @@ public class UserServiceTest {
         when(identityProvider.getId()).thenReturn("oauth2");
         when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
 
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT))
+            .thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
 
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body_no_matching.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
 
         //verify group creations
-        verify(membershipService, times(2)).addRoleToMemberOnReference(
+        verify(membershipService, times(2))
+            .addRoleToMemberOnReference(
                 any(MembershipService.MembershipReference.class),
                 any(MembershipService.MembershipMember.class),
-                any(MembershipService.MembershipRole.class));
+                any(MembershipService.MembershipRole.class)
+            );
     }
 
     @Test
@@ -942,97 +996,147 @@ public class UserServiceTest {
 
         when(roleService.findByScopeAndName(RoleScope.ORGANIZATION, "ADMIN")).thenReturn(Optional.of(roleOrganizationAdmin));
         when(roleService.findByScopeAndName(RoleScope.ORGANIZATION, "USER")).thenReturn(Optional.of(roleOrganizationUser));
-        when(roleService.findDefaultRoleByScopes(RoleScope.API, RoleScope.APPLICATION)).thenReturn(Arrays.asList(roleApiUser, roleApplicationAdmin));
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(roleOrganizationAdmin, roleEnvironmentAdmin));
+        when(roleService.findDefaultRoleByScopes(RoleScope.API, RoleScope.APPLICATION))
+            .thenReturn(Arrays.asList(roleApiUser, roleApplicationAdmin));
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT))
+            .thenReturn(Arrays.asList(roleOrganizationAdmin, roleEnvironmentAdmin));
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_1"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_2"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_2"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_4"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_4"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, "DEFAULT"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "ADMIN"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "ADMIN")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
-        when(membershipService.addRoleToMemberOnReference(
+        when(
+            membershipService.addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, "DEFAULT"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "USER"))).thenReturn(mockMemberEntity());
+                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "USER")
+            )
+        )
+            .thenReturn(mockMemberEntity());
 
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
 
         //verify group creations
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_1"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"));
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            );
 
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_1"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN"));
+                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN")
+            );
 
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_2"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"));
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            );
 
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_2"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN"));
+                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN")
+            );
 
-        verify(membershipService, times(0)).addRoleToMemberOnReference(
+        verify(membershipService, times(0))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_3"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"));
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            );
 
-        verify(membershipService, times(0)).addRoleToMemberOnReference(
+        verify(membershipService, times(0))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_3"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN"));
+                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN")
+            );
 
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_4"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.API, "USER"));
+                new MembershipService.MembershipRole(RoleScope.API, "USER")
+            );
 
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.GROUP, "group_id_4"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN"));
+                new MembershipService.MembershipRole(RoleScope.APPLICATION, "ADMIN")
+            );
 
-        verify(membershipService, times(2)).addRoleToMemberOnReference(
+        verify(membershipService, times(2))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, "DEFAULT"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "ADMIN"));
+                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "ADMIN")
+            );
 
-        verify(membershipService, times(1)).addRoleToMemberOnReference(
+        verify(membershipService, times(1))
+            .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.ORGANIZATION, "DEFAULT"),
                 new MembershipService.MembershipMember("janedoe@example.com", null, MembershipMemberType.USER),
-                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "USER"));
+                new MembershipService.MembershipRole(RoleScope.ORGANIZATION, "USER")
+            );
     }
 
     @Test
@@ -1047,17 +1151,19 @@ public class UserServiceTest {
         when(identityProvider.getId()).thenReturn("oauth2");
         when(userRepository.findBySource("oauth2", "janedoe@example.com", ORGANIZATION)).thenReturn(Optional.empty());
 
-        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT)).thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
+        when(roleService.findDefaultRoleByScopes(RoleScope.ORGANIZATION, RoleScope.ENVIRONMENT))
+            .thenReturn(Arrays.asList(mockRoleEntity(RoleScope.ORGANIZATION, "USER"), mockRoleEntity(RoleScope.ENVIRONMENT, "USER")));
 
         String userInfo = IOUtils.toString(read("/oauth2/json/user_info_response_body.json"), Charset.defaultCharset());
         userService.createOrUpdateUserFromSocialIdentityProvider(identityProvider, userInfo);
 
-
         //verify group creations
-        verify(membershipService, times(2)).addRoleToMemberOnReference(
+        verify(membershipService, times(2))
+            .addRoleToMemberOnReference(
                 any(MembershipService.MembershipReference.class),
                 any(MembershipService.MembershipMember.class),
-                any(MembershipService.MembershipRole.class));
+                any(MembershipService.MembershipRole.class)
+            );
     }
 
     private void mockDefaultEnvironment() {
@@ -1077,7 +1183,9 @@ public class UserServiceTest {
 
     private void mockGroupsMapping() {
         GroupMappingEntity condition1 = new GroupMappingEntity();
-        condition1.setCondition("{#jsonPath(#profile, '$.identity_provider_id') == 'idp_5' && #jsonPath(#profile, '$.job_id') != 'API_BREAKER'}");
+        condition1.setCondition(
+            "{#jsonPath(#profile, '$.identity_provider_id') == 'idp_5' && #jsonPath(#profile, '$.job_id') != 'API_BREAKER'}"
+        );
         condition1.setGroups(Arrays.asList("Example group", "soft user"));
 
         GroupMappingEntity condition2 = new GroupMappingEntity();
@@ -1093,7 +1201,9 @@ public class UserServiceTest {
 
     private void mockRolesMapping() {
         RoleMappingEntity role1 = new RoleMappingEntity();
-        role1.setCondition("{#jsonPath(#profile, '$.identity_provider_id') == 'idp_5' && #jsonPath(#profile, '$.job_id') != 'API_BREAKER'}");
+        role1.setCondition(
+            "{#jsonPath(#profile, '$.identity_provider_id') == 'idp_5' && #jsonPath(#profile, '$.job_id') != 'API_BREAKER'}"
+        );
         role1.setOrganizations(Collections.singletonList("ADMIN"));
 
         RoleMappingEntity role2 = new RoleMappingEntity();
@@ -1104,7 +1214,6 @@ public class UserServiceTest {
         role3.setCondition("{#jsonPath(#profile, '$.job_id') != 'API_BREAKER'}");
         role3.setOrganizations(Collections.singletonList("USER"));
         when(identityProvider.getRoleMappings()).thenReturn(Arrays.asList(role1, role2, role3));
-
     }
 
     private RoleEntity mockRoleEntity(RoleScope scope, String name) {

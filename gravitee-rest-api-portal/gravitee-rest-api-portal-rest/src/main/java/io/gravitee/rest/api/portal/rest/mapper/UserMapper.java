@@ -21,9 +21,8 @@ import io.gravitee.rest.api.model.RegisterUserEntity;
 import io.gravitee.rest.api.model.ResetPasswordUserEntity;
 import io.gravitee.rest.api.model.UserEntity;
 import io.gravitee.rest.api.portal.rest.model.*;
-import org.springframework.stereotype.Component;
-
 import java.util.Date;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
@@ -37,7 +36,7 @@ public class UserMapper {
         userItem.setEmail(user.getEmail());
         userItem.setFirstName(user.getFirstname());
         userItem.setLastName(user.getLastname());
-        userItem.setDisplayName(user.getDisplayName());    
+        userItem.setDisplayName(user.getDisplayName());
         userItem.setId(user.getId());
         userItem.setCustomFields(user.getCustomFields());
         return userItem;

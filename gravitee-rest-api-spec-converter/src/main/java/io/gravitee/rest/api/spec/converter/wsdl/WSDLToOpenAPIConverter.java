@@ -15,6 +15,8 @@
  */
 package io.gravitee.rest.api.spec.converter.wsdl;
 
+import static io.gravitee.rest.api.spec.converter.wsdl.WSDLUtils.*;
+
 import com.ibm.wsdl.xml.WSDLReaderImpl;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
@@ -28,25 +30,23 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.*;
+import java.util.Map.Entry;
+import javax.wsdl.*;
+import javax.wsdl.extensions.schema.Schema;
+import javax.xml.namespace.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
-import javax.wsdl.*;
-import javax.wsdl.extensions.schema.Schema;
-import javax.xml.namespace.QName;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.*;
-import java.util.Map.Entry;
-
-import static io.gravitee.rest.api.spec.converter.wsdl.WSDLUtils.*;
-
 /**
  * @author GraviteeSource Team
  */
 public class WSDLToOpenAPIConverter implements OpenAPIConverter {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(WSDLToOpenAPIConverter.class);
 
     public static final String SOAP_EXTENSION_ENVELOPE = "x-graviteeio-soap-envelope";
@@ -65,7 +65,6 @@ public class WSDLToOpenAPIConverter implements OpenAPIConverter {
 
     @Override
     public OpenAPI toOpenAPI(InputStream stream) {
-
         Objects.requireNonNull(stream, "WSDL input source is required");
         this.wsdlDefinition = loadWSDL(stream);
         // create the SoapBuilder with namespaces declared in the Definition element
@@ -113,7 +112,7 @@ public class WSDLToOpenAPIConverter implements OpenAPIConverter {
         // Types element contains a list of XmlSchema
         Types types = wsdlDefinition.getTypes();
         if (types != null) {
-            types.getExtensibilityElements().forEach((o) -> soapBuilder.addSchema((Schema) o));
+            types.getExtensibilityElements().forEach(o -> soapBuilder.addSchema((Schema) o));
         }
     }
 
@@ -144,17 +143,16 @@ public class WSDLToOpenAPIConverter implements OpenAPIConverter {
 
                 PathItem pathItem = new PathItem();
                 io.swagger.v3.oas.models.Operation openApiOperation = new io.swagger.v3.oas.models.Operation();
-                openApiOperation.operationId(String.join("_", binding.getQName().getLocalPart(),operationName));
+                openApiOperation.operationId(String.join("_", binding.getQName().getLocalPart(), operationName));
                 if (operation.getDocumentationElement() != null) {
                     openApiOperation.description(operation.getDocumentationElement().getTextContent());
                 }
 
                 Input input = operation.getInput();
                 if (input != null) {
-                    extractSOAPAction(bindingOperation)
-                            .ifPresent(action -> openApiOperation.addExtension(SOAP_EXTENSION_ACTION, action));
-                    this.soapBuilder.generateSoapEnvelop(wsdlDefinition, binding,bindingOperation)
-                            .ifPresent((envelope) -> openApiOperation.addExtension(SOAP_EXTENSION_ENVELOPE, envelope));
+                    extractSOAPAction(bindingOperation).ifPresent(action -> openApiOperation.addExtension(SOAP_EXTENSION_ACTION, action));
+                    this.soapBuilder.generateSoapEnvelop(wsdlDefinition, binding, bindingOperation)
+                        .ifPresent(envelope -> openApiOperation.addExtension(SOAP_EXTENSION_ENVELOPE, envelope));
                 }
 
                 // create an empty Content definition used by each response description
@@ -214,7 +212,7 @@ public class WSDLToOpenAPIConverter implements OpenAPIConverter {
 
     private HttpMethod detectHttpMethod(String operationName) {
         String name = operationName.toLowerCase();
-        if (name.startsWith("get") || name.startsWith("find")  || name.startsWith("search") ) {
+        if (name.startsWith("get") || name.startsWith("find") || name.startsWith("search")) {
             return HttpMethod.GET;
         }
 
@@ -238,5 +236,4 @@ public class WSDLToOpenAPIConverter implements OpenAPIConverter {
             serverCache.add(address);
         }
     }
-
 }

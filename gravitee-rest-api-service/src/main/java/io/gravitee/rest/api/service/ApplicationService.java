@@ -17,7 +17,6 @@ package io.gravitee.rest.api.service;
 
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.application.ApplicationListItem;
-
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +26,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ApplicationService {
-
     ApplicationEntity findById(String applicationId);
 
     Set<ApplicationListItem> findByUser(String username);
@@ -45,7 +43,7 @@ public interface ApplicationService {
     ApplicationEntity renewClientSecret(String applicationId);
 
     void archive(String applicationId);
-    
+
     InlinePictureEntity getPicture(String apiId);
 
     InlinePictureEntity getBackground(String application);

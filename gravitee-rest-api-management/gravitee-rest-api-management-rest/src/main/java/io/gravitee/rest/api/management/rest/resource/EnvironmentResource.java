@@ -24,7 +24,6 @@ import io.gravitee.rest.api.model.UpdateEnvironmentEntity;
 import io.gravitee.rest.api.service.EnvironmentService;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.swagger.annotations.*;
-
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -55,17 +54,18 @@ public class EnvironmentResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an Environment", tags = {"Environment"})
-    @ApiResponses({
+    @ApiOperation(value = "Create an Environment", tags = { "Environment" })
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Environment successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public Response createEnvironment(
-            @ApiParam(name = "environmentEntity", required = true) @Valid @NotNull final UpdateEnvironmentEntity environmentEntity) {
+        @ApiParam(name = "environmentEntity", required = true) @Valid @NotNull final UpdateEnvironmentEntity environmentEntity
+    ) {
         environmentEntity.setId(GraviteeContext.getCurrentEnvironment());
-        return Response
-                .status(Status.CREATED)
-                .entity(environmentService.createOrUpdate(environmentEntity))
-                .build();
+        return Response.status(Status.CREATED).entity(environmentService.createOrUpdate(environmentEntity)).build();
     }
 
     /**
@@ -75,16 +75,17 @@ public class EnvironmentResource extends AbstractResource {
      */
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Delete an Environment", tags = {"Environment"})
-    @ApiResponses({
+    @ApiOperation(value = "Delete an Environment", tags = { "Environment" })
+    @ApiResponses(
+        {
             @ApiResponse(code = 204, message = "Environment successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public Response deleteEnvironment() {
         environmentService.delete(GraviteeContext.getCurrentEnvironment());
         //TODO: should delete all items that refers to this environment
-        return Response
-                .status(Status.NO_CONTENT)
-                .build();
+        return Response.status(Status.NO_CONTENT).build();
     }
 
     @Path("alerts")
@@ -112,7 +113,6 @@ public class EnvironmentResource extends AbstractResource {
     public CurrentUserResource getCurrentUserResource() {
         return resourceContext.getResource(CurrentUserResource.class);
     }
-
 
     @Path("subscriptions")
     public SubscriptionsResource getSubscriptionsResource() {

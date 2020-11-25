@@ -15,6 +15,8 @@
  */
 package io.gravitee.rest.api.service.notifiers.impl;
 
+import static io.gravitee.rest.api.service.notification.ApiHook.*;
+
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -26,18 +28,15 @@ import io.gravitee.rest.api.service.EmailService;
 import io.gravitee.rest.api.service.builder.EmailNotificationBuilder;
 import io.gravitee.rest.api.service.notification.*;
 import io.gravitee.rest.api.service.notifiers.EmailNotifierService;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static io.gravitee.rest.api.service.notification.ApiHook.*;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
@@ -56,7 +55,11 @@ public class EmailNotifierServiceImpl implements EmailNotifierService {
 
     @Override
     public void trigger(final Hook hook, GenericNotificationConfig genericNotificationConfig, final Map<String, Object> params) {
-        if (genericNotificationConfig == null || genericNotificationConfig.getConfig() == null || genericNotificationConfig.getConfig().isEmpty()) {
+        if (
+            genericNotificationConfig == null ||
+            genericNotificationConfig.getConfig() == null ||
+            genericNotificationConfig.getConfig().isEmpty()
+        ) {
             LOGGER.error("Email Notifier configuration is empty");
             return;
         }
@@ -67,12 +70,9 @@ public class EmailNotifierServiceImpl implements EmailNotifierService {
         }
 
         String[] mails = getMails(genericNotificationConfig, params).toArray(new String[0]);
-        emailService.sendAsyncEmailNotification(new EmailNotificationBuilder()
-                .to(mails)
-                .subject(getEmailSubject(hook, params))
-                .template(emailTemplate)
-                .params(params)
-                .build());
+        emailService.sendAsyncEmailNotification(
+            new EmailNotificationBuilder().to(mails).subject(getEmailSubject(hook, params)).template(emailTemplate).params(params).build()
+        );
     }
 
     private List<String> getMails(final GenericNotificationConfig genericNotificationConfig, final Map<String, Object> params) {
@@ -145,7 +145,6 @@ public class EmailNotifierServiceImpl implements EmailNotifierService {
         } else if (hook.equals(API_DEPRECATED)) {
             return EmailNotificationBuilder.EmailTemplate.API_DEPRECATED;
         }
-
         // Application Hook
         else if (hook.equals(ApplicationHook.SUBSCRIPTION_NEW)) {
             return EmailNotificationBuilder.EmailTemplate.SUBSCRIPTION_CREATED;
@@ -164,7 +163,6 @@ public class EmailNotifierServiceImpl implements EmailNotifierService {
         } else if (hook.equals(ApplicationHook.NEW_SUPPORT_TICKET)) {
             return EmailNotificationBuilder.EmailTemplate.SUPPORT_TICKET_NOTIFICATION;
         }
-
         // Portal Hook
         else if (hook.equals(PortalHook.USER_REGISTERED)) {
             return EmailNotificationBuilder.EmailTemplate.USER_REGISTERED;
@@ -249,7 +247,6 @@ public class EmailNotifierServiceImpl implements EmailNotifierService {
         } else if (hook.equals(API_DEPRECATED)) {
             return "API deprecated";
         }
-
         // Application Hook
         else if (hook.equals(ApplicationHook.SUBSCRIPTION_NEW)) {
             Object api = params.get(NotificationParamsBuilder.PARAM_API);
@@ -303,7 +300,6 @@ public class EmailNotifierServiceImpl implements EmailNotifierService {
         } else if (hook.equals(ApplicationHook.NEW_SUPPORT_TICKET)) {
             return "New Support Ticket by " + params.get(NotificationParamsBuilder.PARAM_USERNAME);
         }
-
         // Portal Hook
         else if (hook.equals(PortalHook.USER_REGISTERED)) {
             return "User registered - " + params.get(NotificationParamsBuilder.PARAM_USERNAME);

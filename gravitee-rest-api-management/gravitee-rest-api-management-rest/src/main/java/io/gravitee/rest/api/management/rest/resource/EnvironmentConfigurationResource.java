@@ -37,7 +37,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
+import java.util.Arrays;
+import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -45,15 +46,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Azize ELAMRANI (azize at graviteesource.com)
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Configuration"})
+@Api(tags = { "Configuration" })
 public class EnvironmentConfigurationResource {
 
     @Context
@@ -77,12 +76,13 @@ public class EnvironmentConfigurationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("notifiers")
     @ApiOperation(value = "List of available notifiers")
-    @ApiResponses({
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "List of notifiers", response = NotifierEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    @Permissions({
-            @Permission(value = RolePermission.ENVIRONMENT_NOTIFICATION, acls = RolePermissionAction.READ)
-    })
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
+    @Permissions({ @Permission(value = RolePermission.ENVIRONMENT_NOTIFICATION, acls = RolePermissionAction.READ) })
     public List<NotifierEntity> getPortalNotifiers() {
         return notifierService.list(NotificationReferenceType.PORTAL, PortalNotificationDefaultReferenceId.DEFAULT.name());
     }
@@ -160,9 +160,7 @@ public class EnvironmentConfigurationResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getEnabledApplicationTypes() {
         ApplicationTypesEntity enabledApplicationTypes = applicationTypeService.getEnabledApplicationTypes();
-        return Response
-                .ok(enabledApplicationTypes.getData())
-                .build();
+        return Response.ok(enabledApplicationTypes.getData()).build();
     }
 
     @Path("entrypoints")
@@ -184,5 +182,4 @@ public class EnvironmentConfigurationResource {
     public ThemesResource getThemesResource() {
         return resourceContext.getResource(ThemesResource.class);
     }
-
 }
