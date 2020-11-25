@@ -35,10 +35,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
+ * @author Guillaume CUSNIEUX (guillaume.cusnieux at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
 public class CategoryService_FindTest {
+
+    public static final String CATEGORY_ID = "category-id";
 
     @InjectMocks
     private CategoryServiceImpl categoryService = new CategoryServiceImpl();
@@ -59,7 +62,7 @@ public class CategoryService_FindTest {
     @Test
     public void shouldFindCategory() throws TechnicalException {
         Category category = mock(Category.class);
-        when(category.getId()).thenReturn("category-id");
+        when(category.getId()).thenReturn(CATEGORY_ID);
         when(category.getName()).thenReturn("category-name");
         when(category.getDescription()).thenReturn("category-description");
         when(category.getOrder()).thenReturn(1);
@@ -72,14 +75,17 @@ public class CategoryService_FindTest {
 
         assertFalse(list.isEmpty());
         assertEquals("one element", 1, list.size());
-        assertEquals("Id", "category-id", list.get(0).getId());
+        assertEquals("Id", CATEGORY_ID, list.get(0).getId());
         assertEquals("Name", "category-name", list.get(0).getName());
         assertEquals("Description", "category-description", list.get(0).getDescription());
         assertEquals("Total APIs", 0, list.get(0).getTotalApis());
+
         assertEquals("Order", 1, list.get(0).getOrder());
         assertEquals("Hidden", true, list.get(0).isHidden());
+
         assertEquals("UpdatedAt", new Date(1234567890L), list.get(0).getUpdatedAt());
         assertEquals("CreatedAt", new Date(9876543210L), list.get(0).getCreatedAt());
+
         verify(mockCategoryRepository, times(1)).findAllByEnvironment(any());
     }
 }

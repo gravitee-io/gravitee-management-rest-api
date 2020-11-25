@@ -50,6 +50,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * @author Azize Elamrani (azize dot elamrani at gmail dot com)
+ * @author Guillaume Cusnieux (guillaume dot cusnieux at gmail dot com)
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ApiService_CreateTest {
@@ -57,6 +58,7 @@ public class ApiService_CreateTest {
     private static final String API_ID = "id-api";
     private static final String API_NAME = "myAPI";
     private static final String USER_NAME = "myUser";
+    public static final String V_1 = "v1";
 
     @InjectMocks
     private ApiServiceImpl apiService = new ApiServiceImpl();
@@ -136,7 +138,7 @@ public class ApiService_CreateTest {
         when(apiRepository.create(any())).thenReturn(api);
         when(newApi.getName()).thenReturn(API_NAME);
 
-        when(newApi.getVersion()).thenReturn("v1");
+        when(newApi.getVersion()).thenReturn(V_1);
         when(newApi.getDescription()).thenReturn("Ma description");
         when(newApi.getContextPath()).thenReturn("/context");
         when(userService.findById(USER_NAME)).thenReturn(new UserEntity());
@@ -154,7 +156,7 @@ public class ApiService_CreateTest {
         when(apiRepository.findById(anyString())).thenReturn(Optional.of(api));
         when(newApi.getName()).thenReturn(API_NAME);
 
-        when(newApi.getVersion()).thenReturn("v1");
+        when(newApi.getVersion()).thenReturn(V_1);
         when(newApi.getDescription()).thenReturn("Ma description");
 
         apiService.create(newApi, USER_NAME);
@@ -165,9 +167,8 @@ public class ApiService_CreateTest {
         when(apiRepository.findById(anyString())).thenThrow(TechnicalException.class);
         when(newApi.getName()).thenReturn(API_NAME);
 
-        when(newApi.getVersion()).thenReturn("v1");
+        when(newApi.getVersion()).thenReturn(V_1);
         when(newApi.getDescription()).thenReturn("Ma description");
-        //        when(userService.findByUsername(USER_NAME, false)).thenReturn(new UserEntity());
 
         apiService.create(newApi, USER_NAME);
     }
@@ -180,7 +181,7 @@ public class ApiService_CreateTest {
         when(apiRepository.findById(anyString())).thenReturn(Optional.empty());
         when(apiRepository.create(any())).thenReturn(api);
         when(newApi.getName()).thenReturn(API_NAME);
-        when(newApi.getVersion()).thenReturn("v1");
+        when(newApi.getVersion()).thenReturn(V_1);
         when(newApi.getDescription()).thenReturn("Ma description");
         when(newApi.getContextPath()).thenReturn("/context");
         UserEntity admin = new UserEntity();
@@ -192,9 +193,6 @@ public class ApiService_CreateTest {
         assertNotNull(apiEntity);
         assertEquals(API_NAME, apiEntity.getName());
         assertNotNull(apiEntity.getPaths());
-        /*assertTrue("paths not empty", !apiEntity.getPaths().isEmpty());
-        assertEquals("paths.size == 1", apiEntity.getPaths().size(), 1);
-        assertEquals("path == /* ", apiEntity.getPaths().get(0).getPath(), "/*");*/
 
         verify(apiRepository, times(1)).create(any());
         verify(genericNotificationConfigService, times(1)).create(any());
