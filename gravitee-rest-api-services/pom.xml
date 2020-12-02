@@ -24,7 +24,11 @@
     <parent>
         <groupId>io.gravitee.rest.api</groupId>
         <artifactId>gravitee-rest-api</artifactId>
+<<<<<<< HEAD
     <version>3.4.1-SNAPSHOT</version>
+=======
+        <version>3.3.4</version>
+>>>>>>> 3.3.4
     </parent>
 
     <groupId>io.gravitee.rest.api.services</groupId>
