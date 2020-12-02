@@ -24,7 +24,11 @@
     <parent>
         <groupId>io.gravitee.rest.api.idp</groupId>
         <artifactId>gravitee-rest-api-idp</artifactId>
+<<<<<<< HEAD
     <version>3.4.1-SNAPSHOT</version>
+=======
+        <version>3.3.4</version>
+>>>>>>> 3.3.4
     </parent>
 
     <artifactId>gravitee-rest-api-idp-memory</artifactId>
