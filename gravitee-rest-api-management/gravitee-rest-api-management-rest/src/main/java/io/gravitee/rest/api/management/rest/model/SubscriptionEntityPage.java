@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.model;
+package io.gravitee.rest.api.management.rest.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.gravitee.rest.api.model.SubscriptionEntity;
 
-/**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
- * @author GraviteeSource Team
- */
+public class SubscriptionEntityPage extends PagedResult<SubscriptionEntity> {
 
-@Schema(enumAsRef = true)
-public enum DashboardReferenceType {
-    API, APPLICATION, PLATFORM
+    public SubscriptionEntityPage(io.gravitee.common.data.domain.Page<SubscriptionEntity> page, int perPage) {
+        super(page, perPage);
+    }
 }

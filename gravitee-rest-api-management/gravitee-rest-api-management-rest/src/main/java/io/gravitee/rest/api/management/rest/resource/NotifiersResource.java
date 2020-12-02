@@ -23,10 +23,12 @@ import io.gravitee.rest.api.model.NotifierListItem;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.NotifierService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -47,7 +49,7 @@ import java.util.stream.Stream;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugins"})
+@Tag(name = "Plugins")
 public class NotifiersResource {
 
     @Context
@@ -58,11 +60,10 @@ public class NotifiersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List notifier plugins",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of notifiers", response = NotifierListItem.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List notifier plugins", description = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of notifiers",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = NotifierListItem.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })

@@ -22,10 +22,11 @@ import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.platform.plugin.PluginEntity;
 import io.gravitee.rest.api.service.ResourceService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -40,7 +41,7 @@ import javax.ws.rs.core.Context;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugins"})
+@Tag(name = "Plugins")
 public class ResourceResource {
 
     @Context
@@ -51,12 +52,11 @@ public class ResourceResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a resource",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Resource plugin", response = PluginEntity.class),
-            @ApiResponse(code = 404, message = "Resource not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get a resource", description = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Resource plugin",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = PluginEntity.class)))
+    @ApiResponse(responseCode = "404", description = "Resource not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })
@@ -68,8 +68,7 @@ public class ResourceResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a resource's schema",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "Get a resource's schema", description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })
@@ -84,8 +83,8 @@ public class ResourceResource {
     @GET
     @Path("documentation")
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Get a resource's documentation",
-        notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "Get a resource's documentation",
+        description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
         @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })

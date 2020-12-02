@@ -34,7 +34,7 @@ import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.GroupNotFoundException;
 import io.gravitee.rest.api.service.exceptions.RoleNotFoundException;
 import io.gravitee.rest.api.service.exceptions.UserNotFoundException;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.glassfish.jersey.internal.util.collection.MultivaluedStringMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Singleton
-@Api(tags = {"Authentication"})
+@Tag(name = "Authentication")
 public class OAuth2AuthenticationResource extends AbstractAuthenticationResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2AuthenticationResource.class);
@@ -520,8 +520,8 @@ public class OAuth2AuthenticationResource extends AbstractAuthenticationResource
         }
     }
 
-    private RoleScope mapScope(io.gravitee.rest.api.model.permissions.RoleScope scope) {
-        if (io.gravitee.rest.api.model.permissions.RoleScope.API == scope) {
+    private RoleScope mapScope(RoleScope scope) {
+        if (RoleScope.API == scope) {
             return RoleScope.API;
         } else {
             return RoleScope.APPLICATION;

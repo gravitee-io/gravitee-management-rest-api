@@ -29,10 +29,11 @@ import io.gravitee.rest.api.service.AnalyticsService;
 import io.gravitee.rest.api.service.ApiService;
 import io.gravitee.rest.api.service.ApplicationService;
 import io.gravitee.rest.api.service.PermissionService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.BeanParam;
@@ -52,7 +53,7 @@ import static io.gravitee.rest.api.model.permissions.RolePermissionAction.READ;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Platform Analytics"})
+@Tag(name = "Platform Analytics")
 public class PlatformAnalyticsResource extends AbstractResource  {
 
     @Inject
@@ -69,11 +70,10 @@ public class PlatformAnalyticsResource extends AbstractResource  {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get platform analytics",
-            notes = "User must have the MANAGEMENT_PLATFORM[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Platform analytics"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get platform analytics", description = "User must have the MANAGEMENT_PLATFORM[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Platform analytics",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Analytics.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = ENVIRONMENT_PLATFORM, acls = READ)
     })
@@ -114,7 +114,7 @@ public class PlatformAnalyticsResource extends AbstractResource  {
             analyticsParam.setQuery(analyticsParam.getQuery().replaceAll("\\?", "1"));
         }
 
-        switch (analyticsParam.getTypeParam().getValue()) {
+        switch (analyticsParam.getType()) {
             case DATE_HISTO:
                 analytics = executeDateHisto(analyticsParam, extraFilter);
                 break;

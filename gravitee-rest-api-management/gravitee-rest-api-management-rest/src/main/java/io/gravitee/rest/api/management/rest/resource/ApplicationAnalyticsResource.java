@@ -26,7 +26,12 @@ import io.gravitee.rest.api.model.analytics.query.*;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.AnalyticsService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.BeanParam;
@@ -44,7 +49,7 @@ import java.util.stream.Collectors;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Application Analytics"})
+@Tag(name = "Application Analytics")
 public class ApplicationAnalyticsResource extends AbstractResource {
 
     @Inject
@@ -52,16 +57,15 @@ public class ApplicationAnalyticsResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("application")
-    @ApiParam(name = "application", hidden = true)
+    @Parameter(name = "application", hidden = true)
     private String application;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get application analytics",
-            notes = "User must have the APPLICATION_ANALYTICS[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application analytics"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get application analytics", description = "User must have the APPLICATION_ANALYTICS[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Application analytics",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Analytics.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_ANALYTICS, acls = RolePermissionAction.READ)
     })
@@ -71,7 +75,7 @@ public class ApplicationAnalyticsResource extends AbstractResource {
 
         Analytics analytics = null;
 
-        switch (analyticsParam.getTypeParam().getValue()) {
+        switch (analyticsParam.getType()) {
             case DATE_HISTO:
                 analytics = executeDateHisto(application, analyticsParam);
                 break;

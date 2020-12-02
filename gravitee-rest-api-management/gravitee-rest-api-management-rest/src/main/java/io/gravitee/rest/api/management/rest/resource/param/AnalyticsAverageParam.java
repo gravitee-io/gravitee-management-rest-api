@@ -20,8 +20,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 
-import io.gravitee.rest.api.management.rest.resource.param.AnalyticsAverageTypeParam.AnalyticsAverageType;
-
 /**
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team

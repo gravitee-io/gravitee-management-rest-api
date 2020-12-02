@@ -18,7 +18,7 @@ package io.gravitee.rest.api.management.rest.resource;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.rest.api.model.EntrypointEntity;
 import io.gravitee.rest.api.service.EntrypointService;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -31,7 +31,7 @@ import static java.util.stream.Collectors.toList;
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Portal entrypoints"})
+@Tag(name = "Portal entrypoints")
 public class PortalEntrypointsResource extends AbstractResource  {
 
     @Inject

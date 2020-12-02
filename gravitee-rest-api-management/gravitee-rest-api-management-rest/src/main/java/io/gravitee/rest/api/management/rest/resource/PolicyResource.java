@@ -22,8 +22,8 @@ import io.gravitee.rest.api.model.PolicyEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.PolicyService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -38,7 +38,7 @@ import javax.ws.rs.core.Context;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugins"})
+@Tag(name = "Plugins")
 public class PolicyResource {
 
     @Context
@@ -49,8 +49,7 @@ public class PolicyResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "Get a policy", description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })
@@ -62,8 +61,7 @@ public class PolicyResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a policy's schema",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "Get a policy's schema", description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })
@@ -78,8 +76,8 @@ public class PolicyResource {
     @GET
     @Path("icon")
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Get a policy's icon",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "Get a policy's icon",
+            description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })
@@ -94,8 +92,8 @@ public class PolicyResource {
     @GET
     @Path("documentation")
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Get a policy's documentation",
-            notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "Get a policy's documentation",
+            description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })

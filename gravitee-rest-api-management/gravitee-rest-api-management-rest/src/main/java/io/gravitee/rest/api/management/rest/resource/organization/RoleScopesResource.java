@@ -22,10 +22,11 @@ import io.gravitee.rest.api.model.permissions.ApiPermission;
 import io.gravitee.rest.api.model.permissions.ApplicationPermission;
 import io.gravitee.rest.api.model.permissions.EnvironmentPermission;
 import io.gravitee.rest.api.model.permissions.OrganizationPermission;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -34,7 +35,6 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -43,7 +43,7 @@ import static java.util.stream.Collectors.toList;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Roles"})
+@Tag(name = "Roles")
 public class RoleScopesResource extends AbstractResource {
 
     @Context
@@ -51,12 +51,12 @@ public class RoleScopesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List availables role scopes")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of role scopes"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public Map<String, List<String>> getRoleScopes() {
-        final Map<String, List<String>> roles = new LinkedHashMap<>(4);
+    @Operation(summary = "List availables role scopes")
+    @ApiResponse(responseCode = "200", description = "List of role scopes",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = RoleScopes.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public RoleScopes getRoleScopes() {
+        final RoleScopes roles = new RoleScopes();
         roles.put(RoleScope.ORGANIZATION.name(), stream(OrganizationPermission.values()).map(OrganizationPermission::getName).sorted().collect(toList()));
         roles.put(RoleScope.ENVIRONMENT.name(), stream(EnvironmentPermission.values()).map(EnvironmentPermission::getName).sorted().collect(toList()));
         roles.put(RoleScope.API.name(), stream(ApiPermission.values()).map(ApiPermission::getName).sorted().collect(toList()));
@@ -67,5 +67,8 @@ public class RoleScopesResource extends AbstractResource {
     @Path("{scope}/roles")
     public RoleScopeResource getRoleScopeResource() {
         return resourceContext.getResource(RoleScopeResource.class);
+    }
+
+    public static class RoleScopes extends LinkedHashMap<String, List<String>> {
     }
 }

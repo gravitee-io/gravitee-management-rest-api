@@ -24,14 +24,19 @@ import io.gravitee.rest.api.model.UpdateApiMetadataEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.ApiMetadataService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.util.List;
 
 /**
@@ -39,7 +44,7 @@ import java.util.List;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"API Metadata"})
+@Tag(name = "API Metadata")
 public class ApiMetadataResource extends AbstractResource {
 
     @Inject
@@ -47,16 +52,15 @@ public class ApiMetadataResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("api")
-    @ApiParam(name = "api", hidden = true)
+    @Parameter(name = "api", hidden = true)
     private String api;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List metadata for the given API",
-            notes = "User must have the API_METADATA[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of metadata", response = ApiMetadataEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List metadata for the given API", description = "User must have the API_METADATA[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of metadata",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = ApiMetadataEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_METADATA, acls = RolePermissionAction.READ)
     })
@@ -67,12 +71,11 @@ public class ApiMetadataResource extends AbstractResource {
     @GET
     @Path("{metadata}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "A metadata for the given API and metadata id",
-            notes = "User must have the API_METADATA[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "A metadata", response = ApiMetadataEntity.class),
-            @ApiResponse(code = 404, message = "Metadata not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "A metadata for the given API and metadata id", description = "User must have the API_METADATA[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "A metadata",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiMetadataEntity.class)))
+    @ApiResponse(responseCode = "404", description = "Metadata not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_METADATA, acls = RolePermissionAction.READ)
     })
@@ -83,11 +86,10 @@ public class ApiMetadataResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an API metadata",
-            notes = "User must have the API_METADATA[CREATE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "A new API metadata", response = ApiMetadataEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Create an API metadata", description = "User must have the API_METADATA[CREATE] permission to use this service")
+    @ApiResponse(responseCode = "201", description = "A new API metadata",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiMetadataEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_METADATA, acls = RolePermissionAction.CREATE)
     })
@@ -106,11 +108,10 @@ public class ApiMetadataResource extends AbstractResource {
     @Path("{metadata}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an API metadata",
-            notes = "User must have the API_METADATA[UPDATE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "API metadata", response = ApiMetadataEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Update an API metadata", description = "User must have the API_METADATA[UPDATE] permission to use this service")
+    @ApiResponse(responseCode = "201", description = "API metadata",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiMetadataEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_METADATA, acls = RolePermissionAction.UPDATE)
     })
@@ -124,11 +125,9 @@ public class ApiMetadataResource extends AbstractResource {
 
     @DELETE
     @Path("{metadata}")
-    @ApiOperation(value = "Delete a metadata",
-            notes = "User must have the API_METADATA[DELETE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Metadata successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete a metadata", description = "User must have the API_METADATA[DELETE] permission to use this service")
+    @ApiResponse(responseCode = "204", description = "Metadata successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_METADATA, acls = RolePermissionAction.DELETE)
     })

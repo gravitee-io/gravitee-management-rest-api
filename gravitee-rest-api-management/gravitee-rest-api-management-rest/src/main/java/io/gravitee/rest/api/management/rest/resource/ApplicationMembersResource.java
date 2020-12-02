@@ -30,7 +30,13 @@ import io.gravitee.rest.api.service.MembershipService;
 import io.gravitee.rest.api.service.UserService;
 import io.gravitee.rest.api.service.exceptions.SinglePrimaryOwnerException;
 import io.gravitee.rest.api.service.exceptions.UserNotFoundException;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -38,7 +44,6 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,7 +55,7 @@ import static io.gravitee.rest.api.model.permissions.SystemRole.PRIMARY_OWNER;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Application Memberships"})
+@Tag(name = "Application Memberships")
 public class ApplicationMembersResource extends AbstractResource {
 
     @Inject
@@ -63,17 +68,16 @@ public class ApplicationMembersResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("application")
-    @ApiParam(name = "application", hidden = true)
+    @Parameter(name = "application", hidden = true)
     private String application;
 
     @GET
     @Path("/permissions")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get application members",
-            notes = "User must have the APPLICATION_MEMBER permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application member's permissions", response = MemberEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get application members", description = "User must have the APPLICATION_MEMBER permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Application member's permissions",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = MemberEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getApplicationMemberPermissions() {
         Map<String, char[]> permissions = new HashMap<>();
         if (isAuthenticated()) {
@@ -93,13 +97,12 @@ public class ApplicationMembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List application members",
-            notes = "User must have the READ permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application successfully deleted", response = MembershipListItem.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List application members", description = "User must have the READ permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Application successfully deleted",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = MembershipListItem.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
-            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.READ)
+            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = READ)
     })
     public List<MembershipListItem> getApplicationMembers() {
         applicationService.findById(application);
@@ -111,15 +114,13 @@ public class ApplicationMembersResource extends AbstractResource {
     }
 
     @POST
-    @ApiOperation(value = "Add or update an application member",
-            notes = "User must have the MANAGE_MEMBERS permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Member has been added or updated successfully"),
-            @ApiResponse(code = 400, message = "Membership parameter is not valid"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Add or update an application member", description = "User must have the MANAGE_MEMBERS permission to use this service")
+    @ApiResponse(responseCode = "201", description = "Member has been added or updated successfully")
+    @ApiResponse(responseCode = "400", description = "Membership parameter is not valid")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
-            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.CREATE),
-            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.UPDATE)
+            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = CREATE),
+            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = UPDATE)
     })
     public Response addOrUpdateApplicationMember(
             @Valid @NotNull ApplicationMembership applicationMembership) {
@@ -152,17 +153,15 @@ public class ApplicationMembersResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Remove an application member",
-            notes = "User must have the MANAGE_MEMBERS permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Member has been removed successfully"),
-            @ApiResponse(code = 400, message = "User does not exist"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Remove an application member", description = "User must have the MANAGE_MEMBERS permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Member has been removed successfully")
+    @ApiResponse(responseCode = "400", description = "User does not exist")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.DELETE)
     })
     public Response deleteApplicationMember(
-            @ApiParam(name = "user", required = true) @NotNull @QueryParam("user") String userId) {
+            @Parameter(name = "user", required = true) @NotNull @QueryParam("user") String userId) {
         applicationService.findById(application);
         try {
             userService.findById(userId);
@@ -176,13 +175,11 @@ public class ApplicationMembersResource extends AbstractResource {
 
     @POST
     @Path("transfer_ownership")
-    @ApiOperation(value = "Transfer the ownership of the APPLICATION",
-            notes = "User must have the TRANSFER_OWNERSHIP permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Ownership has been transferred successfully"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Transfer the ownership of the APPLICATION", description = "User must have the TRANSFER_OWNERSHIP permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Ownership has been transferred successfully")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
-            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = RolePermissionAction.UPDATE)
+            @Permission(value = RolePermission.APPLICATION_MEMBER, acls = UPDATE)
     })
     public Response transferApplicationOwnership(
             @Valid @NotNull TransferOwnership transferOwnership) {

@@ -15,8 +15,11 @@
  */
 package io.gravitee.rest.api.management.rest.resource.param;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import javax.ws.rs.QueryParam;
-import java.util.List;
 
 /**
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
@@ -25,15 +28,16 @@ import java.util.List;
 public class FetchersParam {
 
     @QueryParam("expand")
-    List<String> expand;
+    @Parameter(explode = Explode.FALSE, schema = @Schema(type = "array"))
+    ListStringParam expand;
     @QueryParam("import")
     private boolean onlyFilesFetchers;
 
-    public List<String> getExpand() {
+    public ListStringParam getExpand() {
         return expand;
     }
 
-    public void setExpand(List<String> expand) {
+    public void setExpand(ListStringParam expand) {
         this.expand = expand;
     }
 

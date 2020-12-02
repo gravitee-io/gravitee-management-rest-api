@@ -15,40 +15,33 @@
  */
 package io.gravitee.rest.api.management.rest.resource.param;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.ws.rs.WebApplicationException;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AbstractListParam<T> extends AbstractParam<List<T>>{
+@JsonIgnoreProperties("empty")
+public abstract class AbstractListParam<T> extends ArrayList<T> {
 
     private static final String SEPARATOR = ",";
 
     public AbstractListParam(String param) throws WebApplicationException {
-        super(param);
-    }
-
-    @Override
-    protected List<T> parse(String param) throws Throwable {
-        List<T> values = new ArrayList<>();
-
         if (param != null) {
-            String[] params = param.replaceAll("\\s","").split(SEPARATOR);
+            String[] params = param.replaceAll("\\s", "").split(SEPARATOR);
             for (String _param : params) {
                 try {
                     if (!_param.isEmpty()) {
-                        values.add(parseValue(_param));
+                        add(parseValue(_param));
                     }
                 } catch (Exception ex) {
                     // nothing to do
                 }
             }
         }
-
-        return values;
     }
 
     protected abstract T parseValue(String param);

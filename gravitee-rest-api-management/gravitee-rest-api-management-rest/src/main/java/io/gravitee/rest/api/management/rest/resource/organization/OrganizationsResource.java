@@ -16,8 +16,8 @@
 package io.gravitee.rest.api.management.rest.resource.organization;
 
 import io.gravitee.rest.api.management.rest.resource.AbstractResource;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -29,7 +29,6 @@ import javax.ws.rs.core.Context;
  * @author GraviteeSource Team
  */
 @Path("/organizations")
-@Api
 public class OrganizationsResource extends AbstractResource {
 
     @Context
@@ -37,7 +36,7 @@ public class OrganizationsResource extends AbstractResource {
 
     @Path("/{orgId}")
     public OrganizationResource getOrganizationResource(
-            @PathParam("orgId") @ApiParam(name = "orgId", required = true, defaultValue = "DEFAULT", value = "The ID of the Organization") String orgId
+            @PathParam("orgId") @Parameter(name = "orgId", required = true, schema = @Schema(defaultValue = "DEFAULT"), description = "The ID of the Organization") String orgId
     ) {
         return resourceContext.getResource(OrganizationResource.class);
     }

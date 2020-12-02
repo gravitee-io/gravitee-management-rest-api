@@ -15,6 +15,8 @@
  */
 package io.gravitee.rest.api.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -28,6 +30,7 @@ import static java.util.Collections.unmodifiableList;
  * Managed types for page documentation
  *
  */
+@Schema(enumAsRef = true)
 public enum PageType {
 
 	MARKDOWN(unmodifiableList(asList("md", "markdown")), 200),

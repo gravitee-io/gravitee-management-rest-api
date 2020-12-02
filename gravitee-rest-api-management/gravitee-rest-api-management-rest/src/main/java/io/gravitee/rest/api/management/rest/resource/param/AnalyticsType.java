@@ -15,26 +15,12 @@
  */
 package io.gravitee.rest.api.management.rest.resource.param;
 
-/**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class AnalyticsAverageTypeParam extends AbstractParam<AnalyticsAverageTypeParam.AnalyticsAverageType> {
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    public enum AnalyticsAverageType {
-        AVAILABILITY,
-        RESPONSE_TIME
-    }
-
-    public AnalyticsAverageTypeParam(String param) {
-        super(param);
-    }
-
-    @Override
-    protected AnalyticsAverageType parse(String param) {
-        if (param != null) {
-            return AnalyticsAverageType.valueOf(param.toUpperCase());
-        }
-        return null;
-    }
+@Schema(enumAsRef = true)
+public enum AnalyticsType {
+    GROUP_BY,
+    DATE_HISTO,
+    COUNT,
+    STATS
 }

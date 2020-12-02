@@ -84,10 +84,10 @@ public class GroupMembersResourceTest extends AbstractResourceTest {
     public void shouldAddMemberWithCustomApplicationRoleAndCustomApiRole() {
         initADDmock();
         MemberRoleEntity apiRole = new MemberRoleEntity();
-        apiRole.setRoleScope(io.gravitee.rest.api.model.permissions.RoleScope.API);
+        apiRole.setRoleScope(RoleScope.API);
         apiRole.setRoleName("CUSTOM_API");
         MemberRoleEntity appRole = new MemberRoleEntity();
-        appRole.setRoleScope(io.gravitee.rest.api.model.permissions.RoleScope.APPLICATION);
+        appRole.setRoleScope(RoleScope.APPLICATION);
         appRole.setRoleName("CUSTOM_APP");
 
         GroupMembership groupMembership = new GroupMembership();
@@ -149,7 +149,7 @@ public class GroupMembersResourceTest extends AbstractResourceTest {
         initUPDATEmock();
 
         MemberRoleEntity apiRole = new MemberRoleEntity();
-        apiRole.setRoleScope(io.gravitee.rest.api.model.permissions.RoleScope.API);
+        apiRole.setRoleScope(RoleScope.API);
         apiRole.setRoleName("CUSTOM_API");
 
         GroupMembership groupMembership = new GroupMembership();
@@ -173,7 +173,7 @@ public class GroupMembersResourceTest extends AbstractResourceTest {
         initUPDATEmock();
 
         MemberRoleEntity appRole = new MemberRoleEntity();
-        appRole.setRoleScope(io.gravitee.rest.api.model.permissions.RoleScope.APPLICATION);
+        appRole.setRoleScope(RoleScope.APPLICATION);
         appRole.setRoleName("CUSTOM_APP");
 
         GroupMembership groupMembership = new GroupMembership();
@@ -196,10 +196,10 @@ public class GroupMembersResourceTest extends AbstractResourceTest {
     public void shouldUpdateApiAndApplicationRole() {
         initUPDATEmock();
         MemberRoleEntity apiRole = new MemberRoleEntity();
-        apiRole.setRoleScope(io.gravitee.rest.api.model.permissions.RoleScope.API);
+        apiRole.setRoleScope(RoleScope.API);
         apiRole.setRoleName("CUSTOM_API");
         MemberRoleEntity appRole = new MemberRoleEntity();
-        appRole.setRoleScope(io.gravitee.rest.api.model.permissions.RoleScope.APPLICATION);
+        appRole.setRoleScope(RoleScope.APPLICATION);
         appRole.setRoleName("CUSTOM_APP");
 
         GroupMembership groupMembership = new GroupMembership();

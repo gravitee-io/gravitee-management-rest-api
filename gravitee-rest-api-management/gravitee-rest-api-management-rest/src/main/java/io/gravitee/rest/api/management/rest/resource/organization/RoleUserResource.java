@@ -27,10 +27,9 @@ import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 import io.gravitee.rest.api.service.MembershipService;
 import io.gravitee.rest.api.service.common.GraviteeContext;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -42,7 +41,7 @@ import java.util.Optional;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Roles"})
+@Tag(name = "Roles")
 public class RoleUserResource extends AbstractResource {
 
     @Inject
@@ -50,15 +49,13 @@ public class RoleUserResource extends AbstractResource {
 
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Delete the role for a given user",
-            notes = "User must have the MANAGEMENT_ROLE[DELETE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Role successfully removed"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete the role for a given user", description = "User must have the MANAGEMENT_ROLE[DELETE] permission to use this service")
+    @ApiResponse(responseCode = "204", description = "Role successfully removed")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ORGANIZATION_ROLE, acls = RolePermissionAction.DELETE)
     })
-    public void deleteRoleForUsert(@PathParam("scope") RoleScope scope,
+    public void deleteRoleForUser(@PathParam("scope") RoleScope scope,
                        @PathParam("role") String role,
                        @PathParam("userId") String userId) {
         final Optional<RoleEntity> roleToRemove = roleService.findByScopeAndName(scope, role);

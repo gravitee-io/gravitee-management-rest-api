@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.model;
+package io.gravitee.rest.api.management.rest.resource.param.healthcheck;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
- * @author GraviteeSource Team
- */
-
 @Schema(enumAsRef = true)
-public enum DashboardReferenceType {
-    API, APPLICATION, PLATFORM
+public enum HealthcheckField {
+    ENDPOINT,
+    GATEWAY
 }

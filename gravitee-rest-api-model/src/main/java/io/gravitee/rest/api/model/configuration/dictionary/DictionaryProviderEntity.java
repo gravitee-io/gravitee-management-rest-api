@@ -15,6 +15,9 @@
  */
 package io.gravitee.rest.api.model.configuration.dictionary;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import javax.validation.constraints.NotNull;
@@ -39,10 +42,17 @@ public class DictionaryProviderEntity {
         this.type = type;
     }
 
-    public JsonNode getConfiguration() {
+    @JsonRawValue
+    public String getConfiguration() {
+        return configuration == null ? null : configuration.toString();
+    }
+
+    @JsonIgnore
+    public JsonNode getConfigurationJson() {
         return configuration;
     }
 
+    @JsonSetter
     public void setConfiguration(JsonNode configuration) {
         this.configuration = configuration;
     }

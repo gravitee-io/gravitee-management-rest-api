@@ -16,6 +16,14 @@
 package io.gravitee.rest.api.model.configuration.identity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.gravitee.rest.api.model.configuration.identity.am.AMIdentityProviderEntity;
+import io.gravitee.rest.api.model.configuration.identity.github.GitHubIdentityProviderEntity;
+import io.gravitee.rest.api.model.configuration.identity.google.GoogleIdentityProviderEntity;
+import io.gravitee.rest.api.model.configuration.identity.oidc.OIDCIdentityProviderEntity;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +32,19 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Schema(discriminatorProperty = "type", discriminatorMapping = {
+        @DiscriminatorMapping(value = "GITHUB", schema = GitHubIdentityProviderEntity.class),
+        @DiscriminatorMapping(value = "OIDC", schema = OIDCIdentityProviderEntity.class),
+        @DiscriminatorMapping(value = "GOOGLE", schema = GoogleIdentityProviderEntity.class),
+        @DiscriminatorMapping(value = "GRAVITEEIO_AM", schema = AMIdentityProviderEntity.class),
+})
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(name = "GITHUB", value = GitHubIdentityProviderEntity.class),
+        @JsonSubTypes.Type(name = "OIDC", value = OIDCIdentityProviderEntity.class),
+        @JsonSubTypes.Type(name = "GOOGLE", value = GoogleIdentityProviderEntity.class),
+        @JsonSubTypes.Type(name = "GRAVITEEIO_AM", value = AMIdentityProviderEntity.class)
+})
 public abstract class SocialIdentityProviderEntity {
 
     private static final String DEFAULT_AUTHORIZATION_HEADER = "Bearer %s";

@@ -16,7 +16,6 @@
 package io.gravitee.rest.api.management.rest.resource;
 
 import io.gravitee.common.http.MediaType;
-import io.gravitee.repository.management.model.ApplicationType;
 import io.gravitee.repository.management.model.NotificationReferenceType;
 import io.gravitee.rest.api.management.rest.security.Permission;
 import io.gravitee.rest.api.management.rest.security.Permissions;
@@ -31,7 +30,13 @@ import io.gravitee.rest.api.service.ApplicationService;
 import io.gravitee.rest.api.service.NotifierService;
 import io.gravitee.rest.api.service.configuration.application.ApplicationTypeService;
 import io.gravitee.rest.api.service.exceptions.ApplicationNotFoundException;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -48,7 +53,7 @@ import java.util.List;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Applications"})
+@Tag(name = "Applications")
 public class ApplicationResource extends AbstractResource {
 
     @Context
@@ -64,16 +69,15 @@ public class ApplicationResource extends AbstractResource {
     private ApplicationTypeService applicationTypeService;
 
     @PathParam("application")
-    @ApiParam(name = "application", required = true)
+    @Parameter(name = "application", required = true)
     private String application;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an application",
-            notes = "User must have the READ permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application", response = ApplicationEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get an application", description = "User must have the READ permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Application",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApplicationEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.READ)
     })
@@ -85,11 +89,10 @@ public class ApplicationResource extends AbstractResource {
     @GET
     @Path("configuration")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get application type definition of an application",
-            notes = "User must have the READ permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "ApplicationType", response = ApplicationType.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get application type definition of an application", description = "User must have the READ permission to use this service")
+    @ApiResponse(responseCode = "200", description = "ApplicationType",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApplicationTypeEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.READ)
     })
@@ -104,11 +107,10 @@ public class ApplicationResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an application",
-            notes = "User must have APPLICATION_DEFINITION[UPDATE] permission to update an application.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Updated application", response = ApplicationEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Update an application", description = "User must have APPLICATION_DEFINITION[UPDATE] permission to update an application.")
+    @ApiResponse(responseCode = "200", description = "Updated application",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApplicationEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.UPDATE)
     })
@@ -129,11 +131,9 @@ public class ApplicationResource extends AbstractResource {
 
     @GET
     @Path("picture")
-    @ApiOperation(value = "Get the application's picture",
-            notes = "User must have the READ permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application's picture"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get the application's picture", description = "User must have the READ permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Application's picture", content = @Content(mediaType = "*/*", schema = @Schema(type = "string", format = "binary")))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.READ)
     })
@@ -143,11 +143,9 @@ public class ApplicationResource extends AbstractResource {
 
     @GET
     @Path("background")
-    @ApiOperation(value = "Get the application's background",
-            notes = "User must have the READ permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application's background"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get the application's background", description = "User must have the READ permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Application's background", content = @Content(mediaType = "*/*", schema = @Schema(type = "string", format = "binary")))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.READ)
     })
@@ -195,11 +193,10 @@ public class ApplicationResource extends AbstractResource {
     @POST
     @Path("/renew_secret")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Renew the client secret for an OAuth2 application",
-            notes = "User must have APPLICATION_DEFINITION[UPDATE] permission to update an application.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Updated application", response = ApplicationEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Renew the client secret for an OAuth2 application", description = "User must have APPLICATION_DEFINITION[UPDATE] permission to update an application.")
+    @ApiResponse(responseCode = "200", description = "Updated application",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApplicationEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.UPDATE)
     })
@@ -208,11 +205,9 @@ public class ApplicationResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete an application",
-            notes = "User must have the DELETE permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Application successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete an application", description = "User must have the DELETE permission to use this service")
+    @ApiResponse(responseCode = "204", description = "Application successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_DEFINITION, acls = RolePermissionAction.DELETE)
     })
@@ -224,11 +219,10 @@ public class ApplicationResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("notifiers")
-    @ApiOperation(value = "List available notifiers for application",
-            notes = "User must have the APPLICATION_NOTIFICATION[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "LList of notifiers", response = NotifierEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List available notifiers for application", description = "User must have the APPLICATION_NOTIFICATION[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "LList of notifiers",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = NotifierEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_NOTIFICATION, acls = RolePermissionAction.READ)
     })

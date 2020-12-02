@@ -16,7 +16,7 @@
 package io.gravitee.rest.api.management.rest.resource.organization;
 
 import io.gravitee.rest.api.management.rest.resource.configuration.identity.IdentityProvidersResource;
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
@@ -26,7 +26,7 @@ import javax.ws.rs.core.Context;
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Configuration"})
+@Tag(name = "Configuration")
 public class OrganizationConfigurationResource {
 
     @Context

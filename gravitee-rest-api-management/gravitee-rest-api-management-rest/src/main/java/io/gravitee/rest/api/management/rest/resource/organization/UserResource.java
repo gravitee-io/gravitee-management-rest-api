@@ -24,7 +24,13 @@ import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.GroupService;
 import io.gravitee.rest.api.service.UserService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -50,7 +56,7 @@ import static io.gravitee.common.http.MediaType.APPLICATION_JSON;
  * @author Florent CHAMFROY (forent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Users"})
+@Tag(name = "Users")
 public class UserResource extends AbstractResource {
 
     @Context
@@ -61,17 +67,16 @@ public class UserResource extends AbstractResource {
     private GroupService groupService;
 
     @PathParam("userId")
-    @ApiParam(name = "userId", required = true)
+    @Parameter(name = "userId", required = true)
     private String userId;
 
     @GET
     @Produces(APPLICATION_JSON)
-    @ApiOperation(value = "Retrieve a user",
-            notes = "User must have the ORGANIZATION_USERS[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "A user", response = UserEntity.class),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Retrieve a user", description = "User must have the ORGANIZATION_USERS[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "A user",
+            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = UserEntity.class)))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions(
             @Permission(value = RolePermission.ORGANIZATION_USERS, acls = RolePermissionAction.READ)
     )
@@ -86,12 +91,10 @@ public class UserResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a user",
-            notes = "User must have the ORGANIZATION_USERS[DELETE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "User successfully deleted"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete a user", description = "User must have the ORGANIZATION_USERS[DELETE] permission to use this service")
+    @ApiResponse(responseCode = "204", description = "User successfully deleted")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions(
             @Permission(value = RolePermission.ORGANIZATION_USERS, acls = RolePermissionAction.DELETE)
     )
@@ -103,12 +106,11 @@ public class UserResource extends AbstractResource {
     @GET
     @Path("/groups")
     @Produces(APPLICATION_JSON)
-    @ApiOperation(value = "List of groups the user belongs to",
-            notes = "User must have the ORGANIZATION_USERS[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of user groups"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List of groups the user belongs to", description = "User must have the ORGANIZATION_USERS[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of user groups",
+            content = @Content(mediaType = APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = UserGroupEntity.class))))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions(
             @Permission(value = RolePermission.ORGANIZATION_USERS, acls = RolePermissionAction.READ)
     )
@@ -132,12 +134,11 @@ public class UserResource extends AbstractResource {
     @GET
     @Path("/memberships")
     @Produces(APPLICATION_JSON)
-    @ApiOperation(value = "List of memberships the user belongs to",
-            notes = "User must have the ORGANIZATION_USERS[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of user memberships"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List of memberships the user belongs to", description = "User must have the ORGANIZATION_USERS[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of user memberships",
+            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = UserMembershipList.class)))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions(
             @Permission(value = RolePermission.ORGANIZATION_USERS, acls = RolePermissionAction.READ)
     )
@@ -155,13 +156,11 @@ public class UserResource extends AbstractResource {
     }
 
     @POST
-    @ApiOperation(value = "Reset the user's password",
-            notes = "User must have the ORGANIZATION_USERS[UPDATE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "User's password reset"),
-            @ApiResponse(code = 400, message = "reset page URL must not be null"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Reset the user's password", description = "User must have the ORGANIZATION_USERS[UPDATE] permission to use this service")
+    @ApiResponse(responseCode = "204", description = "User's password reset")
+    @ApiResponse(responseCode = "400", description = "reset page URL must not be null")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions(
             @Permission(value = RolePermission.ORGANIZATION_USERS, acls = RolePermissionAction.UPDATE)
             // if permission changes or a new one is added, please update io.gravitee.rest.api.service.impl.UserServiceImpl#canResetPassword
@@ -174,11 +173,10 @@ public class UserResource extends AbstractResource {
 
     @GET
     @Path("/avatar")
-    @ApiOperation(value = "Get the user's avatar")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "User's avatar"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get the user's avatar")
+    @ApiResponse(responseCode = "200", description = "User's avatar", content = @Content(mediaType = "*/*", schema = @Schema(type = "string", format = "binary")))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getUserAvatar(@Context Request request) {
         PictureEntity picture = userService.getPicture(userId);
 
@@ -232,13 +230,10 @@ public class UserResource extends AbstractResource {
 
     @POST
     @Path("/changePassword")
-    @ApiOperation(
-            value = "Change user password after a reset",
-            notes = "User registration must be enabled"
-    )
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "User successfully updated", response = UserEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Change user password after a reset", description = "User registration must be enabled")
+    @ApiResponse(responseCode = "200", description = "User successfully updated",
+            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = UserEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response finalizeResetPassword(@Valid ResetPasswordUserEntity resetPwdEntity) {
         UserEntity newUser = userService.finalizeResetPassword(resetPwdEntity);
         if (newUser != null) {
@@ -256,11 +251,11 @@ public class UserResource extends AbstractResource {
     @Permissions(
             @Permission(value = RolePermission.ORGANIZATION_USERS, acls = RolePermissionAction.UPDATE)
     )
-    @ApiOperation(value = "Process a user registration by accepting or rejecting it")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Processed user"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Process a user registration by accepting or rejecting it")
+    @ApiResponse(responseCode = "200", description = "Processed user",
+            content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = UserEntity.class)))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response validateRegistration(boolean accepted) {
         return Response
                 .ok(userService.processRegistration(userId, accepted))

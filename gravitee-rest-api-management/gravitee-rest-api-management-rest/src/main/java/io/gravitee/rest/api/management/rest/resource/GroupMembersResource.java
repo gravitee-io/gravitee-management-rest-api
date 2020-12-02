@@ -21,7 +21,6 @@ import io.gravitee.rest.api.management.rest.security.Permission;
 import io.gravitee.rest.api.management.rest.security.Permissions;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.permissions.RolePermission;
-import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 import io.gravitee.rest.api.service.GroupService;
 import io.gravitee.rest.api.service.MembershipService;
@@ -30,7 +29,13 @@ import io.gravitee.rest.api.service.UserService;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.GroupInvitationForbiddenException;
 import io.gravitee.rest.api.service.exceptions.GroupMembersLimitationExceededException;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -52,7 +57,7 @@ import static java.util.stream.Collectors.toList;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com) 
  * @author GraviteeSource Team
  */
-@Api(tags = {"Group Memberships"})
+@Tag(name = "Group Memberships")
 public class GroupMembersResource extends AbstractResource {
 
     @Context
@@ -66,18 +71,18 @@ public class GroupMembersResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("group")
-    @ApiParam(name = "group", hidden = true)
+    @Parameter(name = "group", hidden = true)
     private String group;
 
     @GET
-    @Produces(io.gravitee.common.http.MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List group members")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of group's members", response = MemberEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "List group members")
+    @ApiResponse(responseCode = "200", description = "List of group's members",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = MemberEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
-            @Permission(value = ENVIRONMENT_GROUP, acls = RolePermissionAction.READ),
-            @Permission(value = RolePermission.GROUP_MEMBER, acls = RolePermissionAction.READ)
+            @Permission(value = ENVIRONMENT_GROUP, acls = READ),
+            @Permission(value = RolePermission.GROUP_MEMBER, acls = READ)
     })
     public List<GroupMemberEntity> getGroupMembers() {
         //check that group exists
@@ -106,18 +111,15 @@ public class GroupMembersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Add or update a group member")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Member has been added"),
-            @ApiResponse(code = 200, message = "Member has been updated"),
-            @ApiResponse(code = 400, message = "Membership is not valid"),
-            @ApiResponse(code = 500, message = "Internal server error")
-    })
+    @Operation(summary = "Add or update a group member")
+    @ApiResponse(responseCode = "200", description = "Member has been added or updated")
+    @ApiResponse(responseCode = "400", description = "Membership is not valid")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
-            @Permission(value = ENVIRONMENT_GROUP, acls = RolePermissionAction.CREATE),
-            @Permission(value = ENVIRONMENT_GROUP, acls = RolePermissionAction.UPDATE),
-            @Permission(value = RolePermission.GROUP_MEMBER, acls = RolePermissionAction.CREATE),
-            @Permission(value = RolePermission.GROUP_MEMBER, acls = RolePermissionAction.UPDATE),
+            @Permission(value = ENVIRONMENT_GROUP, acls = CREATE),
+            @Permission(value = ENVIRONMENT_GROUP, acls = UPDATE),
+            @Permission(value = RolePermission.GROUP_MEMBER, acls = CREATE),
+            @Permission(value = RolePermission.GROUP_MEMBER, acls = UPDATE),
     })
     public Response addOrUpdateGroupMember(
             @Valid @NotNull final List<GroupMembership> memberships

@@ -22,8 +22,8 @@ import io.gravitee.rest.api.model.monitoring.MonitoringData;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.MonitoringService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -35,7 +35,7 @@ import javax.ws.rs.Produces;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Gateway"})
+@Tag(name = "Gateway")
 public class MonitoringResource extends AbstractResource {
 
     @Inject
@@ -43,7 +43,7 @@ public class MonitoringResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get monitoring metrics for a gateway instance")
+    @Operation(summary = "Get monitoring metrics for a gateway instance")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_PLATFORM, acls = RolePermissionAction.READ)
     })

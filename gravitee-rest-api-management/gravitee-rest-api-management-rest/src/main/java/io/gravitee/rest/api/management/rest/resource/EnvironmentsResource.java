@@ -17,9 +17,9 @@ package io.gravitee.rest.api.management.rest.resource;
 
 import io.gravitee.rest.api.model.EnvironmentEntity;
 import io.gravitee.rest.api.service.EnvironmentService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -35,7 +35,6 @@ import java.util.Collection;
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api
 public class EnvironmentsResource extends AbstractResource {
 
     @Context
@@ -46,14 +45,14 @@ public class EnvironmentsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List available environments for current organization")
+    @Operation(summary = "List available environments for current organization")
     public Collection<EnvironmentEntity> list() {
         return this.environmentService.findAll();
     }
 
     @Path("{envId}")
     public EnvironmentResource getEnvironmentResource(
-            @PathParam("envId") @ApiParam(name = "envId", required = true, defaultValue = "DEFAULT", value = "The ID of the environment") String envId
+            @PathParam("envId") @Parameter(name = "envId", required = true, schema = @Schema(defaultValue = "DEFAULT"), description = "The ID of the environment") String envId
     ) {
         return resourceContext.getResource(EnvironmentResource.class);
     }

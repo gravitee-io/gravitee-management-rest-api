@@ -29,7 +29,6 @@ import io.gravitee.rest.api.service.event.DictionaryEvent;
 import io.gravitee.rest.api.services.dictionary.provider.http.HttpProvider;
 import io.gravitee.rest.api.services.dictionary.provider.http.configuration.HttpProviderConfiguration;
 import io.vertx.core.Vertx;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,7 +103,7 @@ public class DictionaryService extends AbstractService implements EventListener<
 
             if (DICTIONARY_HTTP_PROVIDER.equals(providerConf.getType())) {
                 try {
-                    HttpProviderConfiguration configuration = objectMapper.treeToValue(providerConf.getConfiguration(), HttpProviderConfiguration.class);
+                    HttpProviderConfiguration configuration = objectMapper.treeToValue(providerConf.getConfigurationJson(), HttpProviderConfiguration.class);
                     DictionaryRefresher refresher = new DictionaryRefresher(dictionary);
 
                     HttpProvider provider = new HttpProvider(configuration);

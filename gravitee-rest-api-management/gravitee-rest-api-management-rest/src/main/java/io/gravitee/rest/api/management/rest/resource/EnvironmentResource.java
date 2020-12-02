@@ -32,7 +32,12 @@ import io.gravitee.rest.api.service.EnvironmentService;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.configuration.identity.IdentityProviderActivationService;
 import io.gravitee.rest.api.service.configuration.identity.IdentityProviderService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -50,7 +55,6 @@ import java.util.stream.Collectors;
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api
 public class EnvironmentResource extends AbstractResource {
 
     @Context
@@ -66,15 +70,14 @@ public class EnvironmentResource extends AbstractResource {
     private IdentityProviderActivationService identityProviderActivationService;
 
     @PathParam("envId")
-    @ApiParam(name = "envId", hidden = true)
+    @Parameter(name = "envId", hidden = true)
     private String envId;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an Environment", tags = {"Environment"})
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Found Environment"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get an Environment", tags = {"Environment"})
+    @ApiResponse(responseCode = "200", description = "Found Environment")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getEnvironment() {
         return Response
                 .ok(environmentService.findById(envId))
@@ -89,12 +92,11 @@ public class EnvironmentResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an Environment", tags = {"Environment"})
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Environment successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Create an Environment", tags = {"Environment"})
+    @ApiResponse(responseCode = "201", description = "Environment successfully created")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response createEnvironment(
-            @ApiParam(name = "environmentEntity", required = true) @Valid @NotNull final UpdateEnvironmentEntity environmentEntity) {
+            @Parameter(name = "environmentEntity", required = true) @Valid @NotNull final UpdateEnvironmentEntity environmentEntity) {
         environmentEntity.setId(GraviteeContext.getCurrentEnvironment());
         return Response
                 .status(Status.CREATED)
@@ -109,10 +111,9 @@ public class EnvironmentResource extends AbstractResource {
      */
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Delete an Environment", tags = {"Environment"})
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Environment successfully deleted"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete an Environment", tags = {"Environment"})
+    @ApiResponse(responseCode = "204", description = "Environment successfully deleted")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response deleteEnvironment() {
         environmentService.delete(GraviteeContext.getCurrentEnvironment());
         //TODO: should delete all items that refers to this environment
@@ -124,11 +125,11 @@ public class EnvironmentResource extends AbstractResource {
     @GET
     @Path("/identities")
     @Permissions(@Permission(value = RolePermission.ENVIRONMENT_IDENTITY_PROVIDER_ACTIVATION, acls = RolePermissionAction.READ))
-    @ApiOperation(value = "Get the list of identity provider activations for current environment",
-            notes = "User must have the ENVIRONMENT_IDENTITY_PROVIDER_ACTIVATION[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List identity provider activations for current environment", response = IdentityProviderActivationEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get the list of identity provider activations for current environment",
+            description = "User must have the ENVIRONMENT_IDENTITY_PROVIDER_ACTIVATION[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List identity provider activations for current environment",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = IdentityProviderActivationEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Set<IdentityProviderActivationEntity> getIdentityProviderActivations() {
         return identityProviderActivationService.findAllByTarget(new IdentityProviderActivationService.ActivationTarget(GraviteeContext.getCurrentEnvironment(), IdentityProviderActivationReferenceType.ENVIRONMENT));
     }
@@ -138,10 +139,9 @@ public class EnvironmentResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Permissions(@Permission(value = RolePermission.ENVIRONMENT_IDENTITY_PROVIDER_ACTIVATION, acls = {RolePermissionAction.CREATE, RolePermissionAction.DELETE, RolePermissionAction.UPDATE}))
-    @ApiOperation(value = "Update available environment identities", tags = {"Environment"})
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Environment successfully updated"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Update available environment identities", tags = {"Environment"})
+    @ApiResponse(responseCode = "204", description = "Environment successfully updated")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response updateEnvironmentIdentities(List<IdentityProviderActivationEntity> identityProviderActivations) {
         this.identityProviderActivationService.updateTargetIdp(
                 new IdentityProviderActivationService.ActivationTarget(GraviteeContext.getCurrentEnvironment(), IdentityProviderActivationReferenceType.ENVIRONMENT),

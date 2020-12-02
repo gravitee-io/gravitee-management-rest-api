@@ -20,6 +20,7 @@ import io.gravitee.common.http.MediaType;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.rest.api.management.rest.resource.AbstractResource;
 import io.gravitee.rest.api.model.RatingSummaryEntity;
+import io.gravitee.rest.api.model.Visibility;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.api.ApiLifecycleState;
 import io.gravitee.rest.api.model.api.ApiListItem;
@@ -27,7 +28,13 @@ import io.gravitee.rest.api.model.api.ApiQuery;
 import io.gravitee.rest.api.service.ApiService;
 import io.gravitee.rest.api.service.ConfigService;
 import io.gravitee.rest.api.service.RatingService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -56,7 +63,7 @@ import static java.util.stream.Collectors.toList;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Portal APIs"})
+@Tag(name = "Portal APIs")
 public class PortalApisResource extends AbstractResource {
 
     @Inject
@@ -74,12 +81,12 @@ public class PortalApisResource extends AbstractResource {
     @POST
     @Path("_search")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Search for API using the search engine")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List accessible APIs for current user", response = ApiListItem.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Search for API using the search engine")
+    @ApiResponse(responseCode = "200", description = "List accessible APIs for current user",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = ApiListItem.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response searchPortalApis(
-            @ApiParam(name = "q", required = true)
+            @Parameter(name = "q", required = true)
             @NotNull @QueryParam("q") String query) {
         try {
             final Collection<ApiEntity> apis;
@@ -134,7 +141,7 @@ public class PortalApisResource extends AbstractResource {
         apiItem.setPrimaryOwner(api.getPrimaryOwner());
 
         if (api.getVisibility() != null) {
-            apiItem.setVisibility(io.gravitee.rest.api.model.Visibility.valueOf(api.getVisibility().toString()));
+            apiItem.setVisibility(Visibility.valueOf(api.getVisibility().toString()));
         }
 
         if (api.getState() != null) {

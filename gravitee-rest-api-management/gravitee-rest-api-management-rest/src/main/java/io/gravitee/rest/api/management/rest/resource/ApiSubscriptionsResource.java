@@ -18,8 +18,8 @@ package io.gravitee.rest.api.management.rest.resource;
 import io.gravitee.common.data.domain.Page;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.rest.api.management.rest.model.Pageable;
-import io.gravitee.rest.api.management.rest.model.PagedResult;
 import io.gravitee.rest.api.management.rest.model.Subscription;
+import io.gravitee.rest.api.management.rest.model.SubscriptionEntityPage;
 import io.gravitee.rest.api.management.rest.resource.param.ListStringParam;
 import io.gravitee.rest.api.management.rest.resource.param.ListSubscriptionStatusParam;
 import io.gravitee.rest.api.management.rest.security.Permission;
@@ -31,7 +31,14 @@ import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.subscription.SubscriptionQuery;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.validator.CustomApiKey;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
@@ -53,7 +60,7 @@ import static java.lang.String.format;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"API Subscriptions"})
+@Tag(name = "API Subscriptions")
 public class ApiSubscriptionsResource extends AbstractResource {
 
     @Inject
@@ -79,23 +86,24 @@ public class ApiSubscriptionsResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("api")
-    @ApiParam(name = "api", hidden = true)
+    @Parameter(name = "api", hidden = true)
     private String api;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List subscriptions for the API",
-            notes = "User must have the READ_SUBSCRIPTION permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Paged result of API's subscriptions", response = PagedResult.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List subscriptions for the API", description = "User must have the READ_SUBSCRIPTION permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Paged result of API's subscriptions",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = SubscriptionEntityPage.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_SUBSCRIPTION, acls = RolePermissionAction.READ)
     })
-    public PagedResult<SubscriptionEntity> getApiSubscriptions(
+    public SubscriptionEntityPage getApiSubscriptions(
             @BeanParam SubscriptionParam subscriptionParam,
             @Valid @BeanParam Pageable pageable,
-            @ApiParam(allowableValues = "keys", value = "Expansion of data to return in subscriptions") @QueryParam("expand") List<String> expand) {
+            @Parameter(description = "Expansion of data to return in subscriptions",
+                    array = @ArraySchema( schema = @Schema(allowableValues = "keys")))
+            @QueryParam("expand") List<String> expand) {
         // Transform query parameters to a subscription query
         SubscriptionQuery subscriptionQuery = subscriptionParam.toQuery();
         subscriptionQuery.setApi(api);
@@ -121,28 +129,27 @@ public class ApiSubscriptionsResource extends AbstractResource {
             }
         }
 
-        PagedResult<SubscriptionEntity> result = new PagedResult<>(subscriptions, pageable.getSize());
+        SubscriptionEntityPage result = new SubscriptionEntityPage(subscriptions, pageable.getSize());
         result.setMetadata(subscriptionService.getMetadata(subscriptions.getContent()).getMetadata());
         return result;
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Subscribe to a plan",
-            notes = "User must have the MANAGE_SUBSCRIPTIONS permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Subscription successfully created", response = Subscription.class),
-            @ApiResponse(code = 400, message = "Bad custom API Key format or custom API Key definition disabled"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Subscribe to a plan", description = "User must have the MANAGE_SUBSCRIPTIONS permission to use this service")
+    @ApiResponse(responseCode = "201", description = "Subscription successfully created",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = Subscription.class)))
+    @ApiResponse(responseCode = "400", description = "Bad custom API Key format or custom API Key definition disabled")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.API_SUBSCRIPTION, acls = RolePermissionAction.CREATE)
     })
     public Response createSubscriptionToApi(
-            @ApiParam(name = "application", required = true)
+            @Parameter(name = "application", required = true)
             @NotNull @QueryParam("application") String application,
-            @ApiParam(name = "plan", required = true)
+            @Parameter(name = "plan", required = true)
             @NotNull @QueryParam("plan") String plan,
-            @ApiParam(name = "customApiKey")
+            @Parameter(name = "customApiKey")
             @CustomApiKey @QueryParam("customApiKey") String customApiKey) {
 
         if (StringUtils.isNotEmpty(customApiKey)  &&
@@ -153,7 +160,6 @@ public class ApiSubscriptionsResource extends AbstractResource {
         }
 
         NewSubscriptionEntity newSubscriptionEntity = new NewSubscriptionEntity(plan, application);
-
         // Create subscription
         SubscriptionEntity subscription = subscriptionService.create(newSubscriptionEntity, customApiKey);
 
@@ -174,16 +180,15 @@ public class ApiSubscriptionsResource extends AbstractResource {
 
     @GET
     @Path("export")
-    @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Export API logs as CSV")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "API logs as CSV"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Produces("text/csv")
+    @Operation(summary = "Export API logs as CSV")
+    @ApiResponse(responseCode = "200", description = "API logs as CSV", content = @Content(mediaType = "text/csv", schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({@Permission(value = RolePermission.API_LOG, acls = RolePermissionAction.READ)})
     public Response exportApiSubscriptionsLogsAsCSV(
             @BeanParam SubscriptionParam subscriptionParam,
             @Valid @BeanParam Pageable pageable) {
-        final PagedResult<SubscriptionEntity> subscriptions = getApiSubscriptions(subscriptionParam, pageable, null);
+        final SubscriptionEntityPage subscriptions = getApiSubscriptions(subscriptionParam, pageable, null);
         return Response
                 .ok(subscriptionService.exportAsCsv(subscriptions.getData(), subscriptions.getMetadata()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, format("attachment;filename=subscriptions-%s-%s.csv", api, System.currentTimeMillis()))
@@ -236,16 +241,16 @@ public class ApiSubscriptionsResource extends AbstractResource {
     private static class SubscriptionParam {
 
         @QueryParam("plan")
-        @ApiParam(value = "plan")
+        @Parameter(description = "plan", explode = Explode.FALSE, schema = @Schema(type = "array"))
         private ListStringParam plans;
 
         @QueryParam("application")
-        @ApiParam(value = "application")
+        @Parameter(description = "application", explode = Explode.FALSE, schema = @Schema(type = "array"))
         private ListStringParam applications;
 
         @QueryParam("status")
-        @DefaultValue("accepted,pending,paused")
-        @ApiModelProperty(dataType = "string", allowableValues = "accepted, pending, rejected, closed", value = "Subscription status")
+        @DefaultValue("ACCEPTED,PENDING,PAUSED")
+        @Parameter(description = "Subscription status", explode = Explode.FALSE, schema = @Schema(type = "array"))
         private ListSubscriptionStatusParam status;
 
         @QueryParam("api_key")
@@ -285,21 +290,10 @@ public class ApiSubscriptionsResource extends AbstractResource {
 
         private SubscriptionQuery toQuery() {
             SubscriptionQuery query = new SubscriptionQuery();
-
-            if (plans != null && plans.getValue() != null) {
-                query.setPlans(plans.getValue());
-            }
-
-            if (status != null) {
-                query.setStatuses(status.getStatus());
-            }
-
-            if (applications != null && applications.getValue() != null) {
-                query.setApplications(applications.getValue());
-            }
-
+            query.setPlans(plans);
+            query.setStatuses(status);
+            query.setApplications(applications);
             query.setApiKey(this.apiKey);
-
             return query;
         }
     }

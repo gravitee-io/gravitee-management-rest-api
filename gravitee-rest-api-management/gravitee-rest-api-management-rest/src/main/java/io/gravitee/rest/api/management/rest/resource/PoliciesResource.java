@@ -25,8 +25,8 @@ import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.PolicyService;
 import io.gravitee.rest.api.service.impl.swagger.policy.PolicyOperationVisitorManager;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugins"})
+@Tag(name = "Plugins")
 public class PoliciesResource {
 
     @Context
@@ -62,8 +62,7 @@ public class PoliciesResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List policies",
-        notes = "User must have the MANAGEMENT_API[READ] permission to use this service")
+    @Operation(summary = "List policies", description = "User must have the MANAGEMENT_API[READ] permission to use this service")
     @Permissions({
         @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })
@@ -96,8 +95,7 @@ public class PoliciesResource {
     @GET
     @Path("swagger")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List policies which are handling Swagger / OAI definition",
-        notes = "These policies are used when importing an OAI to create an API")
+    @Operation(summary = "List policies which are handling Swagger / OAI definition", description = "These policies are used when importing an OAI to create an API")
     @Permissions({
         @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.READ)
     })

@@ -24,14 +24,14 @@ import io.gravitee.rest.api.management.rest.security.Permissions;
 import io.gravitee.rest.api.model.EventEntity;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
-import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.ApiService;
 import io.gravitee.rest.api.service.EventService;
 import io.gravitee.rest.api.service.exceptions.ApiNotFoundException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.BeanParam;
@@ -49,7 +49,7 @@ import static io.gravitee.rest.api.model.permissions.RolePermissionAction.READ;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Platform Events"})
+@Tag(name = "Platform Events")
 public class PlatformEventsResource  extends AbstractResource {
     
     @Inject
@@ -60,22 +60,21 @@ public class PlatformEventsResource  extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List platform events",
-            notes = "User must have the MANAGEMENT_PLATFORM[READ] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Platform events", response = EventEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List platform events", description = "User must have the MANAGEMENT_PLATFORM[READ] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "Platform events",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = EventEntityPage.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
-            @Permission(value = RolePermission.ENVIRONMENT_PLATFORM, acls = RolePermissionAction.READ)
+            @Permission(value = RolePermission.ENVIRONMENT_PLATFORM, acls = READ)
     })
-    public Page<EventEntity> getPlatformEvents(@BeanParam EventSearchParam eventSearchParam) {
+    public EventEntityPage getPlatformEvents(@BeanParam EventSearchParam eventSearchParam) {
         eventSearchParam.validate();
 
         Map<String, Object> properties = new HashMap<>();
         if (eventSearchParam.getApiIdsParam() != null &&
-                eventSearchParam.getApiIdsParam().getIds() != null &&
-                !eventSearchParam.getApiIdsParam().getIds().isEmpty()) {
-            properties.put(Event.EventProperties.API_ID.getValue(), eventSearchParam.getApiIdsParam().getIds());
+                eventSearchParam.getApiIdsParam() != null &&
+                !eventSearchParam.getApiIdsParam().isEmpty()) {
+            properties.put(Event.EventProperties.API_ID.getValue(), eventSearchParam.getApiIdsParam());
         } else if (!isAdmin()) {
             properties.put(
                     Event.EventProperties.API_ID.getValue(),
@@ -86,7 +85,7 @@ public class PlatformEventsResource  extends AbstractResource {
         }
 
         Page<EventEntity> events = eventService.search(
-                eventSearchParam.getEventTypeListParam().getEventTypes(),
+                eventSearchParam.getEventTypeListParam(),
                 properties,
                 eventSearchParam.getFrom(),
                 eventSearchParam.getTo(),
@@ -113,6 +112,13 @@ public class PlatformEventsResource  extends AbstractResource {
             }
         });
 
-        return events;
+        return new EventEntityPage(events);
+    }
+
+    public static class EventEntityPage extends Page<EventEntity>{
+
+        public EventEntityPage(Page<EventEntity> events) {
+            super(events.getContent(), events.getPageNumber(), (int) events.getPageElements(), events.getTotalElements());
+        }
     }
 }

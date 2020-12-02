@@ -38,10 +38,12 @@ import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.common.JWTHelper;
 import io.gravitee.rest.api.service.common.JWTHelper.Claims;
 import io.gravitee.rest.api.service.exceptions.UserNotFoundException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +82,7 @@ import static javax.ws.rs.core.Response.status;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Current User"})
+@Tag(name = "Current User")
 public class CurrentUserResource extends AbstractResource {
 
     private static Logger LOG = LoggerFactory.getLogger(CurrentUserResource.class);
@@ -104,11 +106,11 @@ public class CurrentUserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the authenticated user")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Authenticated user", response = UserDetails.class),
-            @ApiResponse(code = 401, message = "Unauthorized user"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get the authenticated user")
+    @ApiResponse(responseCode = "200", description = "Authenticated user",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = UserDetails.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized user")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getCurrentUser() {
         if (isAuthenticated()) {
             final UserDetails details = getAuthenticatedUserDetails();
@@ -177,11 +179,10 @@ public class CurrentUserResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the current logged user")
-    @ApiResponses({
-            @ApiResponse(code = 204, message = "Current user successfully deleted"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete the current logged user")
+    @ApiResponse(responseCode = "204", description = "Current user successfully deleted")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response deleteCurrentUser() {
 
         if (isAuthenticated()) {
@@ -194,12 +195,12 @@ public class CurrentUserResource extends AbstractResource {
     }
 
     @PUT
-    @ApiOperation(value = "Update the authenticated user")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Updated user", response = UserEntity.class),
-            @ApiResponse(code = 400, message = "Invalid user profile"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Update the authenticated user")
+    @ApiResponse(responseCode = "200", description = "Updated user",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = UserEntity.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid user profile")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response updateCurrentUser(@Valid @NotNull final UpdateUserEntity user) {
         UserEntity userEntity = userService.findById(getAuthenticatedUser());
         try {
@@ -215,12 +216,12 @@ public class CurrentUserResource extends AbstractResource {
 
     @POST
     @Path("/subscribeNewsletter")
-    @ApiOperation(value = "Subscribe to the newsletter the authenticated user")
-    @ApiResponses({
-        @ApiResponse(code = 200, message = "Updated user", response = UserEntity.class),
-        @ApiResponse(code = 400, message = "Invalid user profile"),
-        @ApiResponse(code = 404, message = "User not found"),
-        @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Subscribe to the newsletter the authenticated user")
+    @ApiResponse(responseCode = "200", description = "Updated user",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = UserEntity.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid user profile")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response subscribeNewsletter(@Valid @NotNull final String email) {
         UserEntity userEntity = userService.findById(getAuthenticatedUser());
         UpdateUserEntity user = new UpdateUserEntity(userEntity);
@@ -230,11 +231,10 @@ public class CurrentUserResource extends AbstractResource {
 
     @GET
     @Path("avatar")
-    @ApiOperation(value = "Get user's avatar")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "User's avatar"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get user's avatar")
+    @ApiResponse(responseCode = "200", description = "User's avatar", content = @Content(mediaType = "*/*", schema = @Schema(type = "string", format = "binary")))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getCurrentUserPicture(@Context Request request) {
         String userId = userService.findById(getAuthenticatedUser()).getId();
         PictureEntity picture = userService.getPicture(userId);
@@ -267,7 +267,7 @@ public class CurrentUserResource extends AbstractResource {
 
     @POST
     @Path("/login")
-    @ApiOperation(value = "Login")
+    @Operation(summary = "Login")
     @Produces(MediaType.APPLICATION_JSON)
     public Response login(final @Context javax.ws.rs.core.HttpHeaders headers, final @Context HttpServletResponse servletResponse) {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -335,7 +335,7 @@ public class CurrentUserResource extends AbstractResource {
 
     @POST
     @Path("/logout")
-    @ApiOperation(value = "Logout")
+    @Operation(summary = "Logout")
     public Response logoutCurrentUser() {
         response.addCookie(cookieGenerator.generate(TokenAuthenticationFilter.AUTH_COOKIE_NAME, null));
         return Response.ok().build();
@@ -344,26 +344,26 @@ public class CurrentUserResource extends AbstractResource {
     @GET
     @Path("/tasks")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the user's tasks")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "User's tasks"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
-    public PagedResult getUserTasks() {
+    @Operation(summary = "Get the user's tasks")
+    @ApiResponse(responseCode = "200", description = "User's tasks",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = TaskEntityPage.class)))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    public TaskEntityPage getUserTasks() {
         List<TaskEntity> tasks = taskService.findAll(getAuthenticatedUserOrNull());
         Map<String, Map<String, Object>> metadata = taskService.getMetadata(tasks).getMetadata();
-        PagedResult<TaskEntity> pagedResult = new PagedResult<>(tasks);
+        TaskEntityPage pagedResult = new TaskEntityPage(tasks);
         pagedResult.setMetadata(metadata);
         return pagedResult;
     }
 
     @GET
     @Path("/tags")
-    @ApiOperation(value = "Get the user's allowed sharding tags")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "User's sharding tags"),
-            @ApiResponse(code = 404, message = "User not found"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get the user's allowed sharding tags")
+    @ApiResponse(responseCode = "200", description = "User's sharding tags",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = String.class), uniqueItems = true)))
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserShardingTags() {
         return Response.ok(tagService.findByUser(getAuthenticatedUser())).build();
@@ -377,5 +377,12 @@ public class CurrentUserResource extends AbstractResource {
     @Path("/tokens")
     public TokensResource getTokensResource() {
         return resourceContext.getResource(TokensResource.class);
+    }
+
+    public static class TaskEntityPage extends PagedResult<TaskEntity> {
+
+        public TaskEntityPage(Collection<TaskEntity> data) {
+            super(data);
+        }
     }
 }

@@ -15,41 +15,29 @@
  */
 package io.gravitee.rest.api.management.rest.resource.param;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.gravitee.rest.api.model.EventType;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+
+import java.util.Arrays;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at gravitee.io)
  * @author GraviteeSource Team
  */
-public class EventTypeListParam {
-
-    private static final String SEPARATOR = ",";
-    private List<EventType> eventTypes;
+@JsonIgnoreProperties("empty")
+@ArraySchema(uniqueItems = true)
+public class EventTypeListParam extends AbstractListParam<EventType> {
 
     public EventTypeListParam(String param) {
-        eventTypes = new ArrayList<EventType>();
-        
-        if (param != null) {
-            String[] params = param.replaceAll("\\s","").split(SEPARATOR);
-            for (String _param : params) {
-                try {
-                    eventTypes.add(EventType.valueOf(_param));
-                } catch (Exception ex) {
-                    // nothing to do
-                }
-            }
-        }
-        
-        if (eventTypes.isEmpty()) {
-            eventTypes = Arrays.asList(EventType.values());
+        super(param);
+        if (isEmpty()) {
+            addAll(Arrays.asList(EventType.values()));
         }
     }
 
-    public List<EventType> getEventTypes() {
-        return eventTypes;
+    @Override
+    protected EventType parseValue(String param) {
+        return EventType.valueOf(param);
     }
 }

@@ -25,9 +25,9 @@ import io.gravitee.rest.api.model.notification.PortalNotificationConfigEntity;
 import io.gravitee.rest.api.service.GenericNotificationConfigService;
 import io.gravitee.rest.api.service.PortalNotificationConfigService;
 import io.gravitee.rest.api.service.exceptions.ForbiddenAccessException;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -43,7 +43,7 @@ import static io.gravitee.rest.api.model.permissions.RolePermissionAction.*;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"API Notifications"})
+@Tag(name = "API Notifications")
 public class ApiNotificationSettingsResource extends AbstractResource {
 
     @Inject
@@ -54,11 +54,11 @@ public class ApiNotificationSettingsResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("api")
-    @ApiParam(name = "api", hidden = true)
+    @Parameter(name = "api", hidden = true)
     private String api;
 
     @GET
-    @ApiOperation(value = "Get notification settings")
+    @Operation(summary = "Get notification settings")
     @Produces(MediaType.APPLICATION_JSON)
     @Permissions({
             @Permission(value = API_NOTIFICATION, acls = READ)
@@ -73,7 +73,7 @@ public class ApiNotificationSettingsResource extends AbstractResource {
     }
 
     @POST
-    @ApiOperation(value = "Create notification settings")
+    @Operation(summary = "Create notification settings")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Object createApiNotificationSettings(GenericNotificationConfigEntity config) {
@@ -93,7 +93,7 @@ public class ApiNotificationSettingsResource extends AbstractResource {
 
     @PUT
     @Path("{notificationId}")
-    @ApiOperation(value = "Update generic notification settings")
+    @Operation(summary = "Update generic notification settings")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Permissions({
@@ -112,7 +112,7 @@ public class ApiNotificationSettingsResource extends AbstractResource {
     }
 
     @PUT
-    @ApiOperation(value = "Update portal notification settings")
+    @Operation(summary = "Update portal notification settings")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Permissions({
@@ -131,7 +131,7 @@ public class ApiNotificationSettingsResource extends AbstractResource {
 
     @DELETE
     @Path("{notificationId}")
-    @ApiOperation(value = "Delete notification settings")
+    @Operation(summary = "Delete notification settings")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Permissions({

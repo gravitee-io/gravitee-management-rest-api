@@ -25,7 +25,12 @@ import io.gravitee.rest.api.model.log.SearchLogResponse;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.LogsService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -39,7 +44,7 @@ import static java.lang.String.format;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Application Logs"})
+@Tag(name = "Application Logs")
 public class ApplicationLogsResource extends AbstractResource {
 
     @Inject
@@ -47,15 +52,15 @@ public class ApplicationLogsResource extends AbstractResource {
 
     @SuppressWarnings("UnresolvedRestParam")
     @PathParam("application")
-    @ApiParam(name = "application", hidden = true)
+    @Parameter(name = "application", hidden = true)
     private String application;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get application logs")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application logs"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get application logs")
+    @ApiResponse(responseCode = "200", description = "Application logs",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = SearchLogResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_LOG, acls = RolePermissionAction.READ)
     })
@@ -78,10 +83,10 @@ public class ApplicationLogsResource extends AbstractResource {
     @GET
     @Path("/{log}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a specific log")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Single log"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Get a specific log")
+    @ApiResponse(responseCode = "200", description = "Single log",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApplicationRequest.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.APPLICATION_LOG, acls = RolePermissionAction.READ)
     })
@@ -93,11 +98,10 @@ public class ApplicationLogsResource extends AbstractResource {
 
     @GET
     @Path("export")
-    @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Export application logs as CSV")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Application logs as CSV"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Produces("text/csv")
+    @Operation(summary = "Export application logs as CSV")
+    @ApiResponse(responseCode = "200", description = "Application logs as CSV", content = @Content(mediaType = "text/csv", schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({@Permission(value = RolePermission.APPLICATION_LOG, acls = RolePermissionAction.READ)})
     public Response exportApplicationLogsAsCSV(
             @BeanParam LogsParam param) {

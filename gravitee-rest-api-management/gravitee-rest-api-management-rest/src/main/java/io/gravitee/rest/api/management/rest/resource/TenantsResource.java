@@ -24,10 +24,12 @@ import io.gravitee.rest.api.model.UpdateTenantEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.TenantService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -41,7 +43,7 @@ import java.util.stream.Collectors;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Tenants"})
+@Tag(name = "Tenants")
 public class TenantsResource extends AbstractResource  {
 
     @Inject
@@ -49,10 +51,10 @@ public class TenantsResource extends AbstractResource  {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List tenants")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of tenants", response = TenantEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "List tenants")
+    @ApiResponse(responseCode = "200", description = "List of tenants",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = TenantEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     public List<TenantEntity> getTenants()  {
         return tenantService.findAll()
                 .stream()
@@ -63,11 +65,10 @@ public class TenantsResource extends AbstractResource  {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a tenant",
-            notes = "User must have the MANAGEMENT_TENANT[CREATE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of tenants", response = TenantEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Create a tenant", description = "User must have the MANAGEMENT_TENANT[CREATE] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of tenants",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = TenantEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_TENANT, acls = RolePermissionAction.CREATE)
     })
@@ -78,11 +79,10 @@ public class TenantsResource extends AbstractResource  {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a tenant",
-            notes = "User must have the MANAGEMENT_TENANT[UPDATE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of tenants", response = TenantEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Update a tenant", description = "User must have the MANAGEMENT_TENANT[UPDATE] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of tenants",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = TenantEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_TENANT, acls = RolePermissionAction.UPDATE)
     })
@@ -93,11 +93,10 @@ public class TenantsResource extends AbstractResource  {
     @Path("{tenant}")
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Delete a tenant",
-            notes = "User must have the MANAGEMENT_TENANT[DELETE] permission to use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List of tenants", response = TenantEntity.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @Operation(summary = "Delete a tenant", description = "User must have the MANAGEMENT_TENANT[DELETE] permission to use this service")
+    @ApiResponse(responseCode = "200", description = "List of tenants",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = TenantEntity.class))))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_TENANT, acls = RolePermissionAction.DELETE)
     })

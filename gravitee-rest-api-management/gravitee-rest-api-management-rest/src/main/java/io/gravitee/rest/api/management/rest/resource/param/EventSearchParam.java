@@ -15,11 +15,14 @@
  */
 package io.gravitee.rest.api.management.rest.resource.param;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.util.Date;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,6 +32,7 @@ public class EventSearchParam {
 
     @QueryParam("type")
     @DefaultValue("all")
+    @Parameter(explode = Explode.FALSE, schema = @Schema(type = "array"))
     private EventTypeListParam eventTypeListParam;
 
     @QueryParam("from")
@@ -46,7 +50,8 @@ public class EventSearchParam {
     private Integer size;
 
     @QueryParam("api_ids")
-    private ApiIdsParam apiIdsParam;
+    @Parameter(explode = Explode.FALSE, schema = @Schema(type = "array"))
+    private ListStringParam apiIdsParam;
 
     public EventTypeListParam getEventTypeListParam() {
         return eventTypeListParam;
@@ -88,11 +93,11 @@ public class EventSearchParam {
         this.size = size;
     }
 
-    public ApiIdsParam getApiIdsParam() {
+    public ListStringParam getApiIdsParam() {
         return apiIdsParam;
     }
 
-    public void setApiIdsParam(ApiIdsParam apiIdsParam) {
+    public void setApiIdsParam(ListStringParam apiIdsParam) {
         this.apiIdsParam = apiIdsParam;
     }
 
