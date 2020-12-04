@@ -16,7 +16,6 @@
 package io.gravitee.rest.api.model.notification;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,7 +24,6 @@ import java.util.Objects;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Schema(enumAsRef = true)
 public class PortalNotificationConfigEntity {
 
     @JsonProperty("config_type")

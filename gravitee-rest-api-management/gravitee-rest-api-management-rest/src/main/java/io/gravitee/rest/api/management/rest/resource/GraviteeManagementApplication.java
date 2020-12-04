@@ -87,6 +87,7 @@ public class GraviteeManagementApplication extends ResourceConfig {
         register(ConstraintValidationExceptionMapper.class);
         register(UnrecognizedPropertyExceptionMapper.class);
         register(ThrowableMapper.class);
+        register(ParamExceptionMapper.class);
         register(NotFoundExceptionMapper.class);
         register(NotAllowedExceptionMapper.class);
         register(BadRequestExceptionMapper.class);

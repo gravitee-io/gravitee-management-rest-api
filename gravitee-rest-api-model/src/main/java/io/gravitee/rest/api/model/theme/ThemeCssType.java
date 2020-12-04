@@ -15,6 +15,7 @@
  */
 package io.gravitee.rest.api.model.theme;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,4 +40,12 @@ public enum ThemeCssType {
         return type;
     }
 
+    @JsonCreator
+    public static ThemeCssType fromString(final String value) {
+        try {
+            return ThemeCssType.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

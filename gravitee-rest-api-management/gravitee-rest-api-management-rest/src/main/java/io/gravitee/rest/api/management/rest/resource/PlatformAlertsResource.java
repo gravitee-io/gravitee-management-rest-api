@@ -132,8 +132,7 @@ public class PlatformAlertsResource extends AbstractResource {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Delete an alert for the platform", description = "User must have the MANAGEMENT_ALERT[DELETE] permission to use this service")
-    @ApiResponse(responseCode = "204", description = "Alert successfully deleted",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = AlertTriggerEntity.class)))
+    @ApiResponse(responseCode = "204", description = "Alert successfully deleted")
     @ApiResponse(responseCode = "500", description = "Internal server error")
 
     @Permissions({
