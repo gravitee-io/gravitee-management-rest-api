@@ -22,7 +22,12 @@ import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.settings.ConsoleConfigEntity;
 import io.gravitee.rest.api.model.settings.ConsoleSettingsEntity;
 import io.gravitee.rest.api.service.ConfigService;
-import io.swagger.annotations.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -42,7 +47,7 @@ import static io.gravitee.rest.api.model.permissions.RolePermissionAction.*;
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Console"})
+@Tag(name = "Console")
 public class ConsoleResource {
 
     @Inject
@@ -53,12 +58,12 @@ public class ConsoleResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the console configuration needed for runtime",
-            notes = "Every users can use this service")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Console configuration", response = ConsoleConfigEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")
-    })
+    @Operation(summary = "Get the console configuration needed for runtime",
+            description = "Every users can use this service")
+    @ApiResponse(responseCode = "200", description = "Console configuration",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ConsoleConfigEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+
     public ConsoleConfigEntity getConsoleConfig() {
         return configService.getConsoleConfig();
     }
@@ -67,16 +72,15 @@ public class ConsoleResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Save the console configuration")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "Console configuration", response = ConsoleSettingsEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")
-    })
+    @Operation(summary = "Save the console configuration")
+    @ApiResponse(responseCode = "200", description = "Console configuration",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ConsoleSettingsEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ORGANIZATION_SETTINGS, acls = {CREATE, UPDATE, DELETE})
     })
     public Response saveConsoleConfig(
-            @ApiParam(name = "config", required = true) @NotNull ConsoleSettingsEntity consoleSettingsEntity) {
+            @Parameter(name = "config", required = true) @NotNull ConsoleSettingsEntity consoleSettingsEntity) {
         configService.save(consoleSettingsEntity);
         return Response
                 .ok()
