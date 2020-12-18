@@ -16,6 +16,12 @@
 package io.gravitee.rest.api.service.impl;
 
 import io.gravitee.common.http.HttpMethod;
+import io.gravitee.repository.analytics.AnalyticsException;
+import io.gravitee.repository.analytics.query.*;
+import io.gravitee.repository.analytics.query.tabular.TabularResponse;
+import io.gravitee.repository.log.api.LogRepository;
+import io.gravitee.repository.log.model.ExtendedLog;
+import io.gravitee.repository.management.model.ApplicationStatus;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.analytics.query.LogQuery;
 import io.gravitee.rest.api.model.api.ApiEntity;
@@ -24,14 +30,9 @@ import io.gravitee.rest.api.model.log.*;
 import io.gravitee.rest.api.model.log.extended.Request;
 import io.gravitee.rest.api.model.log.extended.Response;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.exceptions.*;
-import io.gravitee.repository.analytics.AnalyticsException;
-import io.gravitee.repository.analytics.query.*;
-import io.gravitee.repository.analytics.query.tabular.TabularResponse;
-import io.gravitee.repository.log.api.LogRepository;
-import io.gravitee.repository.log.model.ExtendedLog;
-import io.gravitee.repository.management.model.ApplicationStatus;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.slf4j.Logger;
@@ -147,7 +148,7 @@ public class LogsServiceImpl implements LogsService {
     public ApiRequest findApiLog(String id, Long timestamp) {
         try {
             final ExtendedLog log = logRepository.findById(id, timestamp);
-            if (parameterService.findAsBoolean(Key.LOGGING_AUDIT_ENABLED)) {
+            if (parameterService.findAsBoolean(Key.LOGGING_AUDIT_ENABLED, ParameterReferenceType.ORGANIZATION)) {
                 auditService.createApiAuditLog(log.getApi(),
                         Collections.singletonMap(REQUEST_ID, id),
                         LOG_READ,
@@ -394,6 +395,7 @@ public class LogsServiceImpl implements LogsService {
         if (searchLogResponse.getLogs() == null || searchLogResponse.getLogs().isEmpty()) {
             return "";
         }
+
         final StringBuilder sb = new StringBuilder();
         sb.append("Date");
         sb.append(separator);
@@ -411,16 +413,22 @@ public class LogsServiceImpl implements LogsService {
         sb.append(separator);
         sb.append("Plan");
         sb.append(separator);
+        final boolean userEnabled = parameterService.findAsBoolean(Key.LOGGING_USER_DISPLAYED, ParameterReferenceType.ORGANIZATION);
 
         //get the first item to define the type of export
         if (searchLogResponse.getLogs().get(0) instanceof ApiRequestItem) {
+            if (userEnabled) {
+                sb.append("User");
+                sb.append(separator);
+            }
             sb.append("Application");
             sb.append(lineSeparator());
 
             for (final Object log : searchLogResponse.getLogs()) {
                 final ApiRequestItem apiLog = (ApiRequestItem) log;
                 processLine(searchLogResponse, sb, apiLog.getTimestamp(), apiLog.getId(), apiLog.getTransactionId(),
-                        apiLog.getMethod(), apiLog.getPath(), apiLog.getStatus(), apiLog.getResponseTime(), apiLog.getPlan());
+                        apiLog.getMethod(), apiLog.getPath(), apiLog.getStatus(), apiLog.getResponseTime(),
+                        apiLog.getPlan(), userEnabled, apiLog.getUser());
                 final Object application = searchLogResponse.getMetadata().get(apiLog.getApplication());
                 sb.append(getName(application));
                 sb.append(lineSeparator());
@@ -433,12 +441,17 @@ public class LogsServiceImpl implements LogsService {
             for (final Object log : searchLogResponse.getLogs()) {
                 final ApplicationRequestItem applicationLog = (ApplicationRequestItem) log;
                 processLine(searchLogResponse, sb, applicationLog.getTimestamp(), applicationLog.getId(), applicationLog.getTransactionId(),
-                        applicationLog.getMethod(), applicationLog.getPath(), applicationLog.getStatus(), applicationLog.getResponseTime(), applicationLog.getPlan());
+                        applicationLog.getMethod(), applicationLog.getPath(), applicationLog.getStatus(), applicationLog.getResponseTime(),
+                        applicationLog.getPlan(), false, applicationLog.getUser());
                 final Object api = searchLogResponse.getMetadata().get(applicationLog.getApi());
                 sb.append(getName(api));
                 sb.append(lineSeparator());
             }
         } else if (searchLogResponse.getLogs().get(0) instanceof PlatformRequestItem) {
+            if (userEnabled) {
+                sb.append("User");
+                sb.append(separator);
+            }
             sb.append("API");
             sb.append(separator);
             sb.append("Application");
@@ -447,7 +460,8 @@ public class LogsServiceImpl implements LogsService {
             for (final Object log : searchLogResponse.getLogs()) {
                 final PlatformRequestItem platformLog = (PlatformRequestItem) log;
                 processLine(searchLogResponse, sb, platformLog.getTimestamp(), platformLog.getId(), platformLog.getTransactionId(),
-                        platformLog.getMethod(), platformLog.getPath(), platformLog.getStatus(), platformLog.getResponseTime(), platformLog.getPlan());
+                        platformLog.getMethod(), platformLog.getPath(), platformLog.getStatus(), platformLog.getResponseTime(),
+                        platformLog.getPlan(), userEnabled, platformLog.getUser());
                 final Object api = searchLogResponse.getMetadata().get(platformLog.getApi());
                 sb.append(getName(api));
                 sb.append(separator);
@@ -459,8 +473,8 @@ public class LogsServiceImpl implements LogsService {
         return sb.toString();
     }
 
-    private void processLine(SearchLogResponse searchLogResponse, StringBuilder sb, long timestamp, String id,
-                             String transactionId, HttpMethod method, String path, int status, long responseTime, String plan) {
+    private void processLine(SearchLogResponse searchLogResponse, StringBuilder sb, long timestamp, String id, String transactionId,
+                             HttpMethod method, String path, int status, long responseTime, String plan, boolean userEnabled, String user) {
         sb.append(dateFormatter.format(timestamp));
         sb.append(separator);
         sb.append(id);
@@ -477,6 +491,10 @@ public class LogsServiceImpl implements LogsService {
         sb.append(separator);
         sb.append(getName(searchLogResponse.getMetadata().get(plan)));
         sb.append(separator);
+        if (userEnabled) {
+            sb.append(user);
+            sb.append(separator);
+        }
     }
 
     private String getName(Object map) {

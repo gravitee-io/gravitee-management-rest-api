@@ -45,9 +45,9 @@ public class EnvironmentsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List available environments for current organization")
-    public Collection<EnvironmentEntity> list() {
-        return this.environmentService.findAll();
+    @Operation(summary = "List available environments for current user organization")
+    public Collection<EnvironmentEntity> getEnvironments() {
+        return this.environmentService.findByUser(getAuthenticatedUserOrNull());
     }
 
     @Path("{envId}")

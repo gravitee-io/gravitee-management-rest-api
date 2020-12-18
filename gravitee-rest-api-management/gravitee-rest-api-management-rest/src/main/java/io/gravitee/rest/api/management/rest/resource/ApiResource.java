@@ -29,6 +29,7 @@ import io.gravitee.rest.api.model.api.*;
 import io.gravitee.rest.api.model.api.header.ApiHeaderEntity;
 import io.gravitee.rest.api.model.notification.NotifierEntity;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.security.utils.ImageUtils;
@@ -132,7 +133,7 @@ public class ApiResource extends AbstractResource {
     @ApiResponse(responseCode = "200", description = "API's picture", content = @Content(mediaType = "*/*", schema = @Schema(type = "string", format = "binary")))
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getApiPicture(@Context Request request) throws ApiNotFoundException {
-        return getImageResponse(request, api, apiService.getPicture(api));
+        return getImageResponse(request, apiService.getPicture(api));
     }
 
     @GET
@@ -141,10 +142,10 @@ public class ApiResource extends AbstractResource {
     @ApiResponse(responseCode = "200", description = "API's background", content = @Content(mediaType = "*/*", schema = @Schema(type = "string", format = "binary")))
     @ApiResponse(responseCode = "500", description = "Internal server error")
     public Response getApiBackground(@Context Request request) throws ApiNotFoundException {
-        return getImageResponse(request, api, apiService.getBackground(api));
+        return getImageResponse(request, apiService.getBackground(api));
     }
 
-    private Response getImageResponse(final Request request, final String api, InlinePictureEntity image) {
+    private Response getImageResponse(final Request request, InlinePictureEntity image) {
         canReadApi(api);
         CacheControl cc = new CacheControl();
         cc.setNoTransform(true);
@@ -624,6 +625,23 @@ public class ApiResource extends AbstractResource {
         return Response.ok(apiService.duplicate(api, duplicateApiEntity)).build();
     }
 
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("_migrate")
+    @Operation(
+            summary = "Migrate the API definition to be used with Policy Studio",
+            description = "User must have the MANAGE_API create permission to use this service")
+    @ApiResponse(responseCode = "200", description = "API definition",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiEntity.class)))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @Permissions({
+            @Permission(value = RolePermission.API_DEFINITION, acls = RolePermissionAction.READ),
+            @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.CREATE)
+    })
+    public Response migrateAPI() {
+        return Response.ok(apiService.migrate(this.api)).build();
+    }
+
     @Path("keys")
     public ApiKeysResource getApiKeyResource() {
         return resourceContext.getResource(ApiKeysResource.class);
@@ -727,7 +745,7 @@ public class ApiResource extends AbstractResource {
                     throw new BadRequestException("API is already stopped");
                 }
 
-                final boolean apiReviewEnabled = parameterService.findAsBoolean(Key.API_REVIEW_ENABLED);
+                final boolean apiReviewEnabled = parameterService.findAsBoolean(Key.API_REVIEW_ENABLED, ParameterReferenceType.ENVIRONMENT);
                 if (apiReviewEnabled) {
                     if (api.getWorkflowState() != null && !WorkflowState.REVIEW_OK.equals(api.getWorkflowState())) {
                         throw new BadRequestException("API can not be started without being reviewed");

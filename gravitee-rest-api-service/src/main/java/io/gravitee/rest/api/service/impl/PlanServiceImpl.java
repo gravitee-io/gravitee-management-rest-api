@@ -18,21 +18,23 @@ package io.gravitee.rest.api.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.definition.model.*;
+import io.gravitee.definition.model.DefinitionVersion;
+import io.gravitee.definition.model.Path;
 import io.gravitee.definition.model.flow.Flow;
+import io.gravitee.repository.exceptions.TechnicalException;
+import io.gravitee.repository.management.api.PlanRepository;
+import io.gravitee.repository.management.model.Plan;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.api.ApiLifecycleState;
 import io.gravitee.rest.api.model.api.UpdateApiEntity;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.plan.PlanQuery;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.common.RandomString;
 import io.gravitee.rest.api.service.exceptions.*;
 import io.gravitee.rest.api.service.processor.PlanSynchronizationProcessor;
-import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.repository.management.api.PlanRepository;
-import io.gravitee.repository.management.model.Plan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -338,6 +340,21 @@ public class PlanServiceImpl extends TransactionalService implements PlanService
                 throw new PlanAlreadyClosedException(planId);
             }
 
+            Collection<SubscriptionEntity> subscriptions = plan.getSecurity() != Plan.PlanSecurityType.KEY_LESS ?
+                subscriptionService.findByPlan(planId)
+                : null;
+
+            if (subscriptions != null) {
+                List<SubscriptionEntity> pausedSubscriptions = subscriptions
+                    .stream()
+                    .filter((subscriptionEntity -> SubscriptionStatus.PAUSED.equals(subscriptionEntity.getStatus())))
+                    .collect(Collectors.toList());
+                if (pausedSubscriptions.size() > 0) {
+                    throw new PlanWithPausedSubscriptionsException();
+                }
+            }
+
+
             // Update plan status
             plan.setStatus(Plan.Status.CLOSED);
             plan.setClosedAt(new Date());
@@ -345,17 +362,17 @@ public class PlanServiceImpl extends TransactionalService implements PlanService
             plan.setNeedRedeployAt(plan.getClosedAt());
 
             // Close subscriptions
-            if (plan.getSecurity() != Plan.PlanSecurityType.KEY_LESS) {
-                subscriptionService.findByPlan(planId)
-                    .stream()
-                    .forEach(subscription -> {
-                        try {
-                            subscriptionService.close(subscription.getId());
-                        } catch (SubscriptionNotClosableException snce) {
-                            // subscription status could not be closed (already closed or rejected)
-                            // ignore it
-                        }
-                    });
+            if (subscriptions != null) {
+                subscriptions
+                        .stream()
+                        .forEach(subscription -> {
+                            try {
+                                subscriptionService.close(subscription.getId());
+                            } catch (SubscriptionNotClosableException snce) {
+                                // subscription status could not be closed (already closed or rejected)
+                                // ignore it
+                            }
+                        });
             }
 
             removePlanFromApiDefinition(planId, plan);
@@ -753,7 +770,7 @@ public class PlanServiceImpl extends TransactionalService implements PlanService
             default:
                 return;
         }
-        if (!parameterService.findAsBoolean(securityKey)) {
+        if (!parameterService.findAsBoolean(securityKey, ParameterReferenceType.ENVIRONMENT)) {
             throw new UnauthorizedPlanSecurityTypeException(securityType);
         }
     }

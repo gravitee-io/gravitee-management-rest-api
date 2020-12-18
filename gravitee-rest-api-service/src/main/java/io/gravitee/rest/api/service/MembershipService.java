@@ -20,6 +20,7 @@ import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.pagedresult.Metadata;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,13 +56,14 @@ public interface MembershipService {
     Map<String, char[]>     getUserMemberPermissions                    (ApiEntity api, String userId);
     Map<String, char[]>     getUserMemberPermissions                    (ApplicationEntity application, String userId);
     Map<String, char[]>     getUserMemberPermissions                    (GroupEntity group, String userId);
+    Map<String, char[]>     getUserMemberPermissions                    (EnvironmentEntity environment, String userId);
     void                    removeRole                                  (MembershipReferenceType referenceType, String referenceId, MembershipMemberType memberType, String memberId, String roleId);
     void                    removeRoleUsage                             (String oldRoleId, String newRoleId);
     void                    removeMemberMemberships                     (MembershipMemberType memberType, String memberId);
     void                    transferApiOwnership                        (String apiId, MembershipMember member, List<RoleEntity> newPrimaryOwnerRoles);
     void                    transferApplicationOwnership                (String applicationId, MembershipMember member, List<RoleEntity> newPrimaryOwnerRoles);
-    MemberEntity            updateRoleToMemberOnReference               (MembershipReference reference, MembershipMember member, MembershipRole role, String source, boolean notify);
     MemberEntity            updateRoleToMemberOnReference               (MembershipReference reference, MembershipMember member, MembershipRole role);
+    List<MemberEntity>      updateRolesToMemberOnReference              (MembershipReference reference, MembershipMember member, Collection<MembershipRole> roles, String source, boolean notify);
 
     class MembershipReference {
         private final MembershipReferenceType type;
@@ -96,6 +98,14 @@ public interface MembershipService {
             int result = type.hashCode();
             result = 31 * result + id.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MembershipReference{" +
+                    "type=" + type +
+                    ", id='" + id + '\'' +
+                    '}';
         }
     }
 
@@ -139,6 +149,15 @@ public interface MembershipService {
             result = 31 * result + (reference != null ? reference.hashCode() : 0);
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "MembershipMember{" +
+                    "memberId='" + memberId + '\'' +
+                    ", reference='" + reference + '\'' +
+                    ", memberType=" + memberType +
+                    '}';
+        }
     }
 
     class MembershipRole {
@@ -174,6 +193,14 @@ public interface MembershipService {
             int result = scope.hashCode();
             result = 31 * result + name.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MembershipRole{" +
+                    "scope=" + scope +
+                    ", name='" + name + '\'' +
+                    '}';
         }
     }
 

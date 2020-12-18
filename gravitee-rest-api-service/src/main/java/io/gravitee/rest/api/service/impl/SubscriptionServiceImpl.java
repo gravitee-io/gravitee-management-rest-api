@@ -30,6 +30,7 @@ import io.gravitee.rest.api.model.application.ApplicationListItem;
 import io.gravitee.rest.api.model.common.Pageable;
 import io.gravitee.rest.api.model.pagedresult.Metadata;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.subscription.SubscriptionQuery;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.common.RandomString;
@@ -95,6 +96,8 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
     private ParameterService parameterService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private PageService pageService;
 
     @Override
     public SubscriptionEntity findById(String subscription) {
@@ -193,11 +196,16 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
                 }
             }
 
-            if (planEntity.getGeneralConditions() != null
-                    && !planEntity.getGeneralConditions().isEmpty()
-                    && (Boolean.FALSE.equals(newSubscriptionEntity.getGeneralConditionsAccepted())
+            if(planEntity.getGeneralConditions() != null && !planEntity.getGeneralConditions().isEmpty()){
+                if ((Boolean.FALSE.equals(newSubscriptionEntity.getGeneralConditionsAccepted())
                     || (newSubscriptionEntity.getGeneralConditionsContentRevision() == null))) {
-                throw new PlanGeneralConditionAcceptedException(planEntity.getName());
+                    throw new PlanGeneralConditionAcceptedException(planEntity.getName());
+                }
+
+                PageEntity generalConditions = pageService.findById(planEntity.getGeneralConditions());
+                if(!generalConditions.getContentRevisionId().equals(newSubscriptionEntity.getGeneralConditionsContentRevision())) {
+                    throw new PlanGeneralConditionRevisionException(planEntity.getName());
+                }
             }
 
             ApplicationEntity applicationEntity = applicationService.findById(application);
@@ -295,7 +303,7 @@ public class SubscriptionServiceImpl extends AbstractService implements Subscrip
             final PrimaryOwnerEntity apiOwner = api.getPrimaryOwner();
             //final PrimaryOwnerEntity appOwner = applicationEntity.getPrimaryOwner();
 
-            String managementURL = parameterService.find(Key.MANAGEMENT_URL);
+            String managementURL = parameterService.find(Key.MANAGEMENT_URL, ParameterReferenceType.ORGANIZATION);
 
             String subscriptionsUrl = "";
 

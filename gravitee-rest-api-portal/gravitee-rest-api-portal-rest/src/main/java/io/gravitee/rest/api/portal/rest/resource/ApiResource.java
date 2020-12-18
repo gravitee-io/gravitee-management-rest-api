@@ -20,6 +20,7 @@ import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.documentation.PageQuery;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.portal.rest.mapper.ApiMapper;
 import io.gravitee.rest.api.portal.rest.mapper.PageMapper;
 import io.gravitee.rest.api.portal.rest.mapper.PlanMapper;
@@ -103,10 +104,10 @@ public class ApiResource extends AbstractResource {
             }
 
             api.links(apiMapper.computeApiLinks(PortalApiLinkHelper.apisURL(uriInfo.getBaseUriBuilder(), api.getId()), apiEntity.getUpdatedAt()));
-            if (!parameterService.findAsBoolean(Key.PORTAL_APIS_SHOW_TAGS_IN_APIHEADER)) {
+            if (!parameterService.findAsBoolean(Key.PORTAL_APIS_SHOW_TAGS_IN_APIHEADER, ParameterReferenceType.ENVIRONMENT)) {
                 api.setLabels(new ArrayList<>());
             }
-            if (!parameterService.findAsBoolean(Key.PORTAL_APIS_SHOW_CATEGORIES_IN_APIHEADER)) {
+            if (!parameterService.findAsBoolean(Key.PORTAL_APIS_SHOW_CATEGORIES_IN_APIHEADER, ParameterReferenceType.ENVIRONMENT)) {
                 api.setCategories(new ArrayList<>());
             }
             return Response.ok(api).build();
@@ -119,11 +120,10 @@ public class ApiResource extends AbstractResource {
     @Produces({ MediaType.WILDCARD, MediaType.APPLICATION_JSON })
     @RequirePortalAuth
     public Response getPictureByApiId(@Context Request request, @PathParam("apiId") String apiId) {
-        Collection<ApiEntity> userApis = apiService.findPublishedByUser(getAuthenticatedUserOrNull());
+        // Do not filter on visibility to display the picture on subscription screen even if the API is no more published
+        Collection<ApiEntity> userApis = apiService.findByUser(getAuthenticatedUserOrNull(), null, true);
         if (userApis.stream().anyMatch(a -> a.getId().equals(apiId))) {
-
             InlinePictureEntity image = apiService.getPicture(apiId);
-
             return createPictureResponse(request, image);
         }
         throw new ApiNotFoundException(apiId);

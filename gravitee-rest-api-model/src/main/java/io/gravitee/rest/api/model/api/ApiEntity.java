@@ -76,6 +76,11 @@ public class ApiEntity implements Indexable, FilterableItem {
     private Proxy proxy;
 
     @DeploymentRequired
+    @JsonProperty(value = "flow_mode")
+    @Schema(description = "API's flow mode.", example = "BEST_MATCH")
+    private FlowMode flowMode;
+
+    @DeploymentRequired
     @JsonProperty(value = "paths", required = true)
     @Schema(description = "a map where you can associate a path to a configuration (the policies configuration)")
     private Map<String, Path> paths = new HashMap<>();
@@ -452,6 +457,14 @@ public class ApiEntity implements Indexable, FilterableItem {
         this.graviteeDefinitionVersion = graviteeDefinitionVersion;
     }
 
+    public FlowMode getFlowMode() {
+        return flowMode;
+    }
+
+    public void setFlowMode(FlowMode flowMode) {
+        this.flowMode = flowMode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -487,6 +500,7 @@ public class ApiEntity implements Indexable, FilterableItem {
                 ", workflowState=" + workflowState +
                 ", disableMembershipNotifications=" + disableMembershipNotifications +
                 ", graviteeDefinitionVersion=" + graviteeDefinitionVersion +
+                ", flowMode=" + flowMode +
                 '}';
     }
 }

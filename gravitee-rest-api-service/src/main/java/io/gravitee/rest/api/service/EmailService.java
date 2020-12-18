@@ -15,6 +15,8 @@
  */
 package io.gravitee.rest.api.service;
 
+import io.gravitee.rest.api.service.common.GraviteeContext;
+
 /**
  * @author Azize Elamrani (azize dot elamrani at gmail dot com)
  */
@@ -24,5 +26,5 @@ public interface EmailService {
 
     void sendEmailNotification(EmailNotification emailNotification);
 
-    void sendAsyncEmailNotification(EmailNotification emailNotification);
+    void sendAsyncEmailNotification(EmailNotification emailNotification, GraviteeContext.ReferenceContext context);
 }

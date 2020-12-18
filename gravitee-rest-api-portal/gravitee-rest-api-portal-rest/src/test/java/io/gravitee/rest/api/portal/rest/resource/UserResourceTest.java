@@ -16,9 +16,16 @@
 package io.gravitee.rest.api.portal.rest.resource;
 
 import io.gravitee.common.http.HttpStatusCode;
-import io.gravitee.rest.api.model.*;
-import io.gravitee.rest.api.model.PortalConfigEntity.Management;
-import io.gravitee.rest.api.portal.rest.model.*;
+import io.gravitee.rest.api.model.InlinePictureEntity;
+import io.gravitee.rest.api.model.UpdateUserEntity;
+import io.gravitee.rest.api.model.UrlPictureEntity;
+import io.gravitee.rest.api.model.UserEntity;
+import io.gravitee.rest.api.model.settings.ConsoleSettingsEntity;
+import io.gravitee.rest.api.model.settings.Management;
+import io.gravitee.rest.api.portal.rest.model.User;
+import io.gravitee.rest.api.portal.rest.model.UserConfig;
+import io.gravitee.rest.api.portal.rest.model.UserInput;
+import io.gravitee.rest.api.portal.rest.model.UserLinks;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -85,7 +92,7 @@ public class UserResourceTest extends AbstractResourceTest {
     public void shouldGetCurrentUserWithEmptyManagementConfig() {
         when(userService.findById(USER_NAME)).thenReturn(new UserEntity());
         when(permissionService.hasManagementRights(USER_NAME)).thenReturn(Boolean.TRUE);
-        when(configService.getPortalConfig()).thenReturn(new PortalConfigEntity());
+        when(configService.getConsoleSettings()).thenReturn(new ConsoleSettingsEntity());
         
         final Response response = target().request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -105,9 +112,8 @@ public class UserResourceTest extends AbstractResourceTest {
     public void shouldGetCurrentUserWithManagementConfigWithoutUrl() {
         when(userService.findById(USER_NAME)).thenReturn(new UserEntity());
         when(permissionService.hasManagementRights(USER_NAME)).thenReturn(Boolean.TRUE);
-        PortalConfigEntity portalConfigEntity = new PortalConfigEntity();
-        portalConfigEntity.setManagement(portalConfigEntity.new Management());
-        when(configService.getPortalConfig()).thenReturn(portalConfigEntity);
+        ConsoleSettingsEntity consoleConfigEntity = new ConsoleSettingsEntity();
+        when(configService.getConsoleSettings()).thenReturn(consoleConfigEntity);
         
         final Response response = target().request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -127,11 +133,11 @@ public class UserResourceTest extends AbstractResourceTest {
     public void shouldGetCurrentUserWithManagementConfigWithUrl() {
         when(userService.findById(USER_NAME)).thenReturn(new UserEntity());
         when(permissionService.hasManagementRights(USER_NAME)).thenReturn(Boolean.TRUE);
-        PortalConfigEntity portalConfigEntity = new PortalConfigEntity();
-        Management managementConfig = portalConfigEntity.new Management();
+        ConsoleSettingsEntity consoleConfigEntity = new ConsoleSettingsEntity();
+        Management managementConfig = new Management();
         managementConfig.setUrl("URL");
-        portalConfigEntity.setManagement(managementConfig);
-        when(configService.getPortalConfig()).thenReturn(portalConfigEntity);
+        consoleConfigEntity.setManagement(managementConfig);
+        when(configService.getConsoleSettings()).thenReturn(consoleConfigEntity);
         
         final Response response = target().request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

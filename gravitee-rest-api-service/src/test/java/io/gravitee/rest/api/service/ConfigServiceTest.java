@@ -16,10 +16,12 @@
 package io.gravitee.rest.api.service;
 
 import io.gravitee.repository.management.model.Parameter;
-import io.gravitee.rest.api.model.PortalConfigEntity;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
+import io.gravitee.rest.api.model.settings.ConsoleConfigEntity;
+import io.gravitee.rest.api.model.settings.ConsoleSettingsEntity;
+import io.gravitee.rest.api.model.settings.PortalSettingsEntity;
 import io.gravitee.rest.api.service.impl.ConfigServiceImpl;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,11 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.gravitee.rest.api.model.parameters.Key.COMPANY_NAME;
+import static io.gravitee.rest.api.model.parameters.Key.*;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -61,91 +61,160 @@ public class ConfigServiceTest {
     private NewsletterService newsletterService;
 
     @Test
-    public void shouldGetPortalConfig() {
+    public void shouldGetPortalSettings() {
 
         Map<String, List<String>> params = new HashMap<>();
-        params.put(COMPANY_NAME.key(), singletonList("ACME"));
-        params.put(Key.AUTHENTICATION_FORCELOGIN_ENABLED.key(), singletonList("true"));
-        params.put(Key.AUTHENTICATION_OAUTH2_SCOPE.key(), Arrays.asList("scope1", "scope2"));
-        params.put(Key.SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
+        params.put(Key.PORTAL_AUTHENTICATION_FORCELOGIN_ENABLED.key(), singletonList("true"));
+        params.put(Key.PORTAL_SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
         params.put(Key.PORTAL_ANALYTICS_ENABLED.key(), singletonList("true"));
         params.put(Key.OPEN_API_DOC_TYPE_SWAGGER_ENABLED.key(), singletonList("true"));
         params.put(Key.API_LABELS_DICTIONARY.key(), Arrays.asList("label1", "label2"));
 
-        when(mockParameterService.findAll(any(List.class))).thenReturn(params);
+        when(mockParameterService.findAll(any(List.class), eq("DEFAULT"), eq(ParameterReferenceType.ENVIRONMENT))).thenReturn(params);
         when(reCaptchaService.getSiteKey()).thenReturn("my-site-key");
         when(reCaptchaService.isEnabled()).thenReturn(true);
 
-        PortalConfigEntity portalConfig = configService.getPortalConfig();
+        PortalSettingsEntity portalSettings = configService.getPortalSettings();
 
-        assertNotNull(portalConfig);
-        assertEquals("company name", "ACME", portalConfig.getCompany().getName());
-        assertEquals("force login", true, portalConfig.getAuthentication().getForceLogin().isEnabled());
-        assertEquals("scopes", 2, portalConfig.getAuthentication().getOauth2().getScope().size());
-        assertEquals("scheduler notifications", Integer.valueOf(11), portalConfig.getScheduler().getNotificationsInSeconds());
-        assertEquals("analytics", Boolean.TRUE, portalConfig.getPortal().getAnalytics().isEnabled());
-        assertEquals("recaptcha siteKey", "my-site-key", portalConfig.getReCaptcha().getSiteKey());
-        assertEquals("recaptcha enabled", Boolean.TRUE, portalConfig.getReCaptcha().getEnabled());
-        assertEquals("plan security keyless", Boolean.TRUE, portalConfig.getPlan().getSecurity().getKeyless().isEnabled());
-        assertEquals("open api swagger enabled", Boolean.TRUE, portalConfig.getOpenAPIDocViewer().getOpenAPIDocType().getSwagger().isEnabled());
-        assertEquals("open api swagger default", "Swagger", portalConfig.getOpenAPIDocViewer().getOpenAPIDocType().getDefaultType());
-        assertEquals("api labels", 2, portalConfig.getApi().getLabelsDictionary().size());
-        assertEquals("cors exposed headers", 2, portalConfig.getCors().getExposedHeaders().size());
+        assertNotNull(portalSettings);
+        assertEquals("force login", true, portalSettings.getAuthentication().getForceLogin().isEnabled());
+        assertEquals("scheduler notifications", Integer.valueOf(11), portalSettings.getScheduler().getNotificationsInSeconds());
+        assertEquals("analytics", Boolean.TRUE, portalSettings.getPortal().getAnalytics().isEnabled());
+        assertEquals("recaptcha siteKey", "my-site-key", portalSettings.getReCaptcha().getSiteKey());
+        assertEquals("recaptcha enabled", Boolean.TRUE, portalSettings.getReCaptcha().getEnabled());
+        assertEquals("plan security keyless", Boolean.TRUE, portalSettings.getPlan().getSecurity().getKeyless().isEnabled());
+        assertEquals("open api swagger enabled", Boolean.TRUE, portalSettings.getOpenAPIDocViewer().getOpenAPIDocType().getSwagger().isEnabled());
+        assertEquals("open api swagger default", "Swagger", portalSettings.getOpenAPIDocViewer().getOpenAPIDocType().getDefaultType());
+        assertEquals("api labels", 2, portalSettings.getApi().getLabelsDictionary().size());
+        assertEquals("cors exposed headers", 2, portalSettings.getCors().getExposedHeaders().size());
     }
 
     @Test
-    public void shouldGetPortalConfigFromEnvVar() {
+    public void shouldGetPortalSettingsFromEnvVar() {
 
         Map<String, List<String>> params = new HashMap<>();
-        params.put(COMPANY_NAME.key(), singletonList("ACME"));
-        params.put(Key.AUTHENTICATION_FORCELOGIN_ENABLED.key(), singletonList("true"));
-        params.put(Key.AUTHENTICATION_OAUTH2_SCOPE.key(), Arrays.asList("scope1", "scope2"));
+        params.put(Key.PORTAL_AUTHENTICATION_FORCELOGIN_ENABLED.key(), singletonList("true"));
         params.put(Key.API_LABELS_DICTIONARY.key(), Arrays.asList("label1"));
-        params.put(Key.SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
+        params.put(Key.PORTAL_SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
         params.put(Key.PORTAL_ANALYTICS_ENABLED.key(), singletonList("true"));
         params.put(Key.OPEN_API_DOC_TYPE_SWAGGER_ENABLED.key(), singletonList("true"));
-        params.put(Key.HTTP_CORS_EXPOSED_HEADERS.key(), singletonList("OnlyOneHeader"));
+        params.put(Key.PORTAL_HTTP_CORS_EXPOSED_HEADERS.key(), singletonList("OnlyOneHeader"));
 
-        when(mockParameterService.findAll(any(List.class))).thenReturn(params);
+        when(mockParameterService.findAll(any(List.class), eq("DEFAULT"), eq(ParameterReferenceType.ENVIRONMENT))).thenReturn(params);
 
-        when(environment.containsProperty(eq(COMPANY_NAME.key()))).thenReturn(true);
-        when(environment.containsProperty(eq(Key.AUTHENTICATION_FORCELOGIN_ENABLED.key()))).thenReturn(true);
-        when(environment.containsProperty(Key.AUTHENTICATION_OAUTH2_SCOPE.key())).thenReturn(true);
+        when(environment.containsProperty(eq(Key.PORTAL_AUTHENTICATION_FORCELOGIN_ENABLED.key()))).thenReturn(true);
         when(environment.containsProperty(Key.API_LABELS_DICTIONARY.key())).thenReturn(true);
-        when(environment.containsProperty(Key.SCHEDULER_NOTIFICATIONS.key())).thenReturn(true);
+        when(environment.containsProperty(Key.PORTAL_SCHEDULER_NOTIFICATIONS.key())).thenReturn(true);
         when(environment.containsProperty(Key.PORTAL_ANALYTICS_ENABLED.key())).thenReturn(true);
         when(environment.containsProperty(Key.OPEN_API_DOC_TYPE_SWAGGER_ENABLED.key())).thenReturn(true);
 
-        PortalConfigEntity portalConfig = configService.getPortalConfig();
+        PortalSettingsEntity portalSettings = configService.getPortalSettings();
 
-        assertNotNull(portalConfig);
-        assertEquals("company name", "ACME", portalConfig.getCompany().getName());
-        assertEquals("force login", true, portalConfig.getAuthentication().getForceLogin().isEnabled());
-        assertEquals("scopes", 2, portalConfig.getAuthentication().getOauth2().getScope().size());
-        assertEquals("labels dictionary", 1, portalConfig.getApi().getLabelsDictionary().size());
-        assertEquals("scheduler notifications", Integer.valueOf(11), portalConfig.getScheduler().getNotificationsInSeconds());
-        assertEquals("analytics", Boolean.TRUE, portalConfig.getPortal().getAnalytics().isEnabled());
-        assertEquals("open api swagger enabled", Boolean.TRUE, portalConfig.getOpenAPIDocViewer().getOpenAPIDocType().getSwagger().isEnabled());
-        assertEquals("cors exposed headers", 1, portalConfig.getCors().getExposedHeaders().size());
-        List<String> readonlyMetadata = portalConfig.getMetadata().get(PortalConfigEntity.METADATA_READONLY);
-        assertEquals("Config metadata size", 7, readonlyMetadata.size());
-        assertTrue("Config metadata contains COMPANY_NAME", readonlyMetadata.contains(COMPANY_NAME.key()));
-        assertTrue("Config metadata contains AUTHENTICATION_FORCELOGIN_ENABLED", readonlyMetadata.contains(Key.AUTHENTICATION_FORCELOGIN_ENABLED.key()));
-        assertTrue("Config metadata contains AUTHENTICATION_OAUTH2_SCOPE", readonlyMetadata.contains(Key.AUTHENTICATION_OAUTH2_SCOPE.key()));
+        assertNotNull(portalSettings);
+        assertEquals("force login", true, portalSettings.getAuthentication().getForceLogin().isEnabled());
+        assertEquals("labels dictionary", 1, portalSettings.getApi().getLabelsDictionary().size());
+        assertEquals("scheduler notifications", Integer.valueOf(11), portalSettings.getScheduler().getNotificationsInSeconds());
+        assertEquals("analytics", Boolean.TRUE, portalSettings.getPortal().getAnalytics().isEnabled());
+        assertEquals("open api swagger enabled", Boolean.TRUE, portalSettings.getOpenAPIDocViewer().getOpenAPIDocType().getSwagger().isEnabled());
+        assertEquals("cors exposed headers", 1, portalSettings.getCors().getExposedHeaders().size());
+        List<String> readonlyMetadata = portalSettings.getMetadata().get(PortalSettingsEntity.METADATA_READONLY);
+        assertEquals("Config metadata size", 5, readonlyMetadata.size());
+        assertTrue("Config metadata contains AUTHENTICATION_FORCELOGIN_ENABLED", readonlyMetadata.contains(Key.PORTAL_AUTHENTICATION_FORCELOGIN_ENABLED.key()));
         assertTrue("Config metadata contains API_LABELS_DICTIONARY", readonlyMetadata.contains(Key.API_LABELS_DICTIONARY.key()));
-        assertTrue("Config metadata contains SCHEDULER_NOTIFICATIONS", readonlyMetadata.contains(Key.SCHEDULER_NOTIFICATIONS.key()));
+        assertTrue("Config metadata contains SCHEDULER_NOTIFICATIONS", readonlyMetadata.contains(Key.PORTAL_SCHEDULER_NOTIFICATIONS.key()));
         assertTrue("Config metadata contains PORTAL_ANALYTICS_ENABLED", readonlyMetadata.contains(Key.PORTAL_ANALYTICS_ENABLED.key()));
         assertTrue("Config metadata contains OPEN_API_DOC_TYPE_SWAGGER_ENABLED", readonlyMetadata.contains(Key.OPEN_API_DOC_TYPE_SWAGGER_ENABLED.key()));
     }
 
     @Test
-    public void shouldCreatePortalConfig() {
-        PortalConfigEntity portalConfigEntity = new PortalConfigEntity();
-        portalConfigEntity.getCompany().setName("ACME");
-        when(mockParameterService.save(COMPANY_NAME, "ACME")).thenReturn(new Parameter());
+    public void shouldCreatePortalSettings() {
+        PortalSettingsEntity portalSettingsEntity = new PortalSettingsEntity();
+        portalSettingsEntity.getPortal().setUrl("ACME");
+        when(mockParameterService.save(PORTAL_URL, "ACME", "DEFAULT", ParameterReferenceType.ENVIRONMENT)).thenReturn(new Parameter());
 
-        configService.save(portalConfigEntity);
+        configService.save(portalSettingsEntity);
 
-        verify(mockParameterService, times(1)).save(COMPANY_NAME, "ACME");
+        verify(mockParameterService, times(1)).save(PORTAL_URL, "ACME", "DEFAULT", ParameterReferenceType.ENVIRONMENT);
+    }
+
+    @Test
+    public void shouldGetConsoleSettings() {
+
+        Map<String, List<String>> params = new HashMap<>();
+        params.put(COMPANY_NAME.key(), singletonList("ACME"));
+        params.put(Key.CONSOLE_SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
+        params.put(Key.ALERT_ENABLED.key(), singletonList("true"));
+
+        when(mockParameterService.findAll(any(List.class), eq("DEFAULT"), eq(ParameterReferenceType.ORGANIZATION))).thenReturn(params);
+        when(reCaptchaService.getSiteKey()).thenReturn("my-site-key");
+        when(reCaptchaService.isEnabled()).thenReturn(true);
+
+        ConsoleSettingsEntity consoleSettings = configService.getConsoleSettings();
+
+        assertNotNull(consoleSettings);
+        assertEquals("scheduler notifications", Integer.valueOf(11), consoleSettings.getScheduler().getNotificationsInSeconds());
+        assertEquals("recaptcha siteKey", "my-site-key", consoleSettings.getReCaptcha().getSiteKey());
+        assertEquals("alerting enabled", Boolean.TRUE, consoleSettings.getAlert().getEnabled());
+        assertEquals("recaptcha enabled", Boolean.TRUE, consoleSettings.getReCaptcha().getEnabled());
+        assertEquals("cors exposed headers", 2, consoleSettings.getCors().getExposedHeaders().size());
+    }
+
+    @Test
+    public void shouldGetConsoleConfig() {
+
+        Map<String, List<String>> params = new HashMap<>();
+        params.put(COMPANY_NAME.key(), singletonList("ACME"));
+        params.put(Key.CONSOLE_SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
+        params.put(Key.ALERT_ENABLED.key(), singletonList("true"));
+
+        when(mockParameterService.findAll(any(List.class), eq("DEFAULT"), eq(ParameterReferenceType.ORGANIZATION))).thenReturn(params);
+        when(reCaptchaService.getSiteKey()).thenReturn("my-site-key");
+        when(reCaptchaService.isEnabled()).thenReturn(true);
+
+        ConsoleConfigEntity consoleConfig = configService.getConsoleConfig();
+
+        assertNotNull(consoleConfig);
+        assertEquals("scheduler notifications", Integer.valueOf(11), consoleConfig.getScheduler().getNotificationsInSeconds());
+        assertEquals("recaptcha siteKey", "my-site-key", consoleConfig.getReCaptcha().getSiteKey());
+        assertEquals("alerting enabled", Boolean.TRUE, consoleConfig.getAlert().getEnabled());
+        assertEquals("recaptcha enabled", Boolean.TRUE, consoleConfig.getReCaptcha().getEnabled());
+    }
+
+    @Test
+    public void shouldGetConsoleSettingsFromEnvVar() {
+
+        Map<String, List<String>> params = new HashMap<>();
+        params.put(COMPANY_NAME.key(), singletonList("ACME"));
+        params.put(Key.CONSOLE_AUTHENTICATION_LOCALLOGIN_ENABLED.key(), singletonList("false"));
+        params.put(Key.CONSOLE_SCHEDULER_NOTIFICATIONS.key(), singletonList("11"));
+        params.put(Key.ALERT_ENABLED.key(), singletonList("true"));
+        params.put(Key.ANALYTICS_CLIENT_TIMEOUT.key(), singletonList("60000"));
+        params.put(Key.CONSOLE_HTTP_CORS_EXPOSED_HEADERS.key(), singletonList("OnlyOneHeader"));
+
+        when(mockParameterService.findAll(any(List.class), eq("DEFAULT"), eq(ParameterReferenceType.ORGANIZATION))).thenReturn(params);
+
+        when(environment.containsProperty(eq(Key.CONSOLE_AUTHENTICATION_LOCALLOGIN_ENABLED.key()))).thenReturn(true);
+        when(environment.containsProperty(Key.CONSOLE_SCHEDULER_NOTIFICATIONS.key())).thenReturn(true);
+
+        ConsoleSettingsEntity consoleSettings = configService.getConsoleSettings();
+
+        assertNotNull(consoleSettings);
+        assertEquals("scheduler notifications", Integer.valueOf(11), consoleSettings.getScheduler().getNotificationsInSeconds());
+        assertEquals("cors exposed headers", 1, consoleSettings.getCors().getExposedHeaders().size());
+        List<String> readonlyMetadata = consoleSettings.getMetadata().get(PortalSettingsEntity.METADATA_READONLY);
+        assertEquals("Config metadata size", 2, readonlyMetadata.size());
+        assertTrue("Config metadata contains CONSOLE_AUTHENTICATION_LOCALLOGIN_ENABLED", readonlyMetadata.contains(Key.CONSOLE_AUTHENTICATION_LOCALLOGIN_ENABLED.key()));
+        assertTrue("Config metadata contains CONSOLE_SCHEDULER_NOTIFICATIONS", readonlyMetadata.contains(Key.CONSOLE_SCHEDULER_NOTIFICATIONS.key()));
+    }
+
+    @Test
+    public void shouldCreateConsoleSettings() {
+        ConsoleSettingsEntity consoleSettingsEntity = new ConsoleSettingsEntity();
+        consoleSettingsEntity.getAlert().setEnabled(true);
+        when(mockParameterService.save(ALERT_ENABLED, "true", "DEFAULT", ParameterReferenceType.ORGANIZATION)).thenReturn(new Parameter());
+
+        configService.save(consoleSettingsEntity);
+
+        verify(mockParameterService, times(1)).save(ALERT_ENABLED, "true", "DEFAULT", ParameterReferenceType.ORGANIZATION);
     }
 }

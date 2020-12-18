@@ -178,9 +178,17 @@ public class ApisResource extends AbstractResource {
             @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.UPDATE)
     })
     public Response importApiDefinition(
-            @Parameter(name = "definition", required = true) @Valid @NotNull String apiDefinition) {
+            @Parameter(name = "definition", required = true) @Valid @NotNull String apiDefinition,
+            @QueryParam("definitionVersion") @DefaultValue("1.0.0") String definitionVersion) {
 
-        return Response.ok(apiService.createWithImportedDefinition(null, apiDefinition, getAuthenticatedUser())).build();
+        ApiEntity imported = apiService.createWithImportedDefinition(null, apiDefinition, getAuthenticatedUser());
+
+        if (DefinitionVersion.valueOfLabel(definitionVersion).equals(DefinitionVersion.V2)
+                && DefinitionVersion.V1.getLabel().equals(imported.getGraviteeDefinitionVersion())) {
+            return Response.ok(apiService.migrate(imported.getId())).build();
+        }
+
+        return Response.ok(imported).build();
     }
 
     @POST
@@ -318,5 +326,19 @@ public class ApisResource extends AbstractResource {
         }
 
         return apiItem;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("schema")
+    @Operation(summary = "Get the API configuration schema")
+    @ApiResponse(responseCode = "200", description = "API definition",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+    @Permissions({
+            @Permission(value = RolePermission.API_DEFINITION, acls = RolePermissionAction.READ),
+    })
+    public Response getApisConfigurationSchema() {
+        return Response.ok(apiService.getConfigurationSchema()).build();
     }
 }

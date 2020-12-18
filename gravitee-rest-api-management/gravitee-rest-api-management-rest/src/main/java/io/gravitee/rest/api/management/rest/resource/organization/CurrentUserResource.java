@@ -222,7 +222,7 @@ public class CurrentUserResource extends AbstractResource {
     @ApiResponse(responseCode = "400", description = "Invalid user profile")
     @ApiResponse(responseCode = "404", description = "User not found")
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public Response subscribeNewsletter(@Valid @NotNull final String email) {
+    public Response subscribeNewsletterToCurrentUser(@Valid @NotNull final String email) {
         UserEntity userEntity = userService.findById(getAuthenticatedUser());
         UpdateUserEntity user = new UpdateUserEntity(userEntity);
         user.setNewsletter(true);

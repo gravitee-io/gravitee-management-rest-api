@@ -20,8 +20,8 @@ import io.gravitee.rest.api.management.rest.resource.portal.PortalApisResource;
 import io.gravitee.rest.api.management.rest.resource.portal.SocialIdentityProvidersResource;
 import io.gravitee.rest.api.management.rest.security.Permission;
 import io.gravitee.rest.api.management.rest.security.Permissions;
-import io.gravitee.rest.api.model.PortalConfigEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
+import io.gravitee.rest.api.model.settings.PortalSettingsEntity;
 import io.gravitee.rest.api.service.ConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -54,32 +54,34 @@ public class PortalResource {
     @Context
     private ResourceContext resourceContext;
 
+    @Deprecated
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get the portal configuration", description = "Every users can use this service")
     @ApiResponse(responseCode = "200", description = "Portal configuration",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = PortalConfigEntity.class)))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = PortalSettingsEntity.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public PortalConfigEntity getConfig() {
-        return configService.getPortalConfig();
+    public PortalSettingsEntity getPortalConfig() {
+        return configService.getPortalSettings();
     }
 
+    @Deprecated
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(summary = "Save the portal configuration")
     @ApiResponse(responseCode = "200", description = "Updated portal configuration",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = PortalConfigEntity.class)))
+            content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = PortalSettingsEntity.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
     @Permissions({
             @Permission(value = RolePermission.ENVIRONMENT_SETTINGS, acls = {CREATE, UPDATE, DELETE})
     })
     public Response savePortalConfig(
-            @Parameter(name = "config", required = true) @NotNull PortalConfigEntity portalConfigEntity) {
-        configService.save(portalConfigEntity);
+            @Parameter(name = "config", required = true) @NotNull PortalSettingsEntity portalSettingsEntity) {
+        configService.save(portalSettingsEntity);
         return Response
                 .ok()
-                .entity(portalConfigEntity)
+                .entity(portalSettingsEntity)
                 .build();
     }
 

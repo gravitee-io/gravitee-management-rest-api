@@ -20,15 +20,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Sets;
 import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.definition.model.Plan;
 import io.gravitee.definition.model.Properties;
 import io.gravitee.definition.model.*;
 import io.gravitee.definition.model.endpoint.HttpEndpoint;
-import io.gravitee.definition.model.flow.Flow;
-import io.gravitee.definition.model.flow.Operator;
 import io.gravitee.definition.model.flow.Step;
 import io.gravitee.definition.model.services.discovery.EndpointDiscoveryService;
 import io.gravitee.definition.model.services.healthcheck.HealthCheckService;
@@ -54,6 +51,7 @@ import io.gravitee.rest.api.model.application.ApplicationListItem;
 import io.gravitee.rest.api.model.documentation.PageQuery;
 import io.gravitee.rest.api.model.notification.GenericNotificationConfigEntity;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.permissions.ApiPermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.permissions.RoleScope;
@@ -68,6 +66,7 @@ import io.gravitee.rest.api.service.exceptions.*;
 import io.gravitee.rest.api.service.impl.search.SearchResult;
 import io.gravitee.rest.api.service.impl.upgrade.DefaultMetadataUpgrader;
 import io.gravitee.rest.api.service.jackson.ser.api.ApiSerializer;
+import io.gravitee.rest.api.service.migration.APIV1toAPIV2Converter;
 import io.gravitee.rest.api.service.notification.ApiHook;
 import io.gravitee.rest.api.service.notification.HookScope;
 import io.gravitee.rest.api.service.notification.NotificationParamsBuilder;
@@ -79,7 +78,8 @@ import io.gravitee.rest.api.service.search.query.Query;
 import io.gravitee.rest.api.service.search.query.QueryBuilder;
 import io.gravitee.rest.api.service.spring.ImportConfiguration;
 import io.vertx.core.buffer.Buffer;
-import org.jetbrains.annotations.NotNull;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,12 +87,11 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -107,6 +106,7 @@ import static io.gravitee.rest.api.model.PageType.SWAGGER;
 import static io.gravitee.rest.api.model.WorkflowReferenceType.API;
 import static io.gravitee.rest.api.model.WorkflowState.DRAFT;
 import static io.gravitee.rest.api.model.WorkflowType.REVIEW;
+import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.*;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.*;
@@ -126,6 +126,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
     private static final Pattern DUPLICATE_SLASH_REMOVER = Pattern.compile("(?<!(http:|https:))[//]+");
     private static final Pattern CORS_REGEX_PATTERN = Pattern.compile("^(?:(?:[htps\\(\\)?\\|]+):\\/\\/)*(?:[\\w\\(\\)\\[\\]\\{\\}?\\|.*-](?:(?:[?+*]|\\{\\d+(?:,\\d*)?\\}))?)+(?:[a-zA-Z0-9]{2,6})?(?::\\d{1,5})?$");
     private static final String URI_PATH_SEPARATOR = "/";
+    private static final String CONFIGURATION_DEFINITION_PATH = "/api/apim-configuration-schema.json";
 
     @Autowired
     private ApiRepository apiRepository;
@@ -197,6 +198,8 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
     private MediaService mediaService;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private APIV1toAPIV2Converter apiv1toAPIV2Converter;
 
     private static final Pattern LOGGING_MAX_DURATION_PATTERN = Pattern.compile("(?<before>.*)\\#request.timestamp\\s*\\<\\=?\\s*(?<timestamp>\\d*)l(?<after>.*)");
     private static final String LOGGING_MAX_DURATION_CONDITION = "#request.timestamp <= %dl";
@@ -429,7 +432,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 }
 
                 repoApi.setApiLifecycleState(ApiLifecycleState.CREATED);
-                if (parameterService.findAsBoolean(Key.API_REVIEW_ENABLED)) {
+                if (parameterService.findAsBoolean(Key.API_REVIEW_ENABLED, ParameterReferenceType.ENVIRONMENT)) {
                     workflowService.create(WorkflowReferenceType.API, id, REVIEW, userId, DRAFT, "");
                 }
 
@@ -577,7 +580,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
 
     private void addLoggingMaxDuration(Logging logging) {
         if (logging != null && !LoggingMode.NONE.equals(logging.getMode())) {
-            Optional<Long> optionalMaxDuration = parameterService.findAll(Key.LOGGING_DEFAULT_MAX_DURATION, Long::valueOf).stream().findFirst();
+            Optional<Long> optionalMaxDuration = parameterService.findAll(Key.LOGGING_DEFAULT_MAX_DURATION, Long::valueOf, ParameterReferenceType.ORGANIZATION).stream().findFirst();
             if (optionalMaxDuration.isPresent() && optionalMaxDuration.get() > 0) {
 
                 long maxEndDate = System.currentTimeMillis() + optionalMaxDuration.get();
@@ -653,6 +656,16 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
     }
 
+    @Override
+    public String getConfigurationSchema() {
+        try {
+            InputStream resourceAsStream = this.getClass().getResourceAsStream(CONFIGURATION_DEFINITION_PATH);
+            return IOUtils.toString(resourceAsStream, defaultCharset());
+        } catch (IOException e) {
+            throw new TechnicalManagementException("An error occurs while trying load api configuration definition", e);
+        }
+    }
+
     private UserEntity getPrimaryOwner(Api api) throws TechnicalException {
         MembershipEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(io.gravitee.rest.api.model.MembershipReferenceType.API, api.getId());
         if (primaryOwnerMemberEntity == null) {
@@ -667,7 +680,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         List<ApiEntrypointEntity> apiEntrypoints = new ArrayList<>();
 
         if (api.getProxy() != null) {
-            String defaultEntrypoint = parameterService.find(Key.PORTAL_ENTRYPOINT);
+            String defaultEntrypoint = parameterService.find(Key.PORTAL_ENTRYPOINT, ParameterReferenceType.ENVIRONMENT);
             final String scheme = getScheme(defaultEntrypoint);
             if (api.getTags() != null && !api.getTags().isEmpty()) {
                 List<EntrypointEntity> entrypoints = entrypointService.findAll();
@@ -1047,8 +1060,8 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 if (updateApiEntity.getGroups() == null) {
                     api.setGroups(apiToUpdate.getGroups());
                 }
-                if (updateApiEntity.getLabels() == null) {
-                    api.setLabels(apiToUpdate.getLabels());
+                if (updateApiEntity.getLabels() == null && apiToUpdate.getLabels() != null) {
+                    api.setLabels(new ArrayList<>(new HashSet<>(apiToUpdate.getLabels())));
                 }
                 if (updateApiEntity.getCategories() == null) {
                     api.setCategories(apiToUpdate.getCategories());
@@ -1078,7 +1091,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                     apiToUpdate,
                     updatedApi);
 
-                if (parameterService.findAsBoolean(Key.LOGGING_AUDIT_TRAIL_ENABLED)) {
+                if (parameterService.findAsBoolean(Key.LOGGING_AUDIT_TRAIL_ENABLED, ParameterReferenceType.ENVIRONMENT)) {
                     // Audit API logging if option is enabled
                     auditApiLogging(apiToUpdate, updatedApi);
                 }
@@ -1096,7 +1109,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
     }
 
-    private String buildApiDefinition(String apiDefinition, UpdateApiEntity updateApiEntity) {
+    private String buildApiDefinition(String apiId, String apiDefinition, UpdateApiEntity updateApiEntity) {
         try {
             io.gravitee.definition.model.Api updateApiDefinition;
             if (apiDefinition == null || apiDefinition.isEmpty()) {
@@ -1105,9 +1118,18 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             } else {
                 updateApiDefinition = objectMapper.readValue(apiDefinition, io.gravitee.definition.model.Api.class);
             }
+            updateApiDefinition.setId(apiId);
             updateApiDefinition.setName(updateApiEntity.getName());
             updateApiDefinition.setVersion(updateApiEntity.getVersion());
             updateApiDefinition.setProxy(updateApiEntity.getProxy());
+
+            if (StringUtils.isNotEmpty(updateApiEntity.getGraviteeDefinitionVersion())) {
+                updateApiDefinition.setDefinitionVersion(DefinitionVersion.valueOfLabel(updateApiEntity.getGraviteeDefinitionVersion()));
+            }
+
+            if (updateApiEntity.getFlowMode() != null) {
+                updateApiDefinition.setFlowMode(updateApiEntity.getFlowMode());
+            }
 
             if (updateApiEntity.getPaths() != null) {
                 updateApiDefinition.setPaths(updateApiEntity.getPaths());
@@ -1889,7 +1911,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 newPage.setPublished(pageEntityToImport.isPublished());
                 newPage.setSource(pageEntityToImport.getSource());
                 newPage.setType(PageType.valueOf(pageEntityToImport.getType()));
-
+                newPage.setAttachedMedia(pageEntityToImport.getAttachedMedia());
                 createdOrUpdatedPage = pageService.createPage(apiId, newPage);
             } else {
                 UpdatePageEntity updatePageEntity = new UpdatePageEntity();
@@ -1903,6 +1925,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 updatePageEntity.setParentId(pageEntityToImport.getParentId());
                 updatePageEntity.setPublished(pageEntityToImport.isPublished());
                 updatePageEntity.setSource(pageEntityToImport.getSource());
+                updatePageEntity.setAttachedMedia(pageEntityToImport.getAttachedMedia());
 
                 createdOrUpdatedPage = pageService.update(pageEntityToImport.getId(), updatePageEntity);
             }
@@ -1939,6 +1962,18 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
 
         return imageEntity;
+    }
+
+    @Override
+    public ApiEntity migrate(String apiId) {
+
+        final ApiEntity apiEntity = findById(apiId);
+        final Set<PolicyEntity> policies = policyService.findAll();
+        Set<PlanEntity> plans = planService.findByApi(apiId);
+
+        ApiEntity migratedApi = apiv1toAPIV2Converter.migrateToV2(apiEntity, policies, plans);
+
+        return this.update(apiId, ApiService.convert(migratedApi));
     }
 
     @Override
@@ -2225,13 +2260,13 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         if (hook.equals(ApiHook.ASK_FOR_REVIEW)) {
             List<String> reviewersEmail = findAllReviewersEmail(apiId);
             this.emailService.sendAsyncEmailNotification(new EmailNotificationBuilder()
-                .params(new NotificationParamsBuilder().api(apiEntity).user(user).build())
-                .to(reviewersEmail.toArray(new String[reviewersEmail.size()]))
-                .template(EmailNotificationBuilder.EmailTemplate.API_ASK_FOR_REVIEW)
-                .build()
+                            .params(new NotificationParamsBuilder().api(apiEntity).user(user).build())
+                            .to(reviewersEmail.toArray(new String[reviewersEmail.size()]))
+                            .template(EmailNotificationBuilder.EmailTemplate.API_ASK_FOR_REVIEW)
+                            .build(),
+                    GraviteeContext.getCurrentContext()
             );
         }
-        ;
 
         Map<Audit.AuditProperties, String> properties = new HashMap<>();
         properties.put(Audit.AuditProperties.USER, userId);
@@ -2482,6 +2517,9 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
                 if (apiDefinition.getDefinitionVersion() != null) {
                     apiEntity.setGraviteeDefinitionVersion(apiDefinition.getDefinitionVersion().getLabel());
                 }
+                if (apiDefinition.getFlowMode() != null) {
+                    apiEntity.setFlowMode(apiDefinition.getFlowMode());
+                }
                 if (DefinitionVersion.V2.equals(apiDefinition.getDefinitionVersion())) {
                     apiEntity.setFlows(apiDefinition.getFlows());
                     apiEntity.setPlans(new ArrayList<>(apiDefinition.getPlans()));
@@ -2540,7 +2578,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             apiEntity.setLifecycleState(io.gravitee.rest.api.model.api.ApiLifecycleState.valueOf(lifecycleState.name()));
         }
 
-        if (parameterService.findAsBoolean(Key.API_REVIEW_ENABLED)) {
+        if (parameterService.findAsBoolean(Key.API_REVIEW_ENABLED, ParameterReferenceType.ENVIRONMENT)) {
             final List<Workflow> workflows = workflowService.findByReferenceAndType(API, api.getId(), REVIEW);
             if (workflows != null && !workflows.isEmpty()) {
                 apiEntity.setWorkflowState(WorkflowState.valueOf(workflows.get(0).getState()));
@@ -2563,7 +2601,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         api.setPicture(updateApiEntity.getPicture());
         api.setBackground(updateApiEntity.getBackground());
 
-        api.setDefinition(buildApiDefinition(apiDefinition, updateApiEntity));
+        api.setDefinition(buildApiDefinition(apiId, apiDefinition, updateApiEntity));
 
         final Set<String> apiCategories = updateApiEntity.getCategories();
         if (apiCategories != null) {
@@ -2578,7 +2616,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
 
         if (updateApiEntity.getLabels() != null) {
-            api.setLabels(updateApiEntity.getLabels());
+            api.setLabels(new ArrayList<>(new HashSet<>(updateApiEntity.getLabels())));
         }
 
         api.setGroups(updateApiEntity.getGroups());

@@ -22,7 +22,6 @@ import io.gravitee.rest.api.model.PageEntity;
 import io.gravitee.rest.api.model.PageType;
 import io.gravitee.rest.api.model.configuration.application.ApplicationGrantTypeEntity;
 import io.gravitee.rest.api.model.configuration.application.ApplicationTypesEntity;
-import io.gravitee.rest.api.model.configuration.identity.IdentityProviderActivationEntity;
 import io.gravitee.rest.api.model.configuration.identity.IdentityProviderActivationReferenceType;
 import io.gravitee.rest.api.model.documentation.PageQuery;
 import io.gravitee.rest.api.model.permissions.RoleScope;
@@ -32,10 +31,7 @@ import io.gravitee.rest.api.portal.rest.model.*;
 import io.gravitee.rest.api.portal.rest.model.Link.ResourceTypeEnum;
 import io.gravitee.rest.api.portal.rest.resource.param.PaginationParam;
 import io.gravitee.rest.api.portal.rest.utils.HttpHeadersUtil;
-import io.gravitee.rest.api.service.ConfigService;
-import io.gravitee.rest.api.service.CustomUserFieldService;
-import io.gravitee.rest.api.service.PageService;
-import io.gravitee.rest.api.service.SocialIdentityProviderService;
+import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.configuration.application.ApplicationTypeService;
 import io.gravitee.rest.api.service.configuration.identity.IdentityProviderActivationService;
@@ -44,7 +40,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -69,11 +68,13 @@ public class ConfigurationResource extends AbstractResource {
     private CustomUserFieldService customUserFieldService;
     @Autowired
     private IdentityProviderActivationService identityProviderActivationService;
+    @Autowired
+    private EnvironmentService environmentService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPortalConfiguration() {
-        return Response.ok(configMapper.convert(configService.getPortalConfig())).build();
+        return Response.ok(configMapper.convert(configService.getPortalSettings())).build();
     }
 
     @GET
@@ -96,13 +97,7 @@ public class ConfigurationResource extends AbstractResource {
     @Path("identities")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPortalIdentityProviders(@BeanParam PaginationParam paginationParam) {
-        Set<String> allIdpByTarget = identityProviderActivationService.findAllByTarget(new IdentityProviderActivationService.ActivationTarget(GraviteeContext.getCurrentEnvironment(), IdentityProviderActivationReferenceType.ENVIRONMENT))
-                .stream()
-                .map(IdentityProviderActivationEntity::getIdentityProvider)
-                .collect(Collectors.toSet());
-
-        List<IdentityProvider> identities = socialIdentityProviderService.findAll(true).stream()
-                .filter(idp -> allIdpByTarget.contains(idp.getId()))
+         List<IdentityProvider> identities = socialIdentityProviderService.findAll(new IdentityProviderActivationService.ActivationTarget(GraviteeContext.getCurrentEnvironment(), IdentityProviderActivationReferenceType.ENVIRONMENT)).stream()
                 .sorted((idp1, idp2) -> String.CASE_INSENSITIVE_ORDER.compare(idp1.getName(), idp2.getName()))
                 .map(identityProviderMapper::convert)
                 .collect(Collectors.toList());
@@ -113,7 +108,7 @@ public class ConfigurationResource extends AbstractResource {
     @Path("identities/{identityProviderId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPortalIdentityProvider(@PathParam("identityProviderId") String identityProviderId) {
-        return Response.ok(identityProviderMapper.convert(socialIdentityProviderService.findById(identityProviderId))).build();
+        return Response.ok(identityProviderMapper.convert(socialIdentityProviderService.findById(identityProviderId, new IdentityProviderActivationService.ActivationTarget(GraviteeContext.getCurrentEnvironment(), IdentityProviderActivationReferenceType.ENVIRONMENT)))).build();
     }
 
     @GET

@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "f87af7e9-b003-4e49-9edd-b5cea50bb9bf",
-		"name": "API Portal : Subscriptions",
+		"name": "Subscriptions",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -28,7 +28,7 @@
 								"exec": [
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
-									"    pm.environment.set('X-Xsrf-Token', pm.response.headers.get('X-Xsrf-Token'));",
+									"    pm.collectionVariables.set('X-Xsrf-Token', pm.response.headers.get('X-Xsrf-Token'));",
 									"});"
 								],
 								"type": "text/javascript"
@@ -39,14 +39,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/configuration",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/configuration",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"configuration"
 							]
 						}
@@ -61,11 +58,13 @@
 							"script": {
 								"id": "c0c1fc9e-1544-4003-aaf4-bb369ba26e02",
 								"exec": [
-									"tests[\"Status code is 201\"] = responseCode.code === 201;",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"created_api_for_sub\", JSON.stringify(jsonData));",
-									"pm.environment.set(\"created_api_for_sub_id\", jsonData.id);"
+									"pm.collectionVariables.set(\"created_api_for_sub\", JSON.stringify(jsonData));",
+									"pm.collectionVariables.set(\"created_api_for_sub_id\", jsonData.id);"
 								],
 								"type": "text/javascript"
 							}
@@ -76,7 +75,7 @@
 								"id": "664338aa-f474-47ee-84dc-0383be74a90c",
 								"exec": [
 									"var uid = (\"0000\" + (Math.random()*Math.pow(36,4) << 0).toString(36)).slice(-4);",
-									"pm.environment.set(\"RANDOM_NUMBER\", uid);"
+									"pm.collectionVariables.set(\"RANDOM_NUMBER\", uid);"
 								],
 								"type": "text/javascript"
 							}
@@ -117,16 +116,11 @@
 							}
 						},
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis"
 							]
 						}
@@ -141,7 +135,7 @@
 							"script": {
 								"id": "38edfc12-fdf8-4ba6-a4c4-b27036d485c1",
 								"exec": [
-									"var createdApi_for_sub_toPublish = JSON.parse(pm.environment.get(\"created_api_for_sub\"));",
+									"var createdApi_for_sub_toPublish = JSON.parse(pm.collectionVariables.get(\"created_api_for_sub\"));",
 									"createdApi_for_sub_toPublish.lifecycle_state='published';",
 									"createdApi_for_sub_toPublish.visibility='public';",
 									"delete createdApi_for_sub_toPublish.id;",
@@ -150,7 +144,7 @@
 									"delete createdApi_for_sub_toPublish.updated_at;",
 									"delete createdApi_for_sub_toPublish.owner;",
 									"delete createdApi_for_sub_toPublish.context_path;",
-									"pm.environment.set(\"createdApi_for_sub_toPublish\", JSON.stringify(createdApi_for_sub_toPublish));",
+									"pm.collectionVariables.set(\"createdApi_for_sub_toPublish\", JSON.stringify(createdApi_for_sub_toPublish));",
 									""
 								],
 								"type": "text/javascript"
@@ -161,7 +155,9 @@
 							"script": {
 								"id": "4a0fc2ab-c926-4642-bcd7-338c58351b2f",
 								"exec": [
-									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -203,16 +199,11 @@
 							}
 						},
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis/:apiId",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis/:apiId",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis",
 								":apiId"
 							],
@@ -234,10 +225,12 @@
 							"script": {
 								"id": "5ee5b300-cbc0-40f9-8bf4-a7b2cd3b2e71",
 								"exec": [
-									"tests[\"Status code is 201\"] = responseCode.code === 201;",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"created_plan_for_sub_id\", jsonData.id);"
+									"pm.collectionVariables.set(\"created_plan_for_sub_id\", jsonData.id);"
 								],
 								"type": "text/javascript"
 							}
@@ -278,16 +271,11 @@
 							}
 						},
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis/:apiId/plans",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis/:apiId/plans",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis",
 								":apiId",
 								"plans"
@@ -310,8 +298,9 @@
 							"script": {
 								"id": "db9e5b0c-f4b3-493a-b925-403f8811793e",
 								"exec": [
-									"tests[\"Status code is 200\"] = responseCode.code === 200;",
-									""
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -343,16 +332,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis/:apiId/plans/:planId/_publish",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis/:apiId/plans/:planId/_publish",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis",
 								":apiId",
 								"plans",
@@ -381,10 +365,12 @@
 							"script": {
 								"id": "7c3d4abd-c951-4299-86a2-6c17cd754171",
 								"exec": [
-									"tests[\"Status code is 201\"] = responseCode.code === 201;",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
 									"",
 									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"created_application_for_sub_id\", jsonData.id);"
+									"pm.collectionVariables.set(\"created_application_for_sub_id\", jsonData.id);"
 								],
 								"type": "text/javascript"
 							}
@@ -425,16 +411,11 @@
 							}
 						},
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/applications",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/applications",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"applications"
 							]
 						}
@@ -507,14 +488,11 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/auth/login",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/auth/login",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"auth",
 								"login"
 							]
@@ -545,14 +523,14 @@
 									"});",
 									"",
 									"var i;",
-									"var created_api_for_sub_id = pm.environment.get(\"created_api_for_sub_id\");",
+									"var created_api_for_sub_id = pm.collectionVariables.get(\"created_api_for_sub_id\");",
 									"var isCreatedAPIFound = false;",
 									"for(i=0; i< jsonData.data.length; i++) {",
 									"    if(jsonData.data[i].id == created_api_for_sub_id) {",
 									"        isCreatedAPIFound = true;",
-									"        pm.environment.set(\"created_api_for_sub_self_link\", jsonData.data[i]._links.self);",
-									"        pm.environment.set(\"created_api_for_sub_picture_link\", jsonData.data[i]._links.picture);",
-									"        pm.environment.set(\"created_api_for_sub_plans_link\", jsonData.data[i]._links.plans);",
+									"        pm.collectionVariables.set(\"created_api_for_sub_self_link\", jsonData.data[i]._links.self);",
+									"        pm.collectionVariables.set(\"created_api_for_sub_picture_link\", jsonData.data[i]._links.picture);",
+									"        pm.collectionVariables.set(\"created_api_for_sub_plans_link\", jsonData.data[i]._links.plans);",
 									"    }",
 									"}",
 									"",
@@ -568,20 +546,17 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/apis?size=1000",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/apis?size=-1",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"apis"
 							],
 							"query": [
 								{
 									"key": "size",
-									"value": "1000"
+									"value": "-1"
 								}
 							]
 						}
@@ -601,7 +576,7 @@
 									"});",
 									"pm.test(\"It is the created API\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.id).to.eql(pm.environment.get(\"created_api_for_sub_id\"));",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get(\"created_api_for_sub_id\"));",
 									"    pm.expect(jsonData.name).to.eql(\"API_SUB\");",
 									"});"
 								],
@@ -671,7 +646,7 @@
 									"    pm.expect(jsonData.metadata.data.total).to.eql(jsonData.data.length);",
 									"});",
 									"",
-									"var created_plan_for_sub_id = pm.environment.get(\"created_plan_for_sub_id\");",
+									"var created_plan_for_sub_id = pm.collectionVariables.get(\"created_plan_for_sub_id\");",
 									"",
 									"pm.test(\"Created Plan was found\", function () {",
 									"    pm.expect(jsonData.data[0].id).to.be.eql(created_plan_for_sub_id);",
@@ -716,7 +691,7 @@
 									"});",
 									"",
 									"var i;",
-									"var created_application_for_sub_id = pm.environment.get(\"created_application_for_sub_id\");",
+									"var created_application_for_sub_id = pm.collectionVariables.get(\"created_application_for_sub_id\");",
 									"var isCreatedApplicationFound = false;",
 									"for(i=0; i< jsonData.data.length; i++) {",
 									"    if(jsonData.data[i].id == created_application_for_sub_id) {",
@@ -736,14 +711,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/applications?size",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/applications?size",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"applications"
 							],
 							"query": [
@@ -765,7 +737,7 @@
 								"id": "134e9b2e-f9d2-40ed-99a3-b5de42a18c6c",
 								"exec": [
 									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"created_sub_id\", jsonData.id);",
+									"pm.collectionVariables.set(\"created_sub_id\", jsonData.id);",
 									"",
 									"pm.test(\"Status code is 200\", function () {",
 									"    pm.response.to.have.status(200);",
@@ -795,14 +767,11 @@
 							}
 						},
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/subscriptions",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/subscriptions",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"subscriptions"
 							]
 						}
@@ -829,14 +798,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/subscriptions/:subscriptionId",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/subscriptions/:subscriptionId",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"subscriptions",
 								":subscriptionId"
 							],
@@ -874,14 +840,11 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_PORTAL_URL}}/portal/environments/DEFAULT/auth/logout",
+							"raw": "{{GRAVITEEIO_PORTAL_URL}}/auth/logout",
 							"host": [
 								"{{GRAVITEEIO_PORTAL_URL}}"
 							],
 							"path": [
-								"portal",
-								"environments",
-								"DEFAULT",
 								"auth",
 								"logout"
 							]
@@ -925,7 +888,9 @@
 							"script": {
 								"id": "af2550bc-ab03-4557-a1fd-4870fd6ad7bd",
 								"exec": [
-									"tests[\"Status code is 200\"] = responseCode.code === 200;"
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -950,16 +915,11 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis/:apiId/subscriptions/:subscriptionId/status?status=CLOSED",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis/:apiId/subscriptions/:subscriptionId/status?status=CLOSED",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis",
 								":apiId",
 								"subscriptions",
@@ -994,7 +954,9 @@
 							"script": {
 								"id": "aa76e868-0edc-40ed-ac97-b1bb5826fd43",
 								"exec": [
-									"tests[\"Status code is 204\"] = responseCode.code === 204;",
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
 									""
 								],
 								"type": "text/javascript"
@@ -1020,16 +982,11 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/applications/:applicationId",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/applications/:applicationId",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"applications",
 								":applicationId"
 							],
@@ -1051,7 +1008,9 @@
 							"script": {
 								"id": "c584994b-7e65-42dc-b02c-f067bb2e21d3",
 								"exec": [
-									"tests[\"Status code is 200\"] = responseCode.code === 200;"
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -1076,16 +1035,11 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis/:apiId/plans/:planId/_close",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis/:apiId/plans/:planId/_close",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis",
 								":apiId",
 								"plans",
@@ -1114,7 +1068,9 @@
 							"script": {
 								"id": "15267f5c-1d24-4241-b96f-000e9d1559c0",
 								"exec": [
-									"tests[\"Status code is 204\"] = responseCode.code === 204;"
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
 								],
 								"type": "text/javascript"
 							}
@@ -1139,16 +1095,11 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{GRAVITEEIO_MGMT_URL}}/management/organizations/DEFAULT/environments/DEFAULT/apis/:apiId",
+							"raw": "{{GRAVITEEIO_MGMT_URL}}/apis/:apiId",
 							"host": [
 								"{{GRAVITEEIO_MGMT_URL}}"
 							],
 							"path": [
-								"management",
-								"organizations",
-								"DEFAULT",
-								"environments",
-								"DEFAULT",
 								"apis",
 								":apiId"
 							],
@@ -1173,7 +1124,7 @@
 				"id": "9c5ad019-b744-4bd9-af61-123782d432a7",
 				"type": "text/javascript",
 				"exec": [
-					"pm.request.headers.add({key: 'X-Xsrf-Token', value: pm.environment.get('X-Xsrf-Token') });"
+					"pm.request.headers.add({key: 'X-Xsrf-Token', value: pm.collectionVariables.get('X-Xsrf-Token') });"
 				]
 			}
 		},

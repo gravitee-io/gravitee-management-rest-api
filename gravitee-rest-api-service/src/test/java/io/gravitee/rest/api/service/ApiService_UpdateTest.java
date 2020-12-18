@@ -30,6 +30,7 @@ import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.api.UpdateApiEntity;
 import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.permissions.ApiPermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.permissions.RoleScope;
@@ -43,6 +44,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -52,10 +54,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 
 import static io.gravitee.rest.api.model.WorkflowReferenceType.API;
 import static io.gravitee.rest.api.model.WorkflowType.REVIEW;
@@ -346,6 +345,16 @@ public class ApiService_UpdateTest {
     }
 
     @Test
+    public void shouldNotDuplicateLabels() throws TechnicalException {
+        prepareUpdate();
+        when(existingApi.getLabels()).thenReturn(Arrays.asList("label1", "label1"));
+        when(api.getDefinition()).thenReturn("{\"id\": \"" + API_ID + "\",\"name\": \"" + API_NAME + "\",\"proxy\": {\"context_path\": \"/old\"} ,\"labels\": [\"public\"]}");
+        final ApiEntity apiEntity = apiService.update(API_ID, existingApi);
+        verify(apiRepository).update(argThat(api -> api.getLabels().size() == 1));
+        assertNotNull(apiEntity);
+    }
+
+    @Test
     public void shouldUpdateWithExistingAllowedTag() throws TechnicalException {
         prepareUpdate();
         when(existingApi.getTags()).thenReturn(singleton("private"));
@@ -528,7 +537,7 @@ public class ApiService_UpdateTest {
         verify(emailService).sendAsyncEmailNotification(argThat(emailNotification -> emailNotification.getTemplate().equals(EmailNotificationBuilder.EmailTemplate.API_ASK_FOR_REVIEW.getLinkedHook().getTemplate())
                     && emailNotification.getTo().length == 1
                     && emailNotification.getTo()[0].equals("Reviewer@ema.il")
-        ));
+        ), any());
         verify(roleService).findByScope(RoleScope.API);
     }
 
@@ -562,7 +571,7 @@ public class ApiService_UpdateTest {
     @Test
     public void shouldNotChangeLifecycleStateFromCreatedInReview() throws TechnicalException {
         prepareUpdate();
-        when(parameterService.findAsBoolean(Key.API_REVIEW_ENABLED)).thenReturn(true);
+        when(parameterService.findAsBoolean(Key.API_REVIEW_ENABLED, ParameterReferenceType.ENVIRONMENT)).thenReturn(true);
         final Workflow workflow = new Workflow();
         workflow.setState("IN_REVIEW");
         when(workflowService.findByReferenceAndType(API, API_ID, REVIEW)).thenReturn(singletonList(workflow));

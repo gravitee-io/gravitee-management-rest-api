@@ -17,12 +17,16 @@ package io.gravitee.rest.api.portal.rest.resource;
 
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.rest.api.model.*;
+import io.gravitee.rest.api.model.PageConfigurationKeys;
+import io.gravitee.rest.api.model.PageEntity;
+import io.gravitee.rest.api.model.PageType;
+import io.gravitee.rest.api.model.RoleEntity;
 import io.gravitee.rest.api.model.configuration.application.ApplicationGrantTypeEntity;
 import io.gravitee.rest.api.model.configuration.application.ApplicationTypeEntity;
 import io.gravitee.rest.api.model.configuration.application.ApplicationTypesEntity;
 import io.gravitee.rest.api.model.documentation.PageQuery;
 import io.gravitee.rest.api.model.permissions.RoleScope;
+import io.gravitee.rest.api.model.settings.PortalSettingsEntity;
 import io.gravitee.rest.api.portal.rest.model.*;
 import io.gravitee.rest.api.portal.rest.model.Link.ResourceTypeEnum;
 import org.junit.Test;
@@ -32,13 +36,13 @@ import org.mockito.stubbing.Answer;
 
 import javax.validation.Valid;
 import javax.ws.rs.core.Response;
-
 import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
@@ -55,14 +59,14 @@ public class ConfigurationResourceTest extends AbstractResourceTest {
     public void shouldGetConfiguration() {
         resetAllMocks();
 
-        PortalConfigEntity configEntity = new PortalConfigEntity();
-        doReturn(configEntity).when(configService).getPortalConfig();
-
+        PortalSettingsEntity portalConfigEntity = new PortalSettingsEntity();
+        doReturn(portalConfigEntity).when(configService).getPortalSettings();
         final Response response = target().request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        Mockito.verify(configMapper).convert(configEntity);
-        Mockito.verify(configService).getPortalConfig();
+
+        Mockito.verify(configMapper).convert(portalConfigEntity);
+        Mockito.verify(configService).getPortalSettings();
     }
 
     @Test

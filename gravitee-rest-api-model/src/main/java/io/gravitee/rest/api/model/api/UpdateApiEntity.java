@@ -90,6 +90,11 @@ public class UpdateApiEntity {
     @Schema(description = "API's gravitee definition version")
     private String graviteeDefinitionVersion;
 
+    @DeploymentRequired
+    @JsonProperty(value = "flow_mode")
+    @Schema(description = "API's flow mode.", example = "BEST_MATCH")
+    private FlowMode flowMode;
+
     @JsonProperty("picture_url")
     @Schema(description = "the API logo encoded in base64")
     private String pictureUrl;
@@ -316,5 +321,13 @@ public class UpdateApiEntity {
 
     public void addPlan(Plan plan) {
         this.plans.add(plan);
+    }
+
+    public FlowMode getFlowMode() {
+        return flowMode;
+    }
+
+    public void setFlowMode(FlowMode flowMode) {
+        this.flowMode = flowMode;
     }
 }

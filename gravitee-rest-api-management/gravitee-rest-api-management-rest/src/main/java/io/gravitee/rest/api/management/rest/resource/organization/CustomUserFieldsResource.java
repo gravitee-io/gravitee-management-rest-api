@@ -62,7 +62,7 @@ public class CustomUserFieldsResource extends AbstractResource {
     @ApiResponse(responseCode = "200", description = "Custom User Field deleted",
             content = @Content(mediaType = io.gravitee.common.http.MediaType.APPLICATION_JSON, array = @ArraySchema(schema = @Schema(implementation = CustomUserFieldEntity.class))))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public Response listAll() {
+    public Response getCustomUserFields() {
 
         List<CustomUserFieldEntity> fields = fieldService.listAllFields();
         return Response.ok().entity(fields).build();
@@ -74,7 +74,7 @@ public class CustomUserFieldsResource extends AbstractResource {
     @ApiResponse(responseCode = "201", description = "Custom User Field Created",
             content = @Content(mediaType = io.gravitee.common.http.MediaType.APPLICATION_JSON, schema = @Schema(implementation = CustomUserFieldEntity.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public Response createField(@Valid CustomUserFieldEntity newCustomUserFieldEntity) {
+    public Response createCustomUserField(@Valid CustomUserFieldEntity newCustomUserFieldEntity) {
         CustomUserFieldEntity newField = fieldService.create(newCustomUserFieldEntity);
         if (newField != null) {
             return Response
@@ -93,7 +93,7 @@ public class CustomUserFieldsResource extends AbstractResource {
     @ApiResponse(responseCode = "200", description = "Custom User Field updated",
             content = @Content(mediaType = io.gravitee.common.http.MediaType.APPLICATION_JSON, schema = @Schema(implementation = CustomUserFieldEntity.class)))
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public Response updateField(@PathParam("key") String key,
+    public Response updateCustomUserField(@PathParam("key") String key,
                                 @Valid CustomUserFieldEntity toUpdateFieldEntity) {
 
         if (toUpdateFieldEntity == null || !key.toLowerCase().equals(toUpdateFieldEntity.getKey().toLowerCase())) {
@@ -117,7 +117,7 @@ public class CustomUserFieldsResource extends AbstractResource {
     @Operation(summary = "Delete a Custom User Field", description = "User must have the CUSTOM_USER_FIELDS[DELETE] permission to use this service")
     @ApiResponse(responseCode = "204", description = "Custom User Field deleted")
     @ApiResponse(responseCode = "500", description = "Internal server error")
-    public Response deleteField(@PathParam("key") String key) {
+    public Response deleteCustomUserField(@PathParam("key") String key) {
 
         fieldService.delete(key);
         return Response.noContent().build();
