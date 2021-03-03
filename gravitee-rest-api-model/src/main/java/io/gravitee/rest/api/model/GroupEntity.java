@@ -16,7 +16,6 @@
 package io.gravitee.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import io.gravitee.rest.api.model.permissions.RoleScope;
 
 import java.util.Date;
@@ -52,6 +51,7 @@ public class GroupEntity {
     private boolean emailInvitation;
     @JsonProperty("disable_membership_notifications")
     private boolean disableMembershipNotifications;
+    private String apiPrimaryOwner;
 
     public String getId() {
         return id;
@@ -157,6 +157,14 @@ public class GroupEntity {
         this.disableMembershipNotifications = disableMembershipNotifications;
     }
 
+    public String getApiPrimaryOwner() {
+        return apiPrimaryOwner;
+    }
+
+    public void setApiPrimaryOwner(String apiPrimaryOwner) {
+        this.apiPrimaryOwner = apiPrimaryOwner;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -186,6 +194,7 @@ public class GroupEntity {
                 ", systemInvitation=" + systemInvitation +
                 ", emailInvitation=" + emailInvitation +
                 ", disableMembershipNotifications=" + disableMembershipNotifications +
+                ", apiPrimaryOwner=" + apiPrimaryOwner +
                 '}';
     }
 }

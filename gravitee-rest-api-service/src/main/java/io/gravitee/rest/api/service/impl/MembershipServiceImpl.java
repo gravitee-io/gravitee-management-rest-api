@@ -116,13 +116,15 @@ public class MembershipServiceImpl extends AbstractService implements Membership
         try {
             LOGGER.debug("Add a new member for {} {}", reference.getType(), reference.getId());
 
-            assertRoleScopeAllowedForReference(reference, role);
-            assertRoleNameAllowedForReference(reference, role);
+            Optional<RoleEntity> optRoleEntity = roleService.findByScopeAndName(role.getScope(), role.getName());
+            if(optRoleEntity.isPresent()) {
+                RoleEntity roleEntity = optRoleEntity.get();
 
-            Optional<RoleEntity> optRole = roleService.findByScopeAndName(role.getScope(), role.getName());
-            if(optRole.isPresent()) {
+                assertRoleScopeAllowedForReference(reference, roleEntity);
+                assertRoleNameAllowedForReference(reference, roleEntity);
+
                 if (member.getMemberId() != null) {
-                    Set<io.gravitee.repository.management.model.Membership> similarMemberships = membershipRepository.findByMemberIdAndMemberTypeAndReferenceTypeAndReferenceIdAndRoleId(member.getMemberId(), convert(member.getMemberType()), convert(reference.getType()), reference.getId(), optRole.get().getId());
+                    Set<io.gravitee.repository.management.model.Membership> similarMemberships = membershipRepository.findByMemberIdAndMemberTypeAndReferenceTypeAndReferenceIdAndRoleId(member.getMemberId(), convert(member.getMemberType()), convert(reference.getType()), reference.getId(), roleEntity.getId());
                     if(!similarMemberships.isEmpty()) {
                         throw new MembershipAlreadyExistsException(member.getMemberId(), member.getMemberType(), reference.getId(), reference.getType());
                     }
@@ -137,7 +139,7 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                             convert(member.getMemberType()), 
                             reference.getId(), 
                             convert(reference.getType()),
-                            optRole.get().getId());
+                            roleEntity.getId());
                     membership.setSource(source);
                     membership.setCreatedAt(updateDate);
                     membership.setUpdatedAt(updateDate);
@@ -175,7 +177,7 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                             convert(member.getMemberType()), 
                             reference.getId(), 
                             convert(reference.getType()),
-                            optRole.get().getId());
+                            roleEntity.getId());
                     membership.setSource(source);
                     membership.setCreatedAt(updateDate);
                     membership.setUpdatedAt(updateDate);
@@ -186,9 +188,9 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                 roles.invalidate(reference.getType().name() + reference.getId() + member.getMemberType() + member.getMemberId());
 
                 return userMember;
+            } else {
+                throw new RoleNotFoundException(role.getScope().name() + "_" + role.getName());
             }
-            
-            return null;
         } catch (TechnicalException ex) {
             LOGGER.error("An error occurs while trying to add member for {} {}", reference.getType(), reference.getId(), ex);
             throw new TechnicalManagementException("An error occurs while trying to add member for " + reference.getType() + " " + reference.getId(), ex);
@@ -367,29 +369,28 @@ public class MembershipServiceImpl extends AbstractService implements Membership
     /**
      * assert that the role's scope is allowed for the given reference
      */
-    private void assertRoleScopeAllowedForReference(MembershipReference reference, MembershipRole role) {
-        Optional<RoleEntity> optRoleEntity = roleService.findByScopeAndName(role.getScope(), role.getName());
-        if(optRoleEntity.isPresent()) {
-            RoleEntity roleEntity = optRoleEntity.get();
-            if (
-                    (MembershipReferenceType.API == reference.getType() && RoleScope.API != roleEntity.getScope())
-                    || (MembershipReferenceType.APPLICATION == reference.getType() && RoleScope.APPLICATION != roleEntity.getScope())
-                    || (MembershipReferenceType.GROUP == reference.getType() && RoleScope.GROUP != roleEntity.getScope() && RoleScope.API != roleEntity.getScope() && RoleScope.APPLICATION != roleEntity.getScope())
-                    || (MembershipReferenceType.GROUP == reference.getType() && SystemRole.PRIMARY_OWNER.name().equals(role.getName()))
-               ) {
-                throw new NotAuthorizedMembershipException(role.getName());
-            }
-        } else {
-            throw new RoleNotFoundException(role.getScope().name() + "_" + role.getName());
+    private void assertRoleScopeAllowedForReference(MembershipReference reference, RoleEntity roleEntity) {
+        if (
+                (MembershipReferenceType.API == reference.getType() && RoleScope.API != roleEntity.getScope())
+                || (MembershipReferenceType.APPLICATION == reference.getType() && RoleScope.APPLICATION != roleEntity.getScope())
+                || (MembershipReferenceType.GROUP == reference.getType() && RoleScope.GROUP != roleEntity.getScope() && RoleScope.API != roleEntity.getScope() && RoleScope.APPLICATION != roleEntity.getScope())
+           ) {
+            throw new NotAuthorizedMembershipException(roleEntity.getName());
         }
     }
 
     /**
-     * assert that the role's name is allowed for the given reference
+     * assert that the roleEntity's name is allowed for the given reference
      */
-    private void assertRoleNameAllowedForReference(MembershipReference reference, MembershipRole role) {
-        if (MembershipReferenceType.GROUP == reference.getType() && SystemRole.PRIMARY_OWNER.name().equals(role.getName())) {
-            throw new NotAuthorizedMembershipException(role.getName());
+    public void assertRoleNameAllowedForReference(MembershipReference reference, RoleEntity roleEntity) throws TechnicalException {
+        if (MembershipReferenceType.GROUP == reference.getType() && SystemRole.PRIMARY_OWNER.name().equals(roleEntity.getName())) {
+            if (roleEntity.getScope() == RoleScope.APPLICATION) {
+                throw new NotAuthorizedMembershipException(roleEntity.getName());
+            } else if (roleEntity.getScope() == RoleScope.API) {
+                if (membershipRepository.findByReferenceAndRoleId(io.gravitee.repository.management.model.MembershipReferenceType.GROUP, reference.getId(), roleEntity.getId()).size() > 0) {
+                    throw new NotAuthorizedMembershipException(roleEntity.getName());
+                }
+            }
         }
     }
 
