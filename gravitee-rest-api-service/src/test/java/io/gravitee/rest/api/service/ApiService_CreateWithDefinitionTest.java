@@ -311,6 +311,84 @@ public class ApiService_CreateWithDefinitionTest {
         verify(apiRepository, times(1)).create(any());
         verify(genericNotificationConfigService, times(1)).create(any());
         verify(searchEngineService, times(1)).index(any(), eq(false));
+        verify(membershipService, times(1)).addRoleToMemberOnReference(
+            new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
+            new MembershipService.MembershipMember("admin", null, MembershipMemberType.USER),
+            new MembershipService.MembershipRole(RoleScope.API, SystemRole.PRIMARY_OWNER.name()));
+
+    }
+
+    @Test
+    public void shouldCreateImportApiWithOnlyDefinitionWithPrimaryOwner() throws IOException, TechnicalException {
+        URL url =  Resources.getResource("io/gravitee/rest/api/management/service/import-api.definition+primaryOwner.json");
+        String toBeImport = Resources.toString(url, Charsets.UTF_8);
+        ApiEntity apiEntity = new ApiEntity();
+        Api api = new Api();
+        api.setId(API_ID);
+        apiEntity.setId(API_ID);
+        when(apiRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(apiRepository.create(any())).thenReturn(api);
+        UserEntity admin = new UserEntity();
+        admin.setId("admin");
+        admin.setSource(SOURCE);
+        admin.setSourceId(API_ID);
+        UserEntity user = new UserEntity();
+        user.setId("user");
+        user.setSource(SOURCE);
+        user.setSourceId(API_ID);
+        when(userService.findById(user.getId())).thenReturn(user);
+
+        apiService.createWithImportedDefinition(null, toBeImport, "admin");
+
+        verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
+        verify(apiRepository, never()).update(any());
+        verify(apiRepository, times(1)).create(any());
+        verify(genericNotificationConfigService, times(1)).create(any());
+        verify(searchEngineService, times(1)).index(any(), eq(false));
+
+        verify(membershipService, times(1)).addRoleToMemberOnReference(
+            new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
+            new MembershipService.MembershipMember("user", null, MembershipMemberType.USER),
+            new MembershipService.MembershipRole(RoleScope.API, SystemRole.PRIMARY_OWNER.name()));
+    }
+
+    @Test
+    public void shouldCreateImportApiWithOnlyDefinitionWithPrimaryOwnerGroup() throws IOException, TechnicalException {
+        URL url =  Resources.getResource("io/gravitee/rest/api/management/service/import-api.definition+primaryOwnerGroup.json");
+        String toBeImport = Resources.toString(url, Charsets.UTF_8);
+        ApiEntity apiEntity = new ApiEntity();
+        Api api = new Api();
+        api.setId(API_ID);
+        apiEntity.setId(API_ID);
+        when(apiRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(apiRepository.create(any())).thenReturn(api);
+        UserEntity admin = new UserEntity();
+        admin.setId("admin");
+        admin.setSource(SOURCE);
+        admin.setSourceId(API_ID);
+        UserEntity user = new UserEntity();
+        user.setId("user");
+        user.setSource(SOURCE);
+        user.setSourceId(API_ID);
+
+        GroupEntity group = new GroupEntity();
+        group.setApiPrimaryOwner(user.getId());
+        group.setId("group");
+
+        when(groupService.findById(group.getId())).thenReturn(group);
+
+        apiService.createWithImportedDefinition(null, toBeImport, "admin");
+
+        verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
+        verify(apiRepository, never()).update(any());
+        verify(apiRepository, times(1)).create(any());
+        verify(genericNotificationConfigService, times(1)).create(any());
+        verify(searchEngineService, times(1)).index(any(), eq(false));
+
+        verify(membershipService, times(1)).addRoleToMemberOnReference(
+            new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
+            new MembershipService.MembershipMember("group", null, MembershipMemberType.GROUP),
+            new MembershipService.MembershipRole(RoleScope.API, SystemRole.PRIMARY_OWNER.name()));
     }
 
     @Test
