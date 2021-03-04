@@ -336,7 +336,6 @@ public class ApiService_CreateWithDefinitionTest {
         user.setId("user");
         user.setSource(SOURCE);
         user.setSourceId(API_ID);
-        when(userService.findById(user.getId())).thenReturn(user);
 
         apiService.createWithImportedDefinition(null, toBeImport, "admin");
 
@@ -374,8 +373,6 @@ public class ApiService_CreateWithDefinitionTest {
         GroupEntity group = new GroupEntity();
         group.setApiPrimaryOwner(user.getId());
         group.setId("group");
-
-        when(groupService.findById(group.getId())).thenReturn(group);
 
         apiService.createWithImportedDefinition(null, toBeImport, "admin");
 

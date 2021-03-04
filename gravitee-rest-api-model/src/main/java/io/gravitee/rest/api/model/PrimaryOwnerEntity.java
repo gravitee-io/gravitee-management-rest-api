@@ -40,17 +40,23 @@ public class PrimaryOwnerEntity {
     @ApiModelProperty(
         value = "The primary owner type",
         example = "USER")
-    private PrimaryOwnerType type;
+    private String type;
 
-    public PrimaryOwnerEntity(){
-
+    public PrimaryOwnerEntity() {
     }
 
-    public PrimaryOwnerEntity(PrimaryOwner primaryOwner) {
-        this.id = primaryOwner.getId();
-        this.email = primaryOwner.getEmail();
-        this.displayName = primaryOwner.getDisplayName();
-        this.type = primaryOwner.getType();
+    public PrimaryOwnerEntity(UserEntity user) {
+        this.id = user.getId();
+        this.email = user.getEmail();
+        this.displayName = user.getDisplayName();
+        this.type = "USER";
+    }
+
+    public PrimaryOwnerEntity(GroupEntity group) {
+        this.id = group.getId();
+        this.email = null;
+        this.displayName = group.getName();
+        this.type = "GROUP";
     }
 
     public String getId() {
@@ -65,23 +71,23 @@ public class PrimaryOwnerEntity {
         return email;
     }
 
-    public PrimaryOwnerType getType() {
+    public String getType() {
         return type;
     }
 
-    public void setType(PrimaryOwnerType type) {
-        this.type = type;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
