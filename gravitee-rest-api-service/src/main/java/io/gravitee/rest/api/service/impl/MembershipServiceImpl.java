@@ -289,12 +289,9 @@ public class MembershipServiceImpl extends AbstractService implements Membership
 
     private MemberEntity convertToMemberEntity(io.gravitee.repository.management.model.Membership membership) {
         final MemberEntity member = new MemberEntity();
-        final UserEntity userEntity = userService.findById(membership.getMemberId());
         member.setId(membership.getMemberId());
         member.setCreatedAt(membership.getCreatedAt());
         member.setUpdatedAt(membership.getUpdatedAt());
-        member.setDisplayName(userEntity.getDisplayName());
-        member.setEmail(userEntity.getEmail());
         member.setReferenceId(membership.getReferenceId());
         member.setReferenceType(convert(membership.getReferenceType()));
         if (membership.getRoleId() != null) {
@@ -303,6 +300,16 @@ public class MembershipServiceImpl extends AbstractService implements Membership
             List<RoleEntity> roles = new ArrayList<>();
             roles.add(role);
             member.setRoles(roles);
+        }
+        member.setType(MembershipMemberType.valueOf(membership.getMemberType().name()));
+
+        if (membership.getMemberType() == io.gravitee.repository.management.model.MembershipMemberType.USER) {
+            final UserEntity userEntity = userService.findById(membership.getMemberId());
+            member.setDisplayName(userEntity.getDisplayName());
+            member.setEmail(userEntity.getEmail());
+        } else {
+            final GroupEntity groupEntity = groupService.findById(membership.getMemberId());
+            member.setDisplayName(groupEntity.getName());
         }
 
         return member;
@@ -565,7 +572,6 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                     role);
             Map<String, MemberEntity> results = new HashMap<>();
             memberships.stream()
-            .filter(member -> member.getMemberType() == io.gravitee.repository.management.model.MembershipMemberType.USER)
             .map(this::convertToMemberEntity)
             .forEach(member -> {
                 String key = member.getId()+member.getReferenceId();
@@ -970,21 +976,25 @@ public class MembershipServiceImpl extends AbstractService implements Membership
         Optional<RoleEntity> optPoRoleEntity = roleService.findByScopeAndName(roleScope, PRIMARY_OWNER.name());
         if(optPoRoleEntity.isPresent()) {
             RoleEntity poRoleEntity = optPoRoleEntity.get();
+
             // remove previous role of the new primary owner
-            this.getRoles(membershipReferenceType, itemId, member.getMemberType(), newPrimaryOwnerMember.getId()).forEach(role -> {
+            this.getRoles(membershipReferenceType, itemId, member.getMemberType(), member.getMemberId()).forEach(role -> {
                 if (!role.getId().equals(poRoleEntity.getId())) {
-                    this.removeRole(membershipReferenceType, itemId, MembershipMemberType.USER, newPrimaryOwnerMember.getId(), role.getId());
+                    this.removeRole(membershipReferenceType, itemId, member.getMemberType(), newPrimaryOwnerMember.getId(), role.getId());
                 }
             });
-        
-            // Update the role for previous primary_owner
-            this.removeRole(membershipReferenceType, itemId, MembershipMemberType.USER, primaryOwner.getMemberId(), poRoleEntity.getId());
 
-            for(RoleEntity newRole : newRoles) {
-                this.addRoleToMemberOnReference(
-                        new MembershipReference(membershipReferenceType, itemId),
-                        new MembershipMember(primaryOwner.getMemberId(), null, MembershipMemberType.USER),
-                        new MembershipRole(roleScope, newRole.getName()));
+            // Update the role for previous primary_owner
+            this.removeRole(membershipReferenceType, itemId, primaryOwner.getMemberType(), primaryOwner.getMemberId(), poRoleEntity.getId());
+
+            // set the new role for the previous primary owner only if it is a user
+            if (primaryOwner.getMemberType() == MembershipMemberType.USER) {
+                for(RoleEntity newRole : newRoles) {
+                    this.addRoleToMemberOnReference(
+                            new MembershipReference(membershipReferenceType, itemId),
+                            new MembershipMember(primaryOwner.getMemberId(), null, primaryOwner.getMemberType()),
+                            new MembershipRole(roleScope, newRole.getName()));
+                }
             }
         }
     }

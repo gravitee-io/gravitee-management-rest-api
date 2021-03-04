@@ -463,12 +463,12 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
 
 
                 // Add the primary owner of the newly created API
-                PrimaryOwner primaryOwner = findPrimaryOwner(apiDefinition, userId);
+                PrimaryOwnerEntity primaryOwner = findPrimaryOwner(apiDefinition, userId);
 
                 if (primaryOwner != null) {
                     membershipService.addRoleToMemberOnReference(
                         new MembershipService.MembershipReference(MembershipReferenceType.API, createdApi.getId()),
-                        new MembershipService.MembershipMember(primaryOwner.getId(), null, MembershipMemberType.USER),
+                        new MembershipService.MembershipMember(primaryOwner.getId(), null, MembershipMemberType.valueOf(primaryOwner.getType())),
                         new MembershipService.MembershipRole(RoleScope.API, SystemRole.PRIMARY_OWNER.name()));
 
                     // create the default mail notification
@@ -512,27 +512,20 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
     }
 
-    private PrimaryOwner findPrimaryOwner(JsonNode apiDefinition, String userId) {
-        PrimaryOwner primaryOwner = null;
+    private PrimaryOwnerEntity findPrimaryOwner(JsonNode apiDefinition, String userId) {
+        PrimaryOwnerEntity primaryOwnerEntity = null;
         if (apiDefinition != null && apiDefinition.has("primaryOwner")) {
 
             try {
-                PrimaryOwnerEntity primaryOwnerEntity = objectMapper.readValue(apiDefinition.get("primaryOwner").toString(), PrimaryOwnerEntity.class);
-                if (primaryOwnerEntity.getId() != null && !primaryOwnerEntity.getId().isEmpty()) {
-                    if (PrimaryOwnerType.USER.equals(primaryOwnerEntity.getType())) {
-                        primaryOwner = userService.findById(primaryOwnerEntity.getId());
-                    } else if (PrimaryOwnerType.GROUP.equals(primaryOwnerEntity.getType())) {
-                        primaryOwner = groupService.findById(primaryOwnerEntity.getId());
-                    }
-                }
+               primaryOwnerEntity = objectMapper.readValue(apiDefinition.get("primaryOwner").toString(), PrimaryOwnerEntity.class);
             } catch (JsonProcessingException e) {
                 LOGGER.warn("Cannot parse primary owner from definition, continue with user {} {}", userId, e);
             }
         }
-        if (primaryOwner == null) {
-            primaryOwner = userService.findById(userId);
+        if (primaryOwnerEntity == null) {
+            primaryOwnerEntity = new PrimaryOwnerEntity(userService.findById(userId));
         }
-        return primaryOwner;
+        return primaryOwnerEntity;
     }
 
     private void createSystemFolder(String apiId) {
@@ -720,14 +713,21 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
     }
 
-    private UserEntity getPrimaryOwner(Api api) throws TechnicalException {
-        MembershipEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(io.gravitee.rest.api.model.MembershipReferenceType.API, api.getId());
+    @Override
+    public PrimaryOwnerEntity getPrimaryOwner(String apiId) throws TechnicalManagementException {
+        MembershipEntity primaryOwnerMemberEntity = membershipService.getPrimaryOwner(io.gravitee.rest.api.model.MembershipReferenceType.API, apiId);
         if (primaryOwnerMemberEntity == null) {
-            LOGGER.error("The API {} doesn't have any primary owner.", api.getId());
-            throw new TechnicalException("The API " + api.getId() + " doesn't have any primary owner.");
+            LOGGER.error("The API {} doesn't have any primary owner.", apiId);
+            throw new TechnicalManagementException("The API " + apiId + " doesn't have any primary owner.");
         }
+        if (MembershipMemberType.GROUP == primaryOwnerMemberEntity.getMemberType()) {
+            return new PrimaryOwnerEntity(groupService.findById(primaryOwnerMemberEntity.getMemberId()));
+        }
+        return new PrimaryOwnerEntity(userService.findById(primaryOwnerMemberEntity.getMemberId()));
+    }
 
-        return userService.findById(primaryOwnerMemberEntity.getMemberId());
+    private PrimaryOwnerEntity getPrimaryOwner(Api api) throws TechnicalManagementException {
+        return this.getPrimaryOwner(api.getId());
     }
 
     private void calculateEntrypoints(ApiEntity api, String environmentId) {
@@ -2631,16 +2631,25 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             streamApis = streamApis.filter(api -> !apiIds.contains(api.getId()));
         }
 
-        Map<String, String> apiToUser = new HashMap<>(memberships.size());
-        memberships.forEach(membership -> apiToUser.put(membership.getReferenceId(), membership.getId()));
+        Map<String, String> apiToMember = new HashMap<>(memberships.size());
+        memberships.forEach(membership -> apiToMember.put(membership.getReferenceId(), membership.getId()));
 
-        Map<String, UserEntity> userIdToUserEntity = new HashMap<>(memberships.size());
-        userService.findByIds(memberships.stream().map(MemberEntity::getId).collect(toList()))
-            .forEach(userEntity -> userIdToUserEntity.put(userEntity.getId(), userEntity));
+        Map<String, PrimaryOwnerEntity> primaryOwnerIdToPrimaryOwnerEntity = new HashMap<>(memberships.size());
+        final List<String> userIds = memberships.stream().filter(membership -> membership.getType() == MembershipMemberType.USER).map(MemberEntity::getId).collect(toList());
+        if(userIds != null && !userIds.isEmpty()) {
+            userService.findByIds(userIds)
+                    .forEach(userEntity -> primaryOwnerIdToPrimaryOwnerEntity.put(userEntity.getId(), new PrimaryOwnerEntity(userEntity)));
+        }
+        final Set<String> groupIds = memberships.stream().filter(membership -> membership.getType() == MembershipMemberType.GROUP).map(MemberEntity::getId).collect(Collectors.toSet());
+        if(groupIds != null && !groupIds.isEmpty()) {
+            groupService.findByIds(groupIds)
+                    .forEach(groupEntity -> primaryOwnerIdToPrimaryOwnerEntity.put(groupEntity.getId(), new PrimaryOwnerEntity(groupEntity)));
+        }
+
 
         final List<CategoryEntity> categories = categoryService.findAll();
         return streamApis
-            .map(publicApi -> this.convert(publicApi, userIdToUserEntity.get(apiToUser.get(publicApi.getId())), categories))
+            .map(publicApi -> this.convert(publicApi, primaryOwnerIdToPrimaryOwnerEntity.get(apiToMember.get(publicApi.getId())), categories))
             .collect(toSet());
     }
 
@@ -2648,7 +2657,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         return convert(api, null, null);
     }
 
-    private ApiEntity convert(Api api, PrimaryOwner primaryOwner, List<CategoryEntity> categories) {
+    private ApiEntity convert(Api api, PrimaryOwnerEntity primaryOwner, List<CategoryEntity> categories) {
         ApiEntity apiEntity = new ApiEntity();
 
         apiEntity.setId(api.getId());
@@ -2726,7 +2735,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         }
 
         if (primaryOwner != null) {
-            apiEntity.setPrimaryOwner(new PrimaryOwnerEntity(primaryOwner));
+            apiEntity.setPrimaryOwner(primaryOwner);
         }
         final ApiLifecycleState lifecycleState = api.getApiLifecycleState();
         if (lifecycleState != null) {
