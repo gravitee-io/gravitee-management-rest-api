@@ -320,6 +320,25 @@ public class ApiService_UpdateTest {
         fail("should throw InvalidDataException");
     }
 
+    @Test(expected = InvalidDataException.class)
+    public void shouldNotUpdateWithPOGroups() throws TechnicalException {
+
+        prepareUpdate();
+
+        Set<String> groups = Sets.newSet("group-with-po");
+        when(existingApi.getGroups()).thenReturn(groups);
+
+        GroupEntity poGroup = new GroupEntity();
+        poGroup.setId("group-with-po");
+        poGroup.setApiPrimaryOwner("a-api-po-user");
+        Set<GroupEntity> groupEntitySet = Sets.newSet(poGroup);
+        when(groupService.findByIds(groups)).thenReturn(groupEntitySet);
+
+        apiService.update(API_ID, existingApi);
+
+        fail("should throw InvalidDataException");
+    }
+
     private void prepareUpdate() throws TechnicalException {
         when(apiRepository.findById(API_ID)).thenReturn(Optional.of(api));
         when(apiRepository.update(any())).thenReturn(api);
