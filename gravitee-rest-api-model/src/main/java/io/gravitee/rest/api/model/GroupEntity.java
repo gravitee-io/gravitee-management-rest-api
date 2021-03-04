@@ -24,10 +24,10 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com) 
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GroupEntity {
+public class GroupEntity implements PrimaryOwner {
 
     private String id;
     private String name;
@@ -63,6 +63,16 @@ public class GroupEntity {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return this.getName();
+    }
+
+    @Override
+    public PrimaryOwnerType getType() {
+        return PrimaryOwnerType.GROUP;
     }
 
     public void setName(String name) {
