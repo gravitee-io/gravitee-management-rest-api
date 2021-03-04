@@ -240,11 +240,19 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         return createdApi;
     }
 
-    private void checkGroupExistence(Set<String> groups) {
+    private void checkGroupExistenceAndType(Set<String> groups) {
         // check the existence of groups
         if (groups != null && !groups.isEmpty()) {
             try {
-                groupService.findByIds(new HashSet(groups));
+                final Set<GroupEntity> existingGroups = groupService.findByIds(new HashSet(groups));
+                final List<String> poGroups = existingGroups
+                        .stream()
+                        .filter(group -> group.getApiPrimaryOwner() != null && !group.getApiPrimaryOwner().isEmpty())
+                        .map(GroupEntity::getId)
+                        .collect(toList());
+                if(!poGroups.isEmpty()) {
+                    throw new InvalidDataException("These groups [" + String.join(", ", poGroups) + "] contain an API Primary Owner");
+                }
             } catch (GroupsNotFoundException gnfe) {
                 throw new InvalidDataException("These groups [" + gnfe.getParameters().get("groups") + "] do not exist");
             }
@@ -274,7 +282,7 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
         apiEntity.setDescription(newApiEntity.getDescription());
         apiEntity.setVersion(newApiEntity.getVersion());
 
-        checkGroupExistence(newApiEntity.getGroups());
+        checkGroupExistenceAndType(newApiEntity.getGroups());
         apiEntity.setGroups(newApiEntity.getGroups());
 
         Proxy proxy = new Proxy();
@@ -1080,8 +1088,8 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
             // check lifecycle state
             checkLifecycleState(updateApiEntity, apiToCheck);
 
-            // check the existence of groups
-            checkGroupExistence(updateApiEntity.getGroups());
+            // check the existence of groups and their type (PO groups are forbidden)
+            checkGroupExistenceAndType(updateApiEntity.getGroups());
 
             // add a default path
             if ((updateApiEntity.getPaths() == null || updateApiEntity.getPaths().isEmpty())) {
