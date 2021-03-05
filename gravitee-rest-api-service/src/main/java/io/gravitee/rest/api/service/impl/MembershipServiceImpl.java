@@ -973,28 +973,39 @@ public class MembershipServiceImpl extends AbstractService implements Membership
                 new MembershipMember(member.getMemberId(), member.getReference(), member.getMemberType()),
                 new MembershipRole(roleScope, PRIMARY_OWNER.name()));
 
+        //If the new PO is a group and the reference is an API, add the group as a member of the API
+        if (membershipReferenceType == MembershipReferenceType.API && member.getMemberType() == MembershipMemberType.GROUP) {
+            apiService.addGroup(itemId, member.getMemberId());
+        }
+
         Optional<RoleEntity> optPoRoleEntity = roleService.findByScopeAndName(roleScope, PRIMARY_OWNER.name());
         if(optPoRoleEntity.isPresent()) {
             RoleEntity poRoleEntity = optPoRoleEntity.get();
 
-            // remove previous role of the new primary owner
+            // if the new primary owner is a user, remove its previous role
+            if (member.getMemberType() == MembershipMemberType.USER)
             this.getRoles(membershipReferenceType, itemId, member.getMemberType(), member.getMemberId()).forEach(role -> {
                 if (!role.getId().equals(poRoleEntity.getId())) {
-                    this.removeRole(membershipReferenceType, itemId, member.getMemberType(), newPrimaryOwnerMember.getId(), role.getId());
+                    this.removeRole(membershipReferenceType, itemId, member.getMemberType(), member.getMemberId(), role.getId());
                 }
             });
 
-            // Update the role for previous primary_owner
+            // remove role of the previous  primary owner
             this.removeRole(membershipReferenceType, itemId, primaryOwner.getMemberType(), primaryOwner.getMemberId(), poRoleEntity.getId());
 
-            // set the new role for the previous primary owner only if it is a user
-            if (primaryOwner.getMemberType() == MembershipMemberType.USER) {
-                for(RoleEntity newRole : newRoles) {
+
+            // if the previous primary owner was a user
+            if(primaryOwner.getMemberType() == MembershipMemberType.USER) {
+                // set the new role
+                for (RoleEntity newRole : newRoles) {
                     this.addRoleToMemberOnReference(
                             new MembershipReference(membershipReferenceType, itemId),
                             new MembershipMember(primaryOwner.getMemberId(), null, primaryOwner.getMemberType()),
                             new MembershipRole(roleScope, newRole.getName()));
                 }
+            } else if (primaryOwner.getMemberType() == MembershipMemberType.GROUP) {
+                // remove this group from the api's group list
+                apiService.removeGroup(itemId, primaryOwner.getId());
             }
         }
     }

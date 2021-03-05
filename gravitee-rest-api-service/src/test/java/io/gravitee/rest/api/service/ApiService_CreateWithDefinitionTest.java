@@ -24,6 +24,8 @@ import io.gravitee.repository.management.api.MembershipRepository;
 import io.gravitee.repository.management.model.Api;
 import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
+import io.gravitee.rest.api.model.parameters.Key;
+import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 import io.gravitee.rest.api.model.permissions.SystemRole;
 import io.gravitee.rest.api.service.impl.ApiServiceImpl;
@@ -47,6 +49,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -125,6 +128,7 @@ public class ApiService_CreateWithDefinitionTest {
     @Before
     public void setUp() {
         when(notificationTemplateService.resolveInlineTemplateWithParam(anyString(), any(Reader.class), any())).thenReturn("toDecode=decoded-value");
+        when(parameterService.find(Key.API_PRIMARY_OWNER_MODE, ParameterReferenceType.ENVIRONMENT)).thenReturn("USER");
         reset(searchEngineService);
     }
 
@@ -337,6 +341,9 @@ public class ApiService_CreateWithDefinitionTest {
         user.setSource(SOURCE);
         user.setSourceId(API_ID);
 
+        when(userService.findById(any())).thenReturn(user);
+        when(parameterService.find(Key.API_PRIMARY_OWNER_MODE, ParameterReferenceType.ENVIRONMENT)).thenReturn("HYBRID");
+
         apiService.createWithImportedDefinition(null, toBeImport, "admin");
 
         verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
@@ -373,6 +380,9 @@ public class ApiService_CreateWithDefinitionTest {
         GroupEntity group = new GroupEntity();
         group.setApiPrimaryOwner(user.getId());
         group.setId("group");
+
+        when(groupService.findById(any())).thenReturn(group);
+        when(parameterService.find(Key.API_PRIMARY_OWNER_MODE, ParameterReferenceType.ENVIRONMENT)).thenReturn("GROUP");
 
         apiService.createWithImportedDefinition(null, toBeImport, "admin");
 

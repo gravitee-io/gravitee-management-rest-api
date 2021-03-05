@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.rest.api.model;
+package io.gravitee.rest.api.model.settings;
 
-public enum PrimaryOwnerType {
-    USER,
-    GROUP
+public enum ApiPrimaryOwnerMode {
+    HYBRID, USER, GROUP;
 }

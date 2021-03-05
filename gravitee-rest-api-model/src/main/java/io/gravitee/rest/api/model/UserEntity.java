@@ -30,7 +30,7 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @JsonIgnoreProperties(value = {"displayName"}, allowGetters = true)
-public class UserEntity implements Indexable, PrimaryOwner {
+public class UserEntity implements Indexable {
 
     /**
      * User identifier
@@ -154,11 +154,6 @@ public class UserEntity implements Indexable, PrimaryOwner {
 
     public String getEmail() {
         return email;
-    }
-
-    @Override
-    public PrimaryOwnerType getType() {
-        return PrimaryOwnerType.USER;
     }
 
     public void setEmail(String email) {

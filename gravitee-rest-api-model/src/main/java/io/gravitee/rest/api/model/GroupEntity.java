@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GroupEntity implements PrimaryOwner {
+public class GroupEntity {
 
     private String id;
     private String name;
@@ -52,6 +52,8 @@ public class GroupEntity implements PrimaryOwner {
     @JsonProperty("disable_membership_notifications")
     private boolean disableMembershipNotifications;
     private String apiPrimaryOwner;
+    @JsonProperty("primary_owner")
+    private boolean primaryOwner;
 
     public String getId() {
         return id;
@@ -63,16 +65,6 @@ public class GroupEntity implements PrimaryOwner {
 
     public String getName() {
         return name;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return this.getName();
-    }
-
-    @Override
-    public PrimaryOwnerType getType() {
-        return PrimaryOwnerType.GROUP;
     }
 
     public void setName(String name) {
@@ -175,6 +167,14 @@ public class GroupEntity implements PrimaryOwner {
         this.apiPrimaryOwner = apiPrimaryOwner;
     }
 
+    public boolean isPrimaryOwner() {
+        return primaryOwner;
+    }
+
+    public void setPrimaryOwner(boolean primaryOwner) {
+        this.primaryOwner = primaryOwner;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -205,6 +205,7 @@ public class GroupEntity implements PrimaryOwner {
                 ", emailInvitation=" + emailInvitation +
                 ", disableMembershipNotifications=" + disableMembershipNotifications +
                 ", apiPrimaryOwner=" + apiPrimaryOwner +
+                ", primaryOwner=" + primaryOwner +
                 '}';
     }
 }

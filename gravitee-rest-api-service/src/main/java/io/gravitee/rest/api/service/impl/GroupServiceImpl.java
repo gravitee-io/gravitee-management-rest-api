@@ -30,13 +30,11 @@ import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.permissions.RolePermission;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 import io.gravitee.rest.api.model.permissions.SystemRole;
+import io.gravitee.rest.api.model.settings.ApiPrimaryOwnerMode;
 import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.common.RandomString;
-import io.gravitee.rest.api.service.exceptions.GroupNameAlreadyExistsException;
-import io.gravitee.rest.api.service.exceptions.GroupNotFoundException;
-import io.gravitee.rest.api.service.exceptions.GroupsNotFoundException;
-import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
+import io.gravitee.rest.api.service.exceptions.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +92,8 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
                     .sorted(Comparator.comparing(GroupEntity::getName))
                     .collect(Collectors.toList());
 
+            populateGroupFlags(groups);
+
             if (permissionService.hasPermission(RolePermission.ENVIRONMENT_GROUP, GraviteeContext.getCurrentEnvironment(), CREATE, UPDATE, DELETE)) {
                 groups.forEach(groupEntity -> groupEntity.setManageable(true));
             } else {
@@ -115,6 +115,19 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
             logger.error("An error occurs while trying to find all groups", ex);
             throw new TechnicalManagementException("An error occurs while trying to find all groups", ex);
         }
+    }
+
+    private void populateGroupFlags(final List<GroupEntity> groups) {
+        RoleEntity apiPORole = roleService.findByScopeAndName(RoleScope.API, SystemRole.PRIMARY_OWNER.name())
+                .orElseThrow(() -> new TechnicalManagementException("API System Role 'PRIMARY_OWNER' not found."));
+
+        groups.forEach(group -> {
+            final boolean isApiPO = !membershipService.getMembershipsByMemberAndReferenceAndRole(
+                    MembershipMemberType.GROUP, group.getId(), MembershipReferenceType.API, apiPORole.getId())
+                    .isEmpty();
+
+            group.setPrimaryOwner(isApiPO);
+        });
     }
 
     @Override
@@ -379,6 +392,19 @@ public class GroupServiceImpl extends AbstractService implements GroupService {
             if (!group.isPresent()) {
                 throw new GroupNotFoundException(groupId);
             }
+
+            RoleEntity apiPORole = roleService.findByScopeAndName(RoleScope.API, SystemRole.PRIMARY_OWNER.name())
+                    .orElseThrow(() -> new TechnicalManagementException("API System Role 'PRIMARY_OWNER' not found."));
+
+
+            final long apiCount = membershipService.getMembershipsByMemberAndReferenceAndRole(
+                    MembershipMemberType.GROUP, groupId, MembershipReferenceType.API, apiPORole.getId())
+                    .size();
+
+            if(apiCount > 0) {
+                throw new StillPrimaryOwnerException(apiCount, ApiPrimaryOwnerMode.GROUP);
+            }
+
             //remove all members
             membershipService.deleteReference(MembershipReferenceType.GROUP, groupId);
 

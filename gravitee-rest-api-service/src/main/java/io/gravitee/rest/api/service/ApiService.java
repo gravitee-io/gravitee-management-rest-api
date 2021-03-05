@@ -146,4 +146,7 @@ public interface ApiService {
     ApiEntity fetchMetadataForApi(ApiEntity apiEntity);
 
     PrimaryOwnerEntity getPrimaryOwner(String apiId) throws TechnicalManagementException;
+
+    void addGroup(String api, String group);
+    void removeGroup(String api, String group);
 }

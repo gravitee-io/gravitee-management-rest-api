@@ -197,6 +197,9 @@ public class ApiService_UpdateTest {
         when(api.getEnvironmentId()).thenReturn("DEFAULT");
 
         when(notificationTemplateService.resolveInlineTemplateWithParam(anyString(), any(Reader.class), any())).thenReturn("toDecode=decoded-value");
+        MembershipEntity primaryOwner = new MembershipEntity();
+        primaryOwner.setMemberType(MembershipMemberType.USER);
+        when(membershipService.getPrimaryOwner(eq(MembershipReferenceType.API), any())).thenReturn(primaryOwner);
         reset(searchEngineService);
     }
 
@@ -332,7 +335,8 @@ public class ApiService_UpdateTest {
         poGroup.setId("group-with-po");
         poGroup.setApiPrimaryOwner("a-api-po-user");
         Set<GroupEntity> groupEntitySet = Sets.newSet(poGroup);
-        when(groupService.findByIds(groups)).thenReturn(groupEntitySet);
+//        when(groupService.findByIds(groups)).thenReturn(groupEntitySet);
+        when(groupService.findByIds(groups)).thenThrow(GroupsNotFoundException.class);
 
         apiService.update(API_ID, existingApi);
 
