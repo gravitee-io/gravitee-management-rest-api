@@ -15,6 +15,7 @@
  */
 package io.gravitee.rest.api.service.impl.search.configuration;
 
+import io.gravitee.rest.api.service.impl.search.lucene.SearchEngineIndexer;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
@@ -24,8 +25,6 @@ import org.apache.lucene.store.FSDirectory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import io.gravitee.rest.api.service.impl.search.lucene.SearchEngineIndexer;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -68,4 +67,6 @@ public class SearchEngineConfiguration {
     public Analyzer analyzer() {
         return new StandardAnalyzer();
     }
+
+
 }

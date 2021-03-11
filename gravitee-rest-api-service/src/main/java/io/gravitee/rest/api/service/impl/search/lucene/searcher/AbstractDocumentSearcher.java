@@ -20,7 +20,6 @@ import io.gravitee.rest.api.model.common.Pageable;
 import io.gravitee.rest.api.service.impl.search.SearchResult;
 import io.gravitee.rest.api.service.impl.search.lucene.DocumentSearcher;
 import io.gravitee.rest.api.service.impl.search.lucene.analyzer.CustomWhitespaceAnalyzer;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
