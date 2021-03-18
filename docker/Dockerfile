@@ -22,7 +22,7 @@ ARG GRAVITEEIO_DOWNLOAD_URL=https://download.gravitee.io/graviteeio-apim/distrib
 ENV GRAVITEEIO_HOME /opt/graviteeio-management-api
 
 RUN apk update \
-	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
+	&& apk add --update --no-cache tcpdump curl zip unzip netcat-openbsd wget \
 	&& wget ${GRAVITEEIO_DOWNLOAD_URL}/graviteeio-full-${GRAVITEEIO_VERSION}.zip --no-check-certificate -P /tmp \
     && unzip /tmp/graviteeio-full-${GRAVITEEIO_VERSION}.zip -d /tmp/ \
 	&& apk del zip unzip netcat-openbsd wget \
