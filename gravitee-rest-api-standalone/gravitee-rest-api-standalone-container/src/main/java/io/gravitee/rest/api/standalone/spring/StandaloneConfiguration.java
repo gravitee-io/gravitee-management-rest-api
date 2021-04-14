@@ -15,7 +15,9 @@
  */
 package io.gravitee.rest.api.standalone.spring;
 
+import io.gravitee.node.api.NodeMonitoringRepository;
 import io.gravitee.node.container.NodeFactory;
+import io.gravitee.node.monitoring.NoOpNodeMonitoringRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -60,5 +62,11 @@ public class StandaloneConfiguration {
     @Bean
     public JettyEmbeddedContainer container() {
         return new JettyEmbeddedContainer();
+    }
+
+    // TODO : do not merge for version >= 3.8.x
+    @Bean
+    public NodeMonitoringRepository nodeMonitoringRepository() {
+        return new NoOpNodeMonitoringRepository();
     }
 }
