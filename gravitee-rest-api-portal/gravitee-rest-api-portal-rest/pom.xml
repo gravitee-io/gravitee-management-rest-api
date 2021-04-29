@@ -31,7 +31,7 @@
 	<name>Gravitee.io Rest APIs - Portal - Rest API</name>
 
 	<properties>
-		<openapi-generator.version>4.1.1</openapi-generator.version>
+		<openapi-generator.version>5.1.0</openapi-generator.version>
         <openapi.modelPackage>io.gravitee.rest.api.portal.rest.model</openapi.modelPackage>
 	</properties>
 
