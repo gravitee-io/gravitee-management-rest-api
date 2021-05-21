@@ -59,7 +59,7 @@
         <jsonpath.version>2.4.0</jsonpath.version>
         <lucene.version>7.5.0</lucene.version>
         <powermock.version>2.0.9</powermock.version>
-        <commons-lang3.version>3.9</commons-lang3.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
         <swagger.version>1.6.2</swagger.version>
         <nimbus-jose-jwt.version>8.15</nimbus-jose-jwt.version>
         <flexmark.version>0.61.16</flexmark.version>
