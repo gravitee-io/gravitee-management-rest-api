@@ -16,6 +16,7 @@
 package io.gravitee.rest.api.model.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 import java.util.List;
 import java.util.Objects;
 import javax.validation.constraints.NotNull;
@@ -31,6 +32,11 @@ public class DuplicateApiEntity {
     private String contextPath;
 
     @JsonProperty("filtered_fields")
+    @ApiModelProperty(
+        value = "Fields that WILL NOT be duplicated.",
+        example = "['groups', 'pages']",
+        allowableValues = "groups, members, pages, plans"
+    )
     private List<String> filteredFields;
 
     private String version;

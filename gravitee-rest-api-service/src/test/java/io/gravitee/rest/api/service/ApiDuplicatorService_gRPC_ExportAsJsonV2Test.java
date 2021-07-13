@@ -29,7 +29,7 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class ApiService_gRPC_ExportAsJsonV2Test extends ApiService_gRPC_ExportAsJsonTestSetup {
+public class ApiDuplicatorService_gRPC_ExportAsJsonV2Test extends ApiDuplicatorService_gRPC_ExportAsJsonTestSetup {
 
     @Override
     protected io.gravitee.definition.model.Api buildApiDefinition(Api api) {
