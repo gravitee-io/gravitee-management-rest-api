@@ -39,11 +39,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
 public class ApiService_FindPrimaryOwnerTest {
 
     private static final String CURRENT_USER = "myCurrentUser";
@@ -68,32 +70,36 @@ public class ApiService_FindPrimaryOwnerTest {
 
     // HYBRID + import with PO GROUP
     @Test
-    public void testHybridModeWithExistingPOGroup() {
+    public void testHybridModeWithExistingPOGroup() throws Exception {
         setPrimaryOwnerMode("HYBRID");
         defineGroup(PO_GROUP_ID);
 
         JsonNode definition = poGroupDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(PO_GROUP_ID, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
+    private PrimaryOwnerEntity callFindByPrimaryOwner(JsonNode definition) throws Exception {
+        return Whitebox.invokeMethod(apiService, "findPrimaryOwner", definition, CURRENT_USER);
+    }
+
     @Test
-    public void testHybridModeWithNonExistingPOGroupAndCurrentUserBelongsToAPoGroup() {
+    public void testHybridModeWithNonExistingPOGroupAndCurrentUserBelongsToAPoGroup() throws Exception {
         setPrimaryOwnerMode("HYBRID");
         setPoGroupNonExisting();
         addUserInPOGroup(CURRENT_USER, CURRENT_USER_PO_GROUP);
 
         JsonNode definition = poGroupDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER_PO_GROUP, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test
-    public void testHybridModeWithNonExistingPOGroupAndCurrentUserDoesNotBelongToAPoGroup() {
+    public void testHybridModeWithNonExistingPOGroupAndCurrentUserDoesNotBelongToAPoGroup() throws Exception {
         setPrimaryOwnerMode("HYBRID");
         setPoGroupNonExisting();
         setCurrentUserInNoPOGroup();
@@ -101,103 +107,103 @@ public class ApiService_FindPrimaryOwnerTest {
 
         JsonNode definition = poGroupDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     // HYBRID + import with PO User
     @Test
-    public void testHybridModeWithExistingPOUser() {
+    public void testHybridModeWithExistingPOUser() throws Exception {
         setPrimaryOwnerMode("HYBRID");
         defineUser(PO_USER_ID);
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(PO_USER_ID, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     @Test
-    public void testHybridModeWithNonExistingPOUser() {
+    public void testHybridModeWithNonExistingPOUser() throws Exception {
         setPrimaryOwnerMode("HYBRID");
         setPoUserNonExisting();
         defineUser(CURRENT_USER);
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     // HYBRID + import with no PO
     @Test
-    public void testHybridModeWithNoPO() {
+    public void testHybridModeWithNoPO() throws Exception {
         setPrimaryOwnerMode("HYBRID");
         defineUser(CURRENT_USER);
 
         JsonNode definition = noPODefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     // GROUP + import with PO GROUP
     @Test
-    public void testGroupModeWithExistingPOGroup() {
+    public void testGroupModeWithExistingPOGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         defineGroup(PO_GROUP_ID);
 
         JsonNode definition = poGroupDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(PO_GROUP_ID, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test
-    public void testGroupModeWithNonExistingPOGroupAndCurrentUserBelongsToAPoGroup() {
+    public void testGroupModeWithNonExistingPOGroupAndCurrentUserBelongsToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         setPoGroupNonExisting();
         addUserInPOGroup(CURRENT_USER, CURRENT_USER_PO_GROUP);
 
         JsonNode definition = poGroupDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER_PO_GROUP, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test(expected = NoPrimaryOwnerGroupForUserException.class)
-    public void testGroupModeWithNonExistingPOGroupAndCurrentUserDoesNotBelongToAPoGroup() {
+    public void testGroupModeWithNonExistingPOGroupAndCurrentUserDoesNotBelongToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         setPoGroupNonExisting();
         setCurrentUserInNoPOGroup();
 
         JsonNode definition = poGroupDefinition();
 
-        apiService.findPrimaryOwner(definition, CURRENT_USER);
+        callFindByPrimaryOwner(definition);
     }
 
     // GROUP + import with PO User
     @Test
-    public void testGroupModeWithExistingPOUserAndPoUserBelongsToAPoGroup() {
+    public void testGroupModeWithExistingPOUserAndPoUserBelongsToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         defineUser(PO_USER_ID);
         addUserInPOGroup(PO_USER_ID, PO_GROUP_ID);
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(PO_GROUP_ID, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test
-    public void testGroupModeWithExistingPOUserAndPoUserDoesNotBelongToAPoGroupAndCurrentUserBelongsToAPoGroup() {
+    public void testGroupModeWithExistingPOUserAndPoUserDoesNotBelongToAPoGroupAndCurrentUserBelongsToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         defineUser(PO_USER_ID);
         setPoUserInNoPOGroup();
@@ -205,13 +211,13 @@ public class ApiService_FindPrimaryOwnerTest {
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER_PO_GROUP, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test(expected = NoPrimaryOwnerGroupForUserException.class)
-    public void testGroupModeWithExistingPOUserAndPoUserDoesNotBelongToAPoGroupAndCurrentUserDoesNotBelongToAPoGroup() {
+    public void testGroupModeWithExistingPOUserAndPoUserDoesNotBelongToAPoGroupAndCurrentUserDoesNotBelongToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         defineUser(PO_USER_ID);
         setCurrentUserInNoPOGroup();
@@ -219,104 +225,104 @@ public class ApiService_FindPrimaryOwnerTest {
 
         JsonNode definition = poUserDefinition();
 
-        apiService.findPrimaryOwner(definition, CURRENT_USER);
+        callFindByPrimaryOwner(definition);
     }
 
     @Test
-    public void testGroupModeWithNonExistingPOUserAndCurrentUserBelongsToAPoGroup() {
+    public void testGroupModeWithNonExistingPOUserAndCurrentUserBelongsToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         addUserInPOGroup(CURRENT_USER, CURRENT_USER_PO_GROUP);
         setPoUserNonExisting();
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER_PO_GROUP, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test(expected = NoPrimaryOwnerGroupForUserException.class)
-    public void testGroupModeWithNonExistingPOUserAndCurrentUserDoesNotBelongToAPoGroup() {
+    public void testGroupModeWithNonExistingPOUserAndCurrentUserDoesNotBelongToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         setPoUserNonExisting();
         setCurrentUserInNoPOGroup();
 
         JsonNode definition = poUserDefinition();
 
-        apiService.findPrimaryOwner(definition, CURRENT_USER);
+        callFindByPrimaryOwner(definition);
     }
 
     // GROUP + import with no PO
     @Test
-    public void testGroupModeWithNoPOAndCurrentUserBelongsToAPoGroup() {
+    public void testGroupModeWithNoPOAndCurrentUserBelongsToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         addUserInPOGroup(CURRENT_USER, CURRENT_USER_PO_GROUP);
 
         JsonNode definition = noPODefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER_PO_GROUP, primaryOwner.getId());
         assertEquals("GROUP", primaryOwner.getType());
     }
 
     @Test(expected = NoPrimaryOwnerGroupForUserException.class)
-    public void testGroupModeWithNoPOAndCurrentUserDoesNotBelongToAPoGroup() {
+    public void testGroupModeWithNoPOAndCurrentUserDoesNotBelongToAPoGroup() throws Exception {
         setPrimaryOwnerMode("GROUP");
         setCurrentUserInNoPOGroup();
 
         JsonNode definition = noPODefinition();
 
-        apiService.findPrimaryOwner(definition, CURRENT_USER);
+        callFindByPrimaryOwner(definition);
     }
 
     // USER + import with PO GROUP
     @Test
-    public void testUserModeWithPOGroup() {
+    public void testUserModeWithPOGroup() throws Exception {
         setPrimaryOwnerMode("USER");
         defineUser(CURRENT_USER);
 
         JsonNode definition = poGroupDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     // USER + import with PO User
     @Test
-    public void testUserModeWithExistingPOUser() {
+    public void testUserModeWithExistingPOUser() throws Exception {
         setPrimaryOwnerMode("USER");
         defineUser(PO_USER_ID);
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(PO_USER_ID, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     @Test
-    public void testUserModeWithNonExistingPOUser() {
+    public void testUserModeWithNonExistingPOUser() throws Exception {
         setPrimaryOwnerMode("USER");
         setPoUserNonExisting();
         defineUser(CURRENT_USER);
 
         JsonNode definition = poUserDefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }
 
     // USER + import with no PO
     @Test
-    public void testUserModeWithNoPO() {
+    public void testUserModeWithNoPO() throws Exception {
         setPrimaryOwnerMode("USER");
         defineUser(CURRENT_USER);
 
         JsonNode definition = noPODefinition();
 
-        final PrimaryOwnerEntity primaryOwner = apiService.findPrimaryOwner(definition, CURRENT_USER);
+        final PrimaryOwnerEntity primaryOwner = callFindByPrimaryOwner(definition);
         assertEquals(CURRENT_USER, primaryOwner.getId());
         assertEquals("USER", primaryOwner.getType());
     }

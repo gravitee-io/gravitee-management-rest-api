@@ -42,7 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class ApiService_ExportAsJsonTest extends ApiService_ExportAsJsonTestSetup {
+public class ApiDuplicatorService_ExportAsJsonTest extends ApiDuplicatorService_ExportAsJsonTestSetup {
 
     @Test
     public void shouldConvertAsJsonForExport() throws TechnicalException, IOException {
@@ -214,7 +214,11 @@ public class ApiService_ExportAsJsonTest extends ApiService_ExportAsJsonTestSetu
         }
 
         when(apiRepository.findById(API_ID)).thenReturn(Optional.of(api));
-        String jsonForExport = apiService.exportAsJson(API_ID, ApiSerializer.Version.V_1_15.getVersion(), SystemRole.PRIMARY_OWNER.name());
+        String jsonForExport = apiDuplicatorService.exportAsJson(
+            API_ID,
+            ApiSerializer.Version.V_1_15.getVersion(),
+            SystemRole.PRIMARY_OWNER.name()
+        );
 
         URL url = Resources.getResource(
             "io/gravitee/rest/api/management/service/export-convertAsJsonForExportMultipleEndpointGroups-1_15.json"
