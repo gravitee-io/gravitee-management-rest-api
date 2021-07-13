@@ -83,12 +83,6 @@ public interface ApiService {
 
     ApiEntity rollback(String apiId, UpdateApiEntity api);
 
-    String exportAsJson(String apiId, String exportVersion, String... filteredFields);
-
-    ApiEntity createWithImportedDefinition(ApiEntity apiEntity, String apiDefinitionOrURL, String userId);
-
-    ApiEntity updateWithImportedDefinition(ApiEntity apiEntity, String apiDefinitionOrURL, String userId);
-
     InlinePictureEntity getPicture(String apiId);
 
     void deleteCategoryFromAPIs(String categoryId);
@@ -148,8 +142,6 @@ public interface ApiService {
     ApiEntity askForReview(String apiId, String userId, ReviewEntity reviewEntity);
     ApiEntity acceptReview(String apiId, String userId, ReviewEntity reviewEntity);
     ApiEntity rejectReview(String apiId, String userId, ReviewEntity reviewEntity);
-
-    ApiEntity duplicate(ApiEntity apiEntity, DuplicateApiEntity duplicateApiEntity);
 
     InlinePictureEntity getBackground(String apiId);
 
