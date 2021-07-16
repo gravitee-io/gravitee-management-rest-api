@@ -2522,16 +2522,11 @@ public class PageServiceImpl extends AbstractService implements PageService, App
     }
 
     @Override
-    public PageEntity createWithDefinition(String apiId, String pageDefinition) {
+    public PageEntity createWithDefinition(String apiId, String pageDefinition, String currentEnvironment) {
         try {
             final NewPageEntity newPage = convertToEntity(pageDefinition);
             JsonNode jsonNode = objectMapper.readTree(pageDefinition);
-            return createPage(
-                apiId,
-                newPage,
-                GraviteeContext.getCurrentEnvironment(),
-                (jsonNode.get("id") != null ? jsonNode.get("id").asText() : null)
-            );
+            return createPage(apiId, newPage, currentEnvironment, (jsonNode.get("id") != null ? jsonNode.get("id").asText() : null));
         } catch (JsonProcessingException e) {
             logger.error("An error occurs while trying to JSON deserialize the Page {}", pageDefinition, e);
             throw new TechnicalManagementException("An error occurs while trying to JSON deserialize the Page definition.");

@@ -42,6 +42,7 @@ import io.gravitee.rest.api.model.promotion.PromotionEntity;
 import io.gravitee.rest.api.model.promotion.PromotionRequestEntity;
 import io.gravitee.rest.api.security.utils.ImageUtils;
 import io.gravitee.rest.api.service.*;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.ApiNotFoundException;
 import io.gravitee.rest.api.service.promotion.PromotionService;
 import io.swagger.annotations.*;
@@ -386,7 +387,12 @@ public class ApiResource extends AbstractResource {
     public Response updateApiWithDefinition(@ApiParam(name = "definition", required = true) String apiDefinition) {
         final ApiEntity apiEntity = (ApiEntity) getApi().getEntity();
 
-        ApiEntity updatedApi = apiDuplicatorService.createWithImportedDefinition(apiEntity, apiDefinition, getAuthenticatedUser());
+        ApiEntity updatedApi = apiDuplicatorService.createWithImportedDefinition(
+            apiEntity,
+            apiDefinition,
+            getAuthenticatedUser(),
+            GraviteeContext.getCurrentEnvironment()
+        );
         return Response
             .ok(updatedApi)
             .tag(Long.toString(updatedApi.getUpdatedAt().getTime()))

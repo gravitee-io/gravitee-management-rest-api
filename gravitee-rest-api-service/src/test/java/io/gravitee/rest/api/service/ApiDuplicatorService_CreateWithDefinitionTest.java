@@ -31,9 +31,9 @@ import io.gravitee.rest.api.model.parameters.Key;
 import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 import io.gravitee.rest.api.model.permissions.SystemRole;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.PlanNotFoundException;
 import io.gravitee.rest.api.service.impl.ApiDuplicatorServiceImpl;
-import io.gravitee.rest.api.service.impl.ApiServiceImpl;
 import io.gravitee.rest.api.service.notification.NotificationTemplateService;
 import io.gravitee.rest.api.service.search.SearchEngineService;
 import io.gravitee.rest.api.service.spring.ServiceConfiguration;
@@ -200,11 +200,11 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         when(membershipService.addRoleToMemberOnReference(any(), any(), any())).thenReturn(memberEntity);
         when(userService.findBySource(user.getSource(), user.getSourceId(), false)).thenReturn(user);
         when(userService.findById(memberEntity.getId())).thenReturn(admin);
-        when(pageService.createWithDefinition(any(), any())).thenReturn(new PageEntity());
+        when(pageService.createWithDefinition(any(), any(), GraviteeContext.getCurrentEnvironment())).thenReturn(new PageEntity());
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
-        verify(pageService, times(2)).createWithDefinition(eq(API_ID), anyString());
+        verify(pageService, times(2)).createWithDefinition(eq(API_ID), anyString(), GraviteeContext.getCurrentEnvironment());
         verify(membershipService, times(1))
             .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
@@ -264,7 +264,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         memberEntity.setRoles(Collections.singletonList(poRoleEntity));
         when(membershipService.addRoleToMemberOnReference(any(), any(), any())).thenReturn(memberEntity);
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(pageService, times(1)).createPage(eq(API_ID), any(NewPageEntity.class));
         verify(membershipService, times(1))
@@ -301,11 +301,11 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         user.setSource(SOURCE);
         user.setSourceId("ref-user");
         when(userService.findById(admin.getId())).thenReturn(admin);
-        when(pageService.createWithDefinition(any(), any())).thenReturn(new PageEntity());
+        when(pageService.createWithDefinition(any(), any(), GraviteeContext.getCurrentEnvironment())).thenReturn(new PageEntity());
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
-        verify(pageService, times(2)).createWithDefinition(eq(API_ID), anyString());
+        verify(pageService, times(2)).createWithDefinition(eq(API_ID), anyString(), GraviteeContext.getCurrentEnvironment());
         verify(apiRepository, never()).update(any());
         verify(apiRepository, times(1)).create(any());
         verify(genericNotificationConfigService, times(1)).create(any());
@@ -332,7 +332,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         user.setSourceId(API_ID);
         when(userService.findById(admin.getId())).thenReturn(admin);
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
         verify(apiRepository, never()).update(any());
@@ -369,7 +369,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         when(userService.findById(any())).thenReturn(user);
         when(parameterService.find(Key.API_PRIMARY_OWNER_MODE, ParameterReferenceType.ENVIRONMENT)).thenReturn("HYBRID");
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
         verify(apiRepository, never()).update(any());
@@ -411,7 +411,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         when(groupService.findById(any())).thenReturn(group);
         when(parameterService.find(Key.API_PRIMARY_OWNER_MODE, ParameterReferenceType.ENVIRONMENT)).thenReturn("GROUP");
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
         verify(apiRepository, never()).update(any());
@@ -447,7 +447,12 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         user.setSourceId(API_ID);
         when(userService.findById(admin.getId())).thenReturn(admin);
 
-        ApiEntity apiEntityCreated = apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        ApiEntity apiEntityCreated = apiDuplicatorService.createWithImportedDefinition(
+            null,
+            toBeImport,
+            "admin",
+            GraviteeContext.getCurrentEnvironment()
+        );
 
         verify(pageService, times(1)).createPage(any(), any(NewPageEntity.class));
         verify(apiRepository, never()).update(any());
@@ -473,7 +478,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         when(userService.findById(admin.getId())).thenReturn(admin);
         when(planService.findById(anyString())).thenThrow(PlanNotFoundException.class);
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(pageService, times(1)).createPage(eq(API_ID), any(NewPageEntity.class));
         verify(membershipService, times(1))
@@ -508,7 +513,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         when(userService.findById(admin.getId())).thenReturn(admin);
         when(planService.findById(anyString())).thenThrow(PlanNotFoundException.class);
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(planService, times(2)).create(any(NewPlanEntity.class));
         verify(apiRepository, never()).update(any());
@@ -533,7 +538,7 @@ public class ApiDuplicatorService_CreateWithDefinitionTest {
         admin.setSourceId(API_ID);
         when(userService.findById(admin.getId())).thenReturn(admin);
 
-        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin");
+        apiDuplicatorService.createWithImportedDefinition(null, toBeImport, "admin", GraviteeContext.getCurrentEnvironment());
 
         verify(apiMetadataService, times(1)).create(any(NewApiMetadataEntity.class));
         verify(apiMetadataService, times(2)).update(any(UpdateApiMetadataEntity.class));

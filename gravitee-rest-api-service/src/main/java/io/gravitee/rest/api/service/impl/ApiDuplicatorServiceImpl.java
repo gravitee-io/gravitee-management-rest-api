@@ -66,14 +66,14 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
     private MediaService mediaService;
 
     @Override
-    public ApiEntity createWithImportedDefinition(ApiEntity apiEntity, String apiDefinitionOrURL, String userId) {
+    public ApiEntity createWithImportedDefinition(ApiEntity apiEntity, String apiDefinitionOrURL, String userId, String environment) {
         String apiDefinition = fetchApiDefinitionContentFromURL(apiDefinitionOrURL);
         try {
             // Read the whole definition
             final JsonNode jsonNode = objectMapper.readTree(apiDefinition);
             UpdateApiEntity importedApi = convertToEntity(apiDefinition, jsonNode);
-            ApiEntity createdApiEntity = this.create0(importedApi, userId, false, jsonNode, GraviteeContext.getCurrentEnvironment());
-            createPageAndMedia(createdApiEntity, jsonNode);
+            ApiEntity createdApiEntity = this.create0(importedApi, userId, false, jsonNode, environment);
+            createPageAndMedia(createdApiEntity, jsonNode, environment);
             updateApiReferences(createdApiEntity, jsonNode);
             return createdApiEntity;
         } catch (JsonProcessingException e) {
@@ -222,7 +222,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         return importedApi;
     }
 
-    private void createPageAndMedia(ApiEntity createdApiEntity, JsonNode jsonNode) {
+    private void createPageAndMedia(ApiEntity createdApiEntity, JsonNode jsonNode, String currentEnvironment) {
         final JsonNode apiMedia = jsonNode.path("apiMedia");
         if (apiMedia != null && apiMedia.isArray()) {
             for (JsonNode media : apiMedia) {
@@ -233,7 +233,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         final JsonNode pages = jsonNode.path("pages");
         if (pages != null && pages.isArray()) {
             for (JsonNode page : pages) {
-                PageEntity pageEntity = pageService.createWithDefinition(createdApiEntity.getId(), page.toString());
+                PageEntity pageEntity = pageService.createWithDefinition(createdApiEntity.getId(), page.toString(), currentEnvironment);
                 ((ObjectNode) page).put("id", pageEntity.getId());
             }
         }
@@ -534,6 +534,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
                 }
             }
         }
+
         // Metadata
         final JsonNode metadataDefinition = jsonNode.path("metadata");
         if (metadataDefinition != null && metadataDefinition.isArray()) {
@@ -620,7 +621,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         }
     }
 
-    private static class PageEntityTreeNode {
+    private class PageEntityTreeNode {
 
         PageEntity data;
         PageEntityTreeNode parent;

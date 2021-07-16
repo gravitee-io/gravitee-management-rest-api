@@ -37,6 +37,7 @@ import io.gravitee.rest.api.service.*;
 import io.gravitee.rest.api.service.cockpit.services.CockpitReply;
 import io.gravitee.rest.api.service.cockpit.services.CockpitReplyStatus;
 import io.gravitee.rest.api.service.cockpit.services.CockpitService;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.*;
 import io.gravitee.rest.api.service.impl.promotion.PromotionServiceImpl;
 import java.util.Arrays;
@@ -206,7 +207,8 @@ public class PromotionServiceTest {
         Page<Promotion> promotionPage = new Page<>(emptyList(), 0, 1, 1);
         when(promotionRepository.search(any(), any(), any())).thenReturn(promotionPage);
 
-        when(apiDuplicatorService.createWithImportedDefinition(any(), any(), any())).thenReturn(new ApiEntity());
+        when(apiDuplicatorService.createWithImportedDefinition(any(), any(), any(), GraviteeContext.getCurrentEnvironment()))
+            .thenReturn(new ApiEntity());
 
         CockpitReply<PromotionEntity> cockpitReply = new CockpitReply<>(null, CockpitReplyStatus.SUCCEEDED);
         when(cockpitService.processPromotion(any())).thenReturn(cockpitReply);
@@ -215,7 +217,8 @@ public class PromotionServiceTest {
 
         promotionService.processPromotion(PROMOTION_ID, true, USER_ID);
 
-        verify(apiDuplicatorService, times(1)).createWithImportedDefinition(isNull(), any(), eq(USER_ID));
+        verify(apiDuplicatorService, times(1))
+            .createWithImportedDefinition(isNull(), any(), eq(USER_ID), GraviteeContext.getCurrentEnvironment());
         verify(promotionRepository, times(1)).update(any());
     }
 
@@ -258,7 +261,8 @@ public class PromotionServiceTest {
 
         promotionService.processPromotion(PROMOTION_ID, false, USER_ID);
 
-        verify(apiDuplicatorService, never()).createWithImportedDefinition(isNull(), any(), eq(USER_ID));
+        verify(apiDuplicatorService, never())
+            .createWithImportedDefinition(isNull(), any(), eq(USER_ID), GraviteeContext.getCurrentEnvironment());
         verify(apiDuplicatorService, never()).updateWithImportedDefinition(isNull(), any(), eq(USER_ID));
         verify(promotionRepository, times(1)).update(any());
     }

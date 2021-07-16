@@ -81,7 +81,7 @@ public interface PageService {
 
     PageEntity createSystemFolder(String apiId, SystemFolderType systemFolderType, int order, String environmentId);
 
-    PageEntity createWithDefinition(String apiId, String toString);
+    PageEntity createWithDefinition(String apiId, String toString, String currentEnvironment);
 
     /**
      * Check if the page is used as GeneralCondition by an active Plan for the given ApiID
