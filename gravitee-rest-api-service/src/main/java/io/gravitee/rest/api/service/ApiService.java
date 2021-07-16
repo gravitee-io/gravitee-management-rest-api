@@ -54,8 +54,8 @@ public interface ApiService {
 
     Set<ApiEntity> findByVisibility(Visibility visibility);
 
-    ApiEntity create(NewApiEntity api, String userId);
-    ApiEntity createFromSwagger(SwaggerApiEntity api, String userId, ImportSwaggerDescriptorEntity swaggerDescriptor);
+    ApiEntity create(NewApiEntity api, String userId, String environment);
+    ApiEntity createFromSwagger(SwaggerApiEntity api, String userId, ImportSwaggerDescriptorEntity swaggerDescriptor, String environment);
 
     ApiEntity update(String apiId, UpdateApiEntity api);
     ApiEntity update(String apiId, UpdateApiEntity api, boolean checkPlans);

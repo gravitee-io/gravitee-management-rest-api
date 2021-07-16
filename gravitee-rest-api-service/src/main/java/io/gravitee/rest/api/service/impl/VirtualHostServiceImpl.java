@@ -67,7 +67,7 @@ public class VirtualHostServiceImpl extends TransactionalService implements Virt
     private EnvironmentService environmentService;
 
     @Override
-    public Collection<VirtualHost> sanitizeAndValidate(Collection<VirtualHost> virtualHosts, String apiId) {
+    public Collection<VirtualHost> sanitizeAndValidate(Collection<VirtualHost> virtualHosts, String apiId, String environment) {
         // Sanitize virtual hosts
         Collection<VirtualHost> sanitizedVirtualHosts = virtualHosts.stream().map(this::sanitize).collect(Collectors.toList());
 
@@ -78,7 +78,7 @@ public class VirtualHostServiceImpl extends TransactionalService implements Virt
         Set<ApiEntity> apis = apiRepository
             .search(null)
             .stream()
-            .filter(api -> !api.getId().equals(apiId) && api.getEnvironmentId().equals(GraviteeContext.getCurrentEnvironment()))
+            .filter(api -> !api.getId().equals(apiId) && api.getEnvironmentId().equals(environment))
             .map(this::convert)
             .collect(Collectors.toSet());
 

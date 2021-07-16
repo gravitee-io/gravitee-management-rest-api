@@ -27,6 +27,7 @@ import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.service.AccessControlService;
 import io.gravitee.rest.api.service.ApiService;
 import io.gravitee.rest.api.service.PageService;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.ForbiddenAccessException;
 import io.gravitee.rest.api.service.exceptions.PageMarkdownTemplateActionException;
 import io.gravitee.rest.api.service.exceptions.PageSystemFolderActionException;
@@ -134,7 +135,7 @@ public class ApiPagesResource extends AbstractResource {
         int order = pageService.findMaxApiPageOrderByApi(api) + 1;
         newPageEntity.setOrder(order);
         newPageEntity.setLastContributor(getAuthenticatedUser());
-        PageEntity newPage = pageService.createPage(api, newPageEntity);
+        PageEntity newPage = pageService.createPage(api, newPageEntity, GraviteeContext.getCurrentEnvironment());
         if (newPage != null) {
             return Response.created(this.getLocationHeader(newPage.getId())).entity(newPage).build();
         }

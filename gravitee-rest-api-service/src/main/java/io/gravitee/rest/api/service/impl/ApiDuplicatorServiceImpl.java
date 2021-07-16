@@ -72,7 +72,45 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
             // Read the whole definition
             final JsonNode jsonNode = objectMapper.readTree(apiDefinition);
             UpdateApiEntity importedApi = convertToEntity(apiDefinition, jsonNode);
-            ApiEntity createdApiEntity = this.create0(importedApi, userId, false, jsonNode, environment);
+
+            /*
+            It's a creation => we are free to set the ID we want. The general rule is: "NewID = UUID from concatenate(xxx, targetEnvironmentId)",
+            where xxx can be either the id in the definition or some fields like the name, the type, etc...
+
+            2 ways to tests:
+             a) if the definition contains ids (for API or pages, etc...) then we use the id else we use some fields of the object
+             b) we use only fields of the object even if ids are in the definition
+            */
+
+            // String apiId = jsonNode != null && jsonNode.has("id") ? jsonNode.get("id").asText() : null;
+
+            // Here implementing the a) version
+            String apiId = jsonNode != null && jsonNode.has("id") ? jsonNode.get("id").asText() : null;
+            if (apiId != null) {
+                apiId = computeNewUUID(environment, apiId);
+            } else {
+                String contextPath = "";
+                if (importedApi.getProxy().getVirtualHosts() != null && !importedApi.getProxy().getVirtualHosts().isEmpty()) {
+                    contextPath = importedApi.getProxy().getVirtualHosts().get(0).getPath();
+                }
+
+                apiId = computeNewUUID(environment, importedApi.getName(), importedApi.getVersion(), contextPath);
+            }
+            // End of a)  version
+
+            // Here implementing the b) version
+//            String contextPath = "";
+//            if (importedApi.getProxy().getVirtualHosts() != null && !importedApi.getProxy().getVirtualHosts().isEmpty()) {
+//                contextPath = importedApi.getProxy().getVirtualHosts().get(0).getPath();
+//            }
+//
+//            String apiId = computeNewUUID(environment, importedApi.getName(), importedApi.getVersion(), contextPath);
+            // End of b) version
+
+            ((ObjectNode) jsonNode).put("id", apiId);
+
+            ApiEntity createdApiEntity = this.create0(importedApi, userId, false, jsonNode, environment, apiId);
+
             createPageAndMedia(createdApiEntity, jsonNode, environment);
             updateApiReferences(createdApiEntity, jsonNode);
             return createdApiEntity;
@@ -83,7 +121,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
     }
 
     @Override
-    public ApiEntity duplicate(final ApiEntity apiEntity, final DuplicateApiEntity duplicateApiEntity) {
+    public ApiEntity duplicate(final ApiEntity apiEntity, final DuplicateApiEntity duplicateApiEntity, String environment) {
         requireNonNull(apiEntity, "Missing ApiEntity");
         final String apiId = apiEntity.getId();
         LOGGER.debug("Duplicate API {}", apiId);
@@ -100,7 +138,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
             newApiEntity.setGroups(apiEntity.getGroups());
         }
         final ApiEntity duplicatedApi =
-            this.create0(newApiEntity, getAuthenticatedUsername(), false, null, GraviteeContext.getCurrentEnvironment());
+            this.create0(newApiEntity, getAuthenticatedUsername(), false, null, environment, null);
 
         if (!duplicateApiEntity.getFilteredFields().contains("members")) {
             final Set<MembershipEntity> membershipsToDuplicate = membershipService.getMembershipsByReference(
@@ -176,6 +214,17 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         }
     }
 
+    private String computeNewUUID(String targetEnvironmentId, String...fields) {
+        StringBuilder b = new StringBuilder();
+        for(String f: fields) {
+            b.append(f);
+        }
+        b.append(targetEnvironmentId);
+        String baseStringForUUID = b.toString();
+
+        return UUID.nameUUIDFromBytes(baseStringForUUID.getBytes()).toString();
+    }
+
     private UpdateApiEntity convertToEntity(String apiDefinition, JsonNode jsonNode) throws JsonProcessingException {
         final UpdateApiEntity importedApi = objectMapper
             // because definition could contains other values than the api itself (pages, members)
@@ -222,7 +271,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         return importedApi;
     }
 
-    private void createPageAndMedia(ApiEntity createdApiEntity, JsonNode jsonNode, String currentEnvironment) {
+    private void createPageAndMedia(ApiEntity createdApiEntity, JsonNode jsonNode, String environment) {
         final JsonNode apiMedia = jsonNode.path("apiMedia");
         if (apiMedia != null && apiMedia.isArray()) {
             for (JsonNode media : apiMedia) {
@@ -232,9 +281,11 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
 
         final JsonNode pages = jsonNode.path("pages");
         if (pages != null && pages.isArray()) {
+
+            computeNewPageIds(pages, environment);
+
             for (JsonNode page : pages) {
-                PageEntity pageEntity = pageService.createWithDefinition(createdApiEntity.getId(), page.toString(), currentEnvironment);
-                ((ObjectNode) page).put("id", pageEntity.getId());
+                createPageWithDefinition(createdApiEntity.getId(), page.toString(), environment);
             }
         }
 
@@ -247,6 +298,55 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         );
         if (search.isEmpty()) {
             this.createSystemFolder(createdApiEntity.getId());
+        }
+    }
+
+    private void computeNewPageIds(JsonNode pages, String environment) {
+        Map<String, String> oldAndNewPageId = new HashMap<>();
+
+        // First we change all ids
+        for (JsonNode page: pages) {
+            String pageId = page != null && page.has("id") ? page.get("id").asText() : null;
+            String newPageId = "";
+            if (pageId != null) {
+                newPageId = computeNewUUID(environment, pageId);
+            } else {
+                newPageId = computeNewUUID(environment, page.get("name").asText(), page.get("type").asText(), page.get("parentId").asText());
+            }
+            oldAndNewPageId.put(pageId, newPageId);
+
+            // Set new page Id in JsonNode
+            ((ObjectNode) page).put("id", newPageId);
+        }
+
+        // Then we change parentId and contents of Links
+        for (JsonNode page: pages) {
+            if (page != null && page.has("parentId")) {
+                ((ObjectNode) page).put("parentId", oldAndNewPageId.get(page.get("parentId").asText()));
+            }
+
+            if (page != null
+                    && page.has("content")
+                    && page.has("type")
+                    && page.get("type").asText().equals("LINK")
+                    && page.get("configuration").get("resourceType").asText().equals("page")
+            ) {
+                ((ObjectNode) page).put("content", oldAndNewPageId.get(page.get("content").asText()));
+            }
+        }
+    }
+
+    private PageEntity createPageWithDefinition(String apiId, String pageDefinition, String environment) {
+        try {
+            final NewPageEntity newPage = objectMapper
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .readValue(pageDefinition, NewPageEntity.class);
+            JsonNode jsonNode = objectMapper.readTree(pageDefinition);
+
+            return pageService.createPage(apiId, newPage, environment, jsonNode.get("id").asText());
+        } catch (JsonProcessingException e) {
+            LOGGER.error("An error occurs while trying to JSON deserialize the Page {}", pageDefinition, e);
+            throw new TechnicalManagementException("An error occurs while trying to JSON deserialize the Page definition.");
         }
     }
 
@@ -294,7 +394,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
                 newPage.setSource(pageEntityToImport.getSource());
                 newPage.setType(PageType.valueOf(pageEntityToImport.getType()));
                 newPage.setAttachedMedia(pageEntityToImport.getAttachedMedia());
-                createdOrUpdatedPage = pageService.createPage(apiId, newPage);
+                createdOrUpdatedPage = pageService.createPage(apiId, newPage, GraviteeContext.getCurrentEnvironment());
             } else {
                 UpdatePageEntity updatePageEntity = new UpdatePageEntity();
                 updatePageEntity.setConfiguration(pageEntityToImport.getConfiguration());
@@ -475,6 +575,7 @@ public class ApiDuplicatorServiceImpl extends AbstractApiService implements ApiD
         }
 
         //Pages
+        // FIXME not needed anymore when creating an API from definition, since all has been made in createPageAndMedia
         final JsonNode pagesDefinition = jsonNode.path("pages");
         if (pagesDefinition != null && pagesDefinition.isArray()) {
             List<PageEntity> pagesList = objectMapper.readValue(

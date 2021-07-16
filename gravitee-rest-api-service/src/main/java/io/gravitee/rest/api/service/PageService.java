@@ -45,7 +45,9 @@ public interface PageService {
 
     void transformSwagger(PageEntity pageEntity, String apiId);
 
-    PageEntity createPage(String apiId, NewPageEntity page);
+    PageEntity createPage(String apiId, NewPageEntity page, String environment);
+
+    PageEntity createPage(String apiId, NewPageEntity page, String environment, String pageId);
 
     PageEntity createPage(NewPageEntity page);
 
@@ -80,8 +82,6 @@ public interface PageService {
     Map<SystemFolderType, String> initialize(String environmentId);
 
     PageEntity createSystemFolder(String apiId, SystemFolderType systemFolderType, int order, String environmentId);
-
-    PageEntity createWithDefinition(String apiId, String toString, String currentEnvironment);
 
     /**
      * Check if the page is used as GeneralCondition by an active Plan for the given ApiID

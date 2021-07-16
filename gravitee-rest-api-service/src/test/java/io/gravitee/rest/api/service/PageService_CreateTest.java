@@ -32,6 +32,7 @@ import io.gravitee.repository.management.api.PageRepository;
 import io.gravitee.repository.management.model.Page;
 import io.gravitee.repository.management.model.PageReferenceType;
 import io.gravitee.rest.api.model.*;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.*;
 import io.gravitee.rest.api.service.impl.PageServiceImpl;
 import io.gravitee.rest.api.service.notification.NotificationTemplateService;
@@ -126,7 +127,7 @@ public class PageService_CreateTest {
         when(newPage.getType()).thenReturn(PageType.SWAGGER);
         when(newPage.getVisibility()).thenReturn(Visibility.PUBLIC);
 
-        final PageEntity createdPage = pageService.createPage(API_ID, newPage);
+        final PageEntity createdPage = pageService.createPage(API_ID, newPage, GraviteeContext.getCurrentEnvironment());
 
         verify(pageRepository)
             .create(
@@ -165,7 +166,7 @@ public class PageService_CreateTest {
 
         when(pageRepository.create(any(Page.class))).thenThrow(TechnicalException.class);
 
-        pageService.createPage(API_ID, newPage);
+        pageService.createPage(API_ID, newPage, GraviteeContext.getCurrentEnvironment());
 
         verify(pageRepository, never()).create(any());
     }
@@ -468,7 +469,7 @@ public class PageService_CreateTest {
         when(importConfiguration.isAllowImportFromPrivate()).thenReturn(false);
         when(importConfiguration.getImportWhitelist()).thenReturn(Collections.emptyList());
 
-        pageService.createPage(API_ID, newPage);
+        pageService.createPage(API_ID, newPage, GraviteeContext.getCurrentEnvironment());
 
         verify(pageRepository, never()).create(any());
     }
@@ -489,7 +490,7 @@ public class PageService_CreateTest {
         when(newPage.getVisibility()).thenReturn(Visibility.PUBLIC);
         when(this.notificationTemplateService.resolveInlineTemplateWithParam(anyString(), eq(content), any(), anyBoolean()))
             .thenReturn(content);
-        this.pageService.createPage(API_ID, newPage);
+        this.pageService.createPage(API_ID, newPage, GraviteeContext.getCurrentEnvironment());
 
         verify(pageRepository, never()).create(any());
     }
@@ -522,7 +523,7 @@ public class PageService_CreateTest {
 
         when(this.notificationTemplateService.resolveInlineTemplateWithParam(anyString(), eq(content), any(), anyBoolean()))
             .thenThrow(new TemplateProcessingException(new TemplateException(null)));
-        this.pageService.createPage(API_ID, newPage);
+        this.pageService.createPage(API_ID, newPage, GraviteeContext.getCurrentEnvironment());
 
         verify(pageRepository).create(any());
     }

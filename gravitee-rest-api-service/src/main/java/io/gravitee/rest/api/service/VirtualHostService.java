@@ -16,6 +16,7 @@
 package io.gravitee.rest.api.service;
 
 import io.gravitee.definition.model.VirtualHost;
+
 import java.util.Collection;
 
 /**
@@ -28,10 +29,11 @@ public interface VirtualHostService {
      * virtual hosts for all the APIs.
      *
      * @param virtualHosts
+     * @param environment
      * @return sanitized virtualHosts
      */
-    default Collection<VirtualHost> sanitizeAndValidate(Collection<VirtualHost> virtualHosts) {
-        return sanitizeAndValidate(virtualHosts, null);
+    default Collection<VirtualHost> sanitizeAndValidate(Collection<VirtualHost> virtualHosts, String environment) {
+        return sanitizeAndValidate(virtualHosts, null, environment);
     }
 
     /**
@@ -43,9 +45,10 @@ public interface VirtualHostService {
      *
      * @param virtualHosts
      * @param api
+     * @param environment
      * @return sanitized virtualHosts
      */
-    Collection<VirtualHost> sanitizeAndValidate(Collection<VirtualHost> virtualHosts, String api);
+    Collection<VirtualHost> sanitizeAndValidate(Collection<VirtualHost> virtualHosts, String api, String environment);
 
     /**
      * this method sanitizes the path of the virtual host.

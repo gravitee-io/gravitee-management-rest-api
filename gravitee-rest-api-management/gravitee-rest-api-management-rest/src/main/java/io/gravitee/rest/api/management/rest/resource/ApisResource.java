@@ -209,7 +209,7 @@ public class ApisResource extends AbstractResource {
     @Permissions({ @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.CREATE) })
     public Response createApi(@ApiParam(name = "api", required = true) @Valid @NotNull final NewApiEntity newApiEntity)
         throws ApiAlreadyExistsException {
-        ApiEntity newApi = apiService.create(newApiEntity, getAuthenticatedUser());
+        ApiEntity newApi = apiService.create(newApiEntity, getAuthenticatedUser(), GraviteeContext.getCurrentEnvironment());
         if (newApi != null) {
             return Response.created(this.getLocationHeader(newApi.getId())).entity(newApi).build();
         }
@@ -273,7 +273,7 @@ public class ApisResource extends AbstractResource {
             swaggerDescriptor,
             DefinitionVersion.valueOfLabel(definitionVersion)
         );
-        final ApiEntity api = apiService.createFromSwagger(swaggerApiEntity, getAuthenticatedUser(), swaggerDescriptor);
+        final ApiEntity api = apiService.createFromSwagger(swaggerApiEntity, getAuthenticatedUser(), swaggerDescriptor, GraviteeContext.getCurrentEnvironment());
         return Response
             .created(URI.create(this.uriInfo.getRequestUri().getRawPath().replaceAll("import/swagger", "") + api.getId()))
             .entity(api)
@@ -293,7 +293,7 @@ public class ApisResource extends AbstractResource {
     @Permissions({ @Permission(value = RolePermission.ENVIRONMENT_API, acls = RolePermissionAction.CREATE) })
     public Response verifyApi(@Valid VerifyApiParam verifyApiParam) {
         // TODO : create verify service to query repository with criteria
-        virtualHostService.sanitizeAndValidate(Collections.singletonList(new VirtualHost(verifyApiParam.getContextPath())));
+        virtualHostService.sanitizeAndValidate(Collections.singletonList(new VirtualHost(verifyApiParam.getContextPath())), GraviteeContext.getCurrentEnvironment());
         return Response.ok().entity("API context [" + verifyApiParam.getContextPath() + "] is available").build();
     }
 

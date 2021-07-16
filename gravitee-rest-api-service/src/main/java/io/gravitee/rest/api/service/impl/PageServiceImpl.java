@@ -699,15 +699,12 @@ public class PageServiceImpl extends AbstractService implements PageService, App
     }
 
     @Override
-    public PageEntity createPage(String apiId, NewPageEntity newPageEntity) {
-        return this.createPage(apiId, newPageEntity, GraviteeContext.getCurrentEnvironment());
+    public PageEntity createPage(String apiId, NewPageEntity newPageEntity, String environment) {
+        return this.createPage(apiId, newPageEntity, environment, null);
     }
 
-    private PageEntity createPage(String apiId, NewPageEntity newPageEntity, String environmentId) {
-        return createPage(apiId, newPageEntity, environmentId, null);
-    }
-
-    private PageEntity createPage(String apiId, NewPageEntity newPageEntity, String environmentId, String pageId) {
+    @Override
+    public PageEntity createPage(String apiId, NewPageEntity newPageEntity, String environmentId, String pageId) {
         try {
             logger.debug("Create page {} for API {}", newPageEntity, apiId);
 
@@ -941,14 +938,14 @@ public class PageServiceImpl extends AbstractService implements PageService, App
 
     @Override
     public PageEntity createPage(NewPageEntity newPageEntity) {
-        return this.createPage(null, newPageEntity);
+        return createPage(null, newPageEntity, GraviteeContext.getCurrentEnvironment());
     }
 
     @Override
     public PageEntity create(final String apiId, final PageEntity pageEntity) {
         final NewPageEntity newPageEntity = convert(pageEntity);
         newPageEntity.setLastContributor(null);
-        return createPage(apiId, newPageEntity);
+        return createPage(apiId, newPageEntity, GraviteeContext.getCurrentEnvironment());
     }
 
     private void onlyOneHomepage(Page page) throws TechnicalException {
@@ -1758,7 +1755,7 @@ public class PageServiceImpl extends AbstractService implements PageService, App
                         newPage.setName(pathElement);
                         newPage.setType(PageType.FOLDER);
                         newPage.setVisibility(Visibility.PUBLIC);
-                        folder = this.createPage(apiId, newPage);
+                        folder = createPage(apiId, newPage, GraviteeContext.getCurrentEnvironment());
                     } else {
                         folder = convert(pages.get(0));
                     }
@@ -1786,7 +1783,7 @@ public class PageServiceImpl extends AbstractService implements PageService, App
             configuration.setFilepath(src);
             newPageEntity.getSource().setConfiguration(mapper.valueToTree(configuration));
             newPageEntity.setVisibility(Visibility.PUBLIC);
-            createdPages.add(this.createPage(apiId, newPageEntity));
+            createdPages.add(createPage(apiId, newPageEntity, GraviteeContext.getCurrentEnvironment()));
         } else {
             Page page = pages.get(0);
             UpdatePageEntity updatePage = convertToUpdateEntity(page);
@@ -2488,7 +2485,7 @@ public class PageServiceImpl extends AbstractService implements PageService, App
         newSysFolder.setPublished(true);
         newSysFolder.setType(PageType.SYSTEM_FOLDER);
         newSysFolder.setVisibility(Visibility.PUBLIC);
-        return this.createPage(apiId, newSysFolder, environmentId);
+        return createPage(apiId, newSysFolder, environmentId);
     }
 
     @Override
@@ -2521,7 +2518,6 @@ public class PageServiceImpl extends AbstractService implements PageService, App
         }
     }
 
-    @Override
     public PageEntity createWithDefinition(String apiId, String pageDefinition, String currentEnvironment) {
         try {
             final NewPageEntity newPage = convertToEntity(pageDefinition);

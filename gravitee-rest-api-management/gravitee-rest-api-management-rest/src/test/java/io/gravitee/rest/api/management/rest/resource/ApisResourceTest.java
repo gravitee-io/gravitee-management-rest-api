@@ -56,7 +56,7 @@ public class ApisResourceTest extends AbstractResourceTest {
 
         ApiEntity returnedApi = new ApiEntity();
         returnedApi.setId("my-beautiful-api");
-        doReturn(returnedApi).when(apiService).create(Mockito.any(NewApiEntity.class), Mockito.eq(USER_NAME));
+        doReturn(returnedApi).when(apiService).create(Mockito.any(NewApiEntity.class), Mockito.eq(USER_NAME), GraviteeContext.getCurrentEnvironment());
 
         final Response response = envTarget().request().post(Entity.json(apiEntity));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
@@ -71,7 +71,7 @@ public class ApisResourceTest extends AbstractResourceTest {
 
         ApiEntity returnedApi = new ApiEntity();
         returnedApi.setId("my-beautiful-api");
-        doReturn(returnedApi).when(apiService).create(Mockito.any(NewApiEntity.class), Mockito.eq(USER_NAME));
+        doReturn(returnedApi).when(apiService).create(Mockito.any(NewApiEntity.class), Mockito.eq(USER_NAME), GraviteeContext.getCurrentEnvironment());
 
         final Response response = envTarget().request().post(Entity.json(apiEntity));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
@@ -88,7 +88,7 @@ public class ApisResourceTest extends AbstractResourceTest {
 
         ApiEntity returnedApi = new ApiEntity();
         returnedApi.setId("my-beautiful-api");
-        doReturn(returnedApi).when(apiService).create(Mockito.any(NewApiEntity.class), Mockito.eq(USER_NAME));
+        doReturn(returnedApi).when(apiService).create(Mockito.any(NewApiEntity.class), Mockito.eq(USER_NAME), GraviteeContext.getCurrentEnvironment());
 
         final Response response = envTarget().request().post(Entity.json(apiEntity));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
@@ -103,7 +103,7 @@ public class ApisResourceTest extends AbstractResourceTest {
 
         ApiEntity createdApi = new ApiEntity();
         createdApi.setId("my-beautiful-api");
-        doReturn(createdApi).when(apiService).createFromSwagger(any(), any(), any());
+        doReturn(createdApi).when(apiService).createFromSwagger(any(), any(), any(), GraviteeContext.getCurrentEnvironment());
 
         final Response response = envTarget().path("import").path("swagger").request().post(Entity.json(swaggerDescriptor));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());

@@ -21,7 +21,7 @@ import io.gravitee.rest.api.model.api.DuplicateApiEntity;
 public interface ApiDuplicatorService {
     ApiEntity createWithImportedDefinition(ApiEntity apiEntity, String apiDefinitionOrURL, String userId, String environment);
 
-    ApiEntity duplicate(ApiEntity apiEntity, DuplicateApiEntity duplicateApiEntity);
+    ApiEntity duplicate(ApiEntity apiEntity, DuplicateApiEntity duplicateApiEntity, String environment);
 
     String exportAsJson(String apiId, String exportVersion, String... filteredFields);
 

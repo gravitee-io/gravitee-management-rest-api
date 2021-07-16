@@ -121,110 +121,101 @@ public class HttpClientServiceImpl extends AbstractService implements HttpClient
             LOGGER.error("HttpClient configuration is empty");
             return null;
         }
-
         Promise<Buffer> promise = Promise.promise();
-
         URI requestUri = URI.create(uri);
-
         final HttpClient httpClient = this.getHttpClient(requestUri.getScheme(), useSystemProxy);
-
         final int port = requestUri.getPort() != -1 ? requestUri.getPort() : (HTTPS_SCHEME.equals(requestUri.getScheme()) ? 443 : 80);
-
         RequestOptions options = new RequestOptions()
-            .setMethod(io.vertx.core.http.HttpMethod.valueOf(method.name()))
-            .setHost(requestUri.getHost())
-            .setPort(port)
-            .setURI(requestUri.toString())
-            .setTimeout(httpClientTimeout);
-
+                .setMethod(io.vertx.core.http.HttpMethod.valueOf(method.name()))
+                .setHost(requestUri.getHost())
+                .setPort(port)
+                .setURI(requestUri.toString())
+                .setTimeout(httpClientTimeout);
         //headers
-        options.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-        options.putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(body.getBytes().length));
-        headers.forEach(options::putHeader);
-        options.putHeader("X-Gravitee-Request-Id", RandomString.generate());
-
-        if (!options.getHeaders().contains(HttpHeaders.CONTENT_TYPE)) {
-            options.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+        if (headers != null) {
+            headers.forEach(options::putHeader);
         }
-
+        options.putHeader("X-Gravitee-Request-Id", RandomString.generate());
+        if (body != null) {
+            if (!options.getHeaders().contains(HttpHeaders.CONTENT_TYPE)) {
+                options.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+            }
+            options.putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(body.getBytes().length));
+        }
         Future<HttpClientRequest> requestFuture = httpClient.request(options);
-
         requestFuture
-            .onFailure(
-                new Handler<Throwable>() {
-                    @Override
-                    public void handle(Throwable throwable) {
-                        promise.fail(throwable);
-
-                        // Close client
-                        httpClient.close();
-                    }
-                }
-            )
-            .onSuccess(
-                new Handler<HttpClientRequest>() {
-                    @Override
-                    public void handle(HttpClientRequest request) {
-                        request
-                            .response(
-                                new Handler<AsyncResult<HttpClientResponse>>() {
-                                    @Override
-                                    public void handle(AsyncResult<HttpClientResponse> asyncResponse) {
-                                        if (asyncResponse.failed()) {
-                                            promise.fail(asyncResponse.cause());
-
-                                            // Close client
-                                            httpClient.close();
-                                        } else {
-                                            HttpClientResponse response = asyncResponse.result();
-                                            LOGGER.debug("Web response status code : {}", response.statusCode());
-
-                                            if (response.statusCode() >= HttpStatusCode.OK_200 && response.statusCode() <= 299) {
-                                                response.bodyHandler(
-                                                    buffer -> {
-                                                        promise.complete(buffer);
-
+                .onFailure(
+                        new Handler<Throwable>() {
+                            @Override
+                            public void handle(Throwable throwable) {
+                                promise.fail(throwable);
+                                // Close client
+                                httpClient.close();
+                            }
+                        }
+                )
+                .onSuccess(
+                        new Handler<HttpClientRequest>() {
+                            @Override
+                            public void handle(HttpClientRequest request) {
+                                request
+                                        .response(
+                                                new Handler<AsyncResult<HttpClientResponse>>() {
+                                                    @Override
+                                                    public void handle(AsyncResult<HttpClientResponse> asyncResponse) {
+                                                        if (asyncResponse.failed()) {
+                                                            promise.fail(asyncResponse.cause());
+                                                            // Close client
+                                                            httpClient.close();
+                                                        } else {
+                                                            HttpClientResponse response = asyncResponse.result();
+                                                            LOGGER.debug("Web response status code : {}", response.statusCode());
+                                                            if (response.statusCode() >= HttpStatusCode.OK_200 && response.statusCode() <= 299) {
+                                                                response.bodyHandler(
+                                                                        buffer -> {
+                                                                            promise.complete(buffer);
+                                                                            // Close client
+                                                                            httpClient.close();
+                                                                        }
+                                                                );
+                                                            } else {
+                                                                response.bodyHandler(
+                                                                        buffer ->
+                                                                                promise.fail(
+                                                                                        new TechnicalManagementException(
+                                                                                                " Error on url '" +
+                                                                                                        uri +
+                                                                                                        "'. Status code: " +
+                                                                                                        response.statusCode() +
+                                                                                                        ". Message: " +
+                                                                                                        buffer.toString(),
+                                                                                                null
+                                                                                        )
+                                                                                )
+                                                                );
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                        )
+                                        .exceptionHandler(
+                                                new Handler<Throwable>() {
+                                                    @Override
+                                                    public void handle(Throwable throwable) {
+                                                        promise.fail(throwable);
                                                         // Close client
                                                         httpClient.close();
                                                     }
-                                                );
-                                            } else {
-                                                response.bodyHandler(
-                                                    buffer ->
-                                                        promise.fail(
-                                                            new TechnicalManagementException(
-                                                                " Error on url '" +
-                                                                uri +
-                                                                "'. Status code: " +
-                                                                response.statusCode() +
-                                                                ". Message: " +
-                                                                buffer.toString(),
-                                                                null
-                                                            )
-                                                        )
-                                                );
-                                            }
-                                        }
-                                    }
+                                                }
+                                        );
+                                if (body != null) {
+                                    request.end(body);
+                                } else {
+                                    request.end();
                                 }
-                            )
-                            .exceptionHandler(
-                                new Handler<Throwable>() {
-                                    @Override
-                                    public void handle(Throwable throwable) {
-                                        promise.fail(throwable);
-
-                                        // Close client
-                                        httpClient.close();
-                                    }
-                                }
-                            );
-
-                        request.end(body);
-                    }
-                }
-            );
-
+                            }
+                        }
+                );
         try {
             return promise.future().toCompletionStage().toCompletableFuture().get();
         } catch (InterruptedException | ExecutionException e) {

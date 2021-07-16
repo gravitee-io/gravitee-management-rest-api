@@ -32,6 +32,7 @@ import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.api.NewApiEntity;
 import io.gravitee.rest.api.model.parameters.Key;
 import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.exceptions.ApiAlreadyExistsException;
 import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
 import io.gravitee.rest.api.service.impl.ApiServiceImpl;
@@ -158,7 +159,7 @@ public class ApiService_CreateTest {
 
         when(groupService.findByEvent(any())).thenReturn(Collections.emptySet());
 
-        final ApiEntity apiEntity = apiService.create(newApi, USER_NAME);
+        final ApiEntity apiEntity = apiService.create(newApi, USER_NAME, GraviteeContext.getCurrentEnvironment());
 
         assertNotNull(apiEntity);
         assertEquals(API_NAME, apiEntity.getName());
@@ -173,7 +174,7 @@ public class ApiService_CreateTest {
         when(newApi.getVersion()).thenReturn("v1");
         when(newApi.getDescription()).thenReturn("Ma description");
 
-        apiService.create(newApi, USER_NAME);
+        apiService.create(newApi, USER_NAME, GraviteeContext.getCurrentEnvironment());
     }
 
     @Test(expected = TechnicalManagementException.class)
@@ -185,7 +186,7 @@ public class ApiService_CreateTest {
         when(newApi.getDescription()).thenReturn("Ma description");
         //        when(userService.findByUsername(USER_NAME, false)).thenReturn(new UserEntity());
 
-        apiService.create(newApi, USER_NAME);
+        apiService.create(newApi, USER_NAME, GraviteeContext.getCurrentEnvironment());
     }
 
     @Test
@@ -203,7 +204,7 @@ public class ApiService_CreateTest {
         admin.setId(USER_NAME);
         when(userService.findById(admin.getId())).thenReturn(admin);
 
-        final ApiEntity apiEntity = apiService.create(newApi, USER_NAME);
+        final ApiEntity apiEntity = apiService.create(newApi, USER_NAME, GraviteeContext.getCurrentEnvironment());
 
         assertNotNull(apiEntity);
         assertEquals(API_NAME, apiEntity.getName());

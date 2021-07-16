@@ -21,7 +21,6 @@ import static io.gravitee.repository.management.model.Workflow.AuditEvent.*;
 import static io.gravitee.rest.api.model.EventType.PUBLISH_API;
 import static io.gravitee.rest.api.model.ImportSwaggerDescriptorEntity.Type.INLINE;
 import static io.gravitee.rest.api.model.PageType.SWAGGER;
-import static io.gravitee.rest.api.model.WorkflowReferenceType.API;
 import static io.gravitee.rest.api.model.WorkflowType.REVIEW;
 import static java.util.Collections.*;
 import static java.util.Comparator.comparing;
@@ -33,7 +32,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Strings;
-import io.gravitee.common.component.Lifecycle;
 import io.gravitee.common.data.domain.Page;
 import io.gravitee.definition.model.*;
 import io.gravitee.definition.model.Properties;
@@ -60,8 +58,6 @@ import io.gravitee.rest.api.model.common.Pageable;
 import io.gravitee.rest.api.model.common.PageableImpl;
 import io.gravitee.rest.api.model.common.Sortable;
 import io.gravitee.rest.api.model.documentation.PageQuery;
-import io.gravitee.rest.api.model.parameters.Key;
-import io.gravitee.rest.api.model.parameters.ParameterReferenceType;
 import io.gravitee.rest.api.model.permissions.ApiPermission;
 import io.gravitee.rest.api.model.permissions.RolePermissionAction;
 import io.gravitee.rest.api.model.permissions.RoleScope;
@@ -151,11 +147,11 @@ public class ApiServiceImpl extends AbstractApiService implements ApiService {
 
     @Override
     public ApiEntity createFromSwagger(
-        final SwaggerApiEntity swaggerApiEntity,
-        final String userId,
-        final ImportSwaggerDescriptorEntity swaggerDescriptor
+            final SwaggerApiEntity swaggerApiEntity,
+            final String userId,
+            final ImportSwaggerDescriptorEntity swaggerDescriptor, String environment
     ) throws ApiAlreadyExistsException {
-        final ApiEntity createdApi = createFromUpdateApiEntity(swaggerApiEntity, userId, swaggerDescriptor);
+        final ApiEntity createdApi = createFromUpdateApiEntity(swaggerApiEntity, userId, swaggerDescriptor, environment);
 
         createMetadata(swaggerApiEntity.getMetadata(), createdApi.getId());
 
@@ -181,7 +177,7 @@ public class ApiServiceImpl extends AbstractApiService implements ApiService {
     }
 
     @Override
-    public ApiEntity create(final NewApiEntity newApiEntity, final String userId) throws ApiAlreadyExistsException {
+    public ApiEntity create(final NewApiEntity newApiEntity, final String userId, String environment) throws ApiAlreadyExistsException {
         UpdateApiEntity apiEntity = new UpdateApiEntity();
 
         apiEntity.setName(newApiEntity.getName());
@@ -226,15 +222,15 @@ public class ApiServiceImpl extends AbstractApiService implements ApiService {
 
         apiEntity.setPathMappings(new HashSet<>(declaredPaths));
 
-        return createFromUpdateApiEntity(apiEntity, userId, null);
+        return createFromUpdateApiEntity(apiEntity, userId, null, environment);
     }
 
     private ApiEntity createFromUpdateApiEntity(
-        final UpdateApiEntity apiEntity,
-        final String userId,
-        final ImportSwaggerDescriptorEntity swaggerDescriptor
+            final UpdateApiEntity apiEntity,
+            final String userId,
+            final ImportSwaggerDescriptorEntity swaggerDescriptor, String environment
     ) {
-        final ApiEntity createdApi = this.create0(apiEntity, userId, true, null, GraviteeContext.getCurrentEnvironment());
+        final ApiEntity createdApi = this.create0(apiEntity, userId, true, null, environment, null);
         createOrUpdateDocumentation(swaggerDescriptor, createdApi, true);
         return createdApi;
     }
@@ -260,7 +256,7 @@ public class ApiServiceImpl extends AbstractApiService implements ApiService {
                     source.setType("http-fetcher");
                     source.setConfiguration(objectMapper.convertValue(singletonMap("url", swaggerDescriptor.getPayload()), JsonNode.class));
                 }
-                pageService.createPage(api.getId(), page);
+                pageService.createPage(api.getId(), page, GraviteeContext.getCurrentEnvironment());
             } else if (apiDocs.size() == 1) {
                 PageEntity pageToUpdate = apiDocs.get(0);
                 final UpdatePageEntity page = new UpdatePageEntity();
@@ -1635,104 +1631,6 @@ public class ApiServiceImpl extends AbstractApiService implements ApiService {
 
     private ApiEntity convert(Api api) {
         return convert(api, null, null);
-    }
-
-    private ApiEntity convert(Api api, PrimaryOwnerEntity primaryOwner, List<CategoryEntity> categories) {
-        ApiEntity apiEntity = new ApiEntity();
-
-        apiEntity.setId(api.getId());
-        apiEntity.setName(api.getName());
-        apiEntity.setDeployedAt(api.getDeployedAt());
-        apiEntity.setCreatedAt(api.getCreatedAt());
-        apiEntity.setGroups(api.getGroups());
-        apiEntity.setDisableMembershipNotifications(api.isDisableMembershipNotifications());
-        apiEntity.setReferenceType(GraviteeContext.ReferenceContextType.ENVIRONMENT.name());
-        apiEntity.setReferenceId(api.getEnvironmentId());
-
-        if (api.getDefinition() != null) {
-            try {
-                io.gravitee.definition.model.Api apiDefinition = objectMapper.readValue(
-                    api.getDefinition(),
-                    io.gravitee.definition.model.Api.class
-                );
-
-                apiEntity.setProxy(apiDefinition.getProxy());
-                apiEntity.setPaths(apiDefinition.getPaths());
-                apiEntity.setServices(apiDefinition.getServices());
-                apiEntity.setResources(apiDefinition.getResources());
-                apiEntity.setProperties(apiDefinition.getProperties());
-                apiEntity.setTags(apiDefinition.getTags());
-                if (apiDefinition.getDefinitionVersion() != null) {
-                    apiEntity.setGraviteeDefinitionVersion(apiDefinition.getDefinitionVersion().getLabel());
-                }
-                if (apiDefinition.getFlowMode() != null) {
-                    apiEntity.setFlowMode(apiDefinition.getFlowMode());
-                }
-                if (DefinitionVersion.V2.equals(apiDefinition.getDefinitionVersion())) {
-                    apiEntity.setFlows(apiDefinition.getFlows());
-                    apiEntity.setPlans(new ArrayList<>(apiDefinition.getPlans()));
-                } else {
-                    apiEntity.setFlows(null);
-                    apiEntity.setPlans(null);
-                }
-
-                // Issue https://github.com/gravitee-io/issues/issues/3356
-                if (apiDefinition.getProxy().getVirtualHosts() != null && !apiDefinition.getProxy().getVirtualHosts().isEmpty()) {
-                    apiEntity.setContextPath(apiDefinition.getProxy().getVirtualHosts().get(0).getPath());
-                }
-
-                if (apiDefinition.getPathMappings() != null) {
-                    apiEntity.setPathMappings(new HashSet<>(apiDefinition.getPathMappings().keySet()));
-                }
-                apiEntity.setResponseTemplates(apiDefinition.getResponseTemplates());
-            } catch (IOException ioe) {
-                LOGGER.error("Unexpected error while generating API definition", ioe);
-            }
-        }
-
-        apiEntity.setUpdatedAt(api.getUpdatedAt());
-        apiEntity.setVersion(api.getVersion());
-        apiEntity.setDescription(api.getDescription());
-        apiEntity.setPicture(api.getPicture());
-        apiEntity.setBackground(api.getBackground());
-        apiEntity.setLabels(api.getLabels());
-
-        final Set<String> apiCategories = api.getCategories();
-        if (apiCategories != null) {
-            if (categories == null) {
-                categories = categoryService.findAll();
-            }
-            final Set<String> newApiCategories = new HashSet<>(apiCategories.size());
-            for (final String apiView : apiCategories) {
-                final Optional<CategoryEntity> optionalView = categories.stream().filter(c -> apiView.equals(c.getId())).findAny();
-                optionalView.ifPresent(category -> newApiCategories.add(category.getKey()));
-            }
-            apiEntity.setCategories(newApiCategories);
-        }
-        final LifecycleState state = api.getLifecycleState();
-        if (state != null) {
-            apiEntity.setState(Lifecycle.State.valueOf(state.name()));
-        }
-        if (api.getVisibility() != null) {
-            apiEntity.setVisibility(io.gravitee.rest.api.model.Visibility.valueOf(api.getVisibility().toString()));
-        }
-
-        if (primaryOwner != null) {
-            apiEntity.setPrimaryOwner(primaryOwner);
-        }
-        final ApiLifecycleState lifecycleState = api.getApiLifecycleState();
-        if (lifecycleState != null) {
-            apiEntity.setLifecycleState(io.gravitee.rest.api.model.api.ApiLifecycleState.valueOf(lifecycleState.name()));
-        }
-
-        if (parameterService.findAsBoolean(Key.API_REVIEW_ENABLED, api.getEnvironmentId(), ParameterReferenceType.ENVIRONMENT)) {
-            final List<Workflow> workflows = workflowService.findByReferenceAndType(API, api.getId(), REVIEW);
-            if (workflows != null && !workflows.isEmpty()) {
-                apiEntity.setWorkflowState(WorkflowState.valueOf(workflows.get(0).getState()));
-            }
-        }
-
-        return apiEntity;
     }
 
     private LifecycleState convert(EventType eventType) {

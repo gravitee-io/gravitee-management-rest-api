@@ -27,6 +27,8 @@ import io.gravitee.rest.api.model.api.ApiEntity;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import org.junit.Test;
 
 /**
@@ -180,7 +182,7 @@ public class ApiPagesResourceAdminTest extends AbstractResourceTest {
 
         PageEntity returnedPage = new PageEntity();
         returnedPage.setId("my-beautiful-page");
-        doReturn(returnedPage).when(pageService).createPage(eq(API_NAME), any());
+        doReturn(returnedPage).when(pageService).createPage(eq(API_NAME), any(), GraviteeContext.getCurrentEnvironment());
         doReturn(0).when(pageService).findMaxPortalPageOrder();
 
         final Response response = envTarget().request().post(Entity.json(newPageEntity));

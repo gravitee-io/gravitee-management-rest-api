@@ -31,8 +31,8 @@ import io.gravitee.rest.api.model.*;
 import io.gravitee.rest.api.model.api.ApiEntity;
 import io.gravitee.rest.api.model.permissions.RoleScope;
 import io.gravitee.rest.api.model.permissions.SystemRole;
+import io.gravitee.rest.api.service.common.GraviteeContext;
 import io.gravitee.rest.api.service.impl.ApiDuplicatorServiceImpl;
-import io.gravitee.rest.api.service.impl.ApiServiceImpl;
 import io.gravitee.rest.api.service.notification.NotificationTemplateService;
 import io.gravitee.rest.api.service.search.SearchEngineService;
 import java.io.IOException;
@@ -289,7 +289,7 @@ public class ApiDuplicatorService_UpdateWithDefinitionTest {
 
         apiDuplicatorService.updateWithImportedDefinition(apiEntity, toBeImport, "import");
 
-        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class), GraviteeContext.getCurrentEnvironment());
         verify(membershipService, never())
             .addRoleToMemberOnReference(MembershipReferenceType.API, API_ID, MembershipMemberType.USER, user.getId(), "API_PRIMARY_OWNER");
         verify(membershipService, times(1))
@@ -318,7 +318,7 @@ public class ApiDuplicatorService_UpdateWithDefinitionTest {
 
         apiDuplicatorService.updateWithImportedDefinition(apiEntity, toBeImport, "import");
 
-        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class), GraviteeContext.getCurrentEnvironment());
         verify(membershipService, never())
             .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
@@ -354,7 +354,7 @@ public class ApiDuplicatorService_UpdateWithDefinitionTest {
 
         apiDuplicatorService.updateWithImportedDefinition(apiEntity, toBeImport, "import");
 
-        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class), GraviteeContext.getCurrentEnvironment());
         verify(membershipService, never())
             .addRoleToMemberOnReference(
                 new MembershipService.MembershipReference(MembershipReferenceType.API, API_ID),
@@ -406,7 +406,7 @@ public class ApiDuplicatorService_UpdateWithDefinitionTest {
 
         apiDuplicatorService.updateWithImportedDefinition(apiEntity, toBeImport, null);
 
-        verify(pageService, times(2)).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, times(2)).createPage(eq(API_ID), any(NewPageEntity.class), GraviteeContext.getCurrentEnvironment());
         verify(membershipService, never()).addRoleToMemberOnReference(any(), any(), any());
         verify(apiRepository, times(1)).update(any());
         verify(apiRepository, never()).create(any());
@@ -444,7 +444,7 @@ public class ApiDuplicatorService_UpdateWithDefinitionTest {
 
         apiDuplicatorService.updateWithImportedDefinition(apiEntity, toBeImport, null);
 
-        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class));
+        verify(pageService, never()).createPage(eq(API_ID), any(NewPageEntity.class), GraviteeContext.getCurrentEnvironment());
         verify(membershipService, never()).addRoleToMemberOnReference(any(), any(), any());
         verify(apiRepository, times(1)).update(any());
         verify(apiRepository, never()).create(any());
