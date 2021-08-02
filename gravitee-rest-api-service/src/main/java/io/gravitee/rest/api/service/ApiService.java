@@ -23,7 +23,6 @@ import io.gravitee.rest.api.model.api.*;
 import io.gravitee.rest.api.model.api.header.ApiHeaderEntity;
 import io.gravitee.rest.api.model.common.Pageable;
 import io.gravitee.rest.api.model.common.Sortable;
-import io.gravitee.rest.api.service.exceptions.ApiAlreadyExistsException;
 import io.gravitee.rest.api.service.exceptions.TechnicalManagementException;
 import java.util.Collection;
 import java.util.List;
@@ -83,6 +82,8 @@ public interface ApiService {
     boolean isSynchronized(String apiId);
 
     ApiEntity deploy(String apiId, String userId, EventType eventType, ApiDeploymentEntity apiDeploymentEntity);
+
+    DebugApiEntity debug(String apiId, String userId, DebugApiEntity debugApiEntity);
 
     ApiEntity rollback(String apiId, UpdateApiEntity api);
 

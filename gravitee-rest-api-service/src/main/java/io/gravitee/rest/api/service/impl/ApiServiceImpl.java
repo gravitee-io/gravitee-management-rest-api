@@ -108,10 +108,10 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.constraints.NotNull;
 import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1874,6 +1874,31 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
     }
 
     @Override
+    public DebugApiEntity debug(String apiId, String userId, DebugApiEntity debugApiEntity) {
+        try {
+            LOGGER.debug("Debug API : {}", apiId);
+
+            final Api api = apiRepository.findById(apiId).orElseThrow(() -> new ApiNotFoundException(apiId));
+
+            Map<String, String> properties = new HashMap<>();
+            properties.put(Event.EventProperties.API_ID.getValue(), api.getId());
+            properties.put(Event.EventProperties.USER.getValue(), userId);
+            properties.put(Event.EventProperties.API_DEBUG_STATUS.getValue(), ApiDebugStatus.TO_DEBUG.name());
+
+            // Clear useless field for history
+            api.setPicture(null);
+
+            DebugApi debugApi = convert(debugApiEntity);
+            eventService.create(EventType.DEBUG_API, objectMapper.writeValueAsString(debugApi), properties);
+
+            return debugApiEntity;
+        } catch (Exception ex) {
+            LOGGER.error("An error occurs while trying to debug API: {}", apiId, ex);
+            throw new TechnicalManagementException("An error occurs while trying to deploy API: " + apiId, ex);
+        }
+    }
+
+    @Override
     public ApiEntity deploy(String apiId, String userId, EventType eventType, ApiDeploymentEntity apiDeploymentEntity) {
         try {
             LOGGER.debug("Deploy API : {}", apiId);
@@ -1921,11 +1946,29 @@ public class ApiServiceImpl extends AbstractService implements ApiService {
 
             // And create event
             eventService.create(eventType, objectMapper.writeValueAsString(apiValue), properties);
-
             return convert(singletonList(apiValue)).iterator().next();
         } else {
             throw new ApiNotFoundException(apiId);
         }
+    }
+
+    private DebugApi convert(DebugApiEntity debugApiEntity) {
+        DebugApi debugApi = new DebugApi();
+        debugApi.setRequest(debugApiEntity.getRequest());
+        debugApi.setResponse(debugApiEntity.getResponse());
+        debugApi.setDefinitionVersion(DefinitionVersion.valueOfLabel(debugApiEntity.getGraviteeDefinitionVersion()));
+        debugApi.setName(debugApiEntity.getName());
+        debugApi.setVersion(debugApiEntity.getVersion());
+        debugApi.setProperties(debugApiEntity.getProperties());
+        debugApi.setProxy(debugApiEntity.getProxy());
+        debugApi.setResources(debugApiEntity.getResources());
+        debugApi.setResponseTemplates(debugApiEntity.getResponseTemplates());
+        debugApi.setServices(debugApiEntity.getServices());
+        debugApi.setTags(debugApiEntity.getTags());
+        debugApi.setPaths(debugApiEntity.getPaths());
+        debugApi.setFlows(debugApiEntity.getFlows());
+        debugApi.setPlans(debugApiEntity.getPlans());
+        return debugApi;
     }
 
     private void addDeploymentLabelToProperties(

@@ -47,6 +47,7 @@ import io.gravitee.rest.api.service.exceptions.ApiNotFoundException;
 import io.gravitee.rest.api.service.promotion.PromotionService;
 import io.swagger.annotations.*;
 import java.io.ByteArrayOutputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -318,6 +319,26 @@ public class ApiResource extends AbstractResource {
                 .tag(Long.toString(apiEntity.getUpdatedAt().getTime()))
                 .lastModified(apiEntity.getUpdatedAt())
                 .build();
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity("JsonProcessingException " + e).build();
+        }
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("_debug")
+    @ApiOperation(value = "Debug API on gateway instances", notes = "User must have the MANAGE_LIFECYCLE permission to use this service")
+    @ApiResponses(
+        {
+            @ApiResponse(code = 200, message = "API successfully debugged", response = ApiEntity.class),
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
+    @Permissions({ @Permission(value = RolePermission.API_DEFINITION, acls = RolePermissionAction.UPDATE) })
+    public Response debugAPI(@ApiParam(name = "request") @Valid final DebugApiEntity debugApiEntity) {
+        try {
+            DebugApiEntity apiEntity = apiService.debug(api, getAuthenticatedUser(), debugApiEntity);
+            return Response.ok(apiEntity).tag(Long.toString(new Date().getTime())).lastModified(new Date()).build();
         } catch (Exception e) {
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity("JsonProcessingException " + e).build();
         }
