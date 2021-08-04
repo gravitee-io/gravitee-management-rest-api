@@ -16,18 +16,20 @@
 package io.gravitee.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.gravitee.rest.api.model.descriptor.GraviteeDescriptorPageEntity;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author Guillaume GILLON
  * @author GraviteeSource Team
  */
-public class NewPageEntity {
+public class NewPageEntity extends FetchablePageEntity {
 
     @NotNull
     @Size(min = 1)
@@ -35,8 +37,6 @@ public class NewPageEntity {
 
     @NotNull
     private PageType type;
-
-    private String content;
 
     private int order;
 
@@ -78,14 +78,6 @@ public class NewPageEntity {
 
     public void setType(PageType type) {
         this.type = type;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
     }
 
     public int getOrder() {
