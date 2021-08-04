@@ -17,6 +17,11 @@ package io.gravitee.rest.api.model;
 
 import java.util.Map;
 
+/**
+ * A page that can be fetched from an external source.
+ *
+ * @author GraviteeSource Team
+ */
 public abstract class FetchablePageEntity {
 
     private String content;
