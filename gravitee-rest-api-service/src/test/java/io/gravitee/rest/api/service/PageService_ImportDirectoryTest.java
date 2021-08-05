@@ -183,13 +183,13 @@ public class PageService_ImportDirectoryTest {
                 )
             );
 
-        // /swagger.json
+        // /asciidoc.adoc
         verify(pageRepository)
             .create(
                 argThat(
                     pageToCreate ->
-                        "swagger".equals(pageToCreate.getName()) &&
-                        "SWAGGER".equals(pageToCreate.getType()) &&
+                        "asciidoc".equals(pageToCreate.getName()) &&
+                        "ASCIIDOC".equals(pageToCreate.getType()) &&
                         null == pageToCreate.getParentId()
                 )
             );
@@ -205,13 +205,13 @@ public class PageService_ImportDirectoryTest {
                 )
             );
 
-        // /src/doc/m2.yaml
+        // /src/doc/asciidoc2.adoc
         verify(pageRepository)
             .create(
                 argThat(
                     pageToCreate ->
-                        "m2".equals(pageToCreate.getName()) &&
-                        "SWAGGER".equals(pageToCreate.getType()) &&
+                        "asciidoc2".equals(pageToCreate.getName()) &&
+                        "ASCIIDOC".equals(pageToCreate.getType()) &&
                         null != pageToCreate.getParentId()
                 )
             );
@@ -226,6 +226,6 @@ public class PageService_ImportDirectoryTest {
                 )
             );
 
-        verify(pageRevisionService, times(5)).create(any());
+        verify(pageRevisionService, times(3)).create(any());
     }
 }

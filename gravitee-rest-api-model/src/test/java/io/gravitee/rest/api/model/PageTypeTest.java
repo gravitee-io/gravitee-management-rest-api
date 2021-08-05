@@ -145,4 +145,14 @@ public class PageTypeTest {
 
         assertNull(type);
     }
+
+    @Test
+    public void matchesExtension_should_return_true_when_it_matches() {
+        assertTrue(MARKDOWN.matchesExtension("Md"));
+    }
+
+    @Test
+    public void matchesExtension_should_return_false_when_it_doesnt_matches() {
+        assertFalse(MARKDOWN.matchesExtension("mxd"));
+    }
 }

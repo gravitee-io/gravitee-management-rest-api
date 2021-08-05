@@ -53,8 +53,12 @@ public enum PageType {
         return removeOrder;
     }
 
+    public boolean matchesExtension(String pageExtension) {
+        return extensions.contains(pageExtension.toLowerCase());
+    }
+
     public boolean matchesExtensionAndContent(String pageExtension, String pageContent) {
-        return extensions.contains(pageExtension) && (contentRegexp == null || pageContent.matches(contentRegexp));
+        return matchesExtension(pageExtension) && (contentRegexp == null || pageContent.matches(contentRegexp));
     }
 
     public static PageType fromPageExtensionAndContent(String pageExtension, String pageContent) {

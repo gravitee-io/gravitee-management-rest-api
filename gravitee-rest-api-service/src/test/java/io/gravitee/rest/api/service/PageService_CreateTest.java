@@ -22,6 +22,9 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -462,7 +465,6 @@ public class PageService_CreateTest {
 
         final String name = "PAGE_NAME";
 
-        when(newPage.getName()).thenReturn(name);
         when(newPage.getSource()).thenReturn(pageSource);
         when(newPage.getVisibility()).thenReturn(Visibility.PUBLIC);
 
