@@ -1,9 +1,9 @@
 = Gravitee Management REST API
 
-ifdef::env-github[]
-image:https://ci.gravitee.io/buildStatus/icon?job=gravitee-io/gravitee-management-rest-api/master["Build status", link="https://ci.gravitee.io/job/gravitee-io/job/gravitee-management-rest-api/"]
-image:https://badges.gitter.im/Join Chat.svg["Gitter", link="https://gitter.im/gravitee-io/gravitee-io?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
-endif::[]
+⚠️ DEPRECATED
+This repository is no longer active, all the sources have been moved to a new monorepo.
+
+The new repository will be become the single GitHub repository for everything related to Gravitee.io API Management.
 
 == Overview
 
@@ -16,13 +16,14 @@ You can find Gravitee.io API Management documentation from https://docs.gravitee
 
 == Building
 
-```
+[source]
+----
 $ git clone https://github.com/gravitee-io/gravitee-management-rest-api
 $ cd gravitee-management-rest-api
 $ mvn clean compile exec:java -Pdev -pl gravitee-rest-api-standalone/gravitee-rest-api-standalone-container
 ...
 <app starts and listens on port 8083>
-```
+----
 
 == Makefile support
 
