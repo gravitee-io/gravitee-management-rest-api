@@ -32,7 +32,7 @@ public enum PageType {
     ASYNCAPI(List.of("json", "yaml", "yml"), 200, "(?s).*\\\"?asyncapi\\\"?: *['\\\"]?\\d.*"),
     MARKDOWN(List.of("md", "markdown"), 200, null),
     MARKDOWN_TEMPLATE(emptyList(), 200, null),
-    SWAGGER(List.of("json", "yaml", "yml"), 200, "(?s).*\\\"?swagger\\\"?: *['\\\"]?\\d.*"),
+    SWAGGER(List.of("json", "yaml", "yml"), 200, "(?s).*\\\"?(swagger|openapi)\\\"?: *['\\\"]?\\d.*"),
     FOLDER(emptyList(), 300, null),
     LINK(emptyList(), 100, null),
     ROOT(emptyList(), 500, null),

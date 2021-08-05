@@ -56,6 +56,16 @@ public class PageTypeTest {
     }
 
     @Test
+    public void fromPageExtensionAndContent_should_return_swagger_called_with_valid_openapi_yml_content() {
+        String pageExtension = "yml";
+        String pageContent = "openapi: 2.0\ninfo:";
+
+        PageType type = PageType.fromPageExtensionAndContent(pageExtension, pageContent);
+
+        assertSame(SWAGGER, type);
+    }
+
+    @Test
     public void fromPageExtensionAndContent_should_return_null_called_with_invalid_swagger_yml_content() {
         String pageExtension = "yml";
         String pageContent = "swagXXXger: 2.0\ninfo:";
