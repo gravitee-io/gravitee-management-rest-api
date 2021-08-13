@@ -1,7 +1,7 @@
 = Gravitee Management REST API
 
 ⚠️ DEPRECATED
-This repository is no longer active, all the sources have been moved to a new monorepo.
+This repository is no longer active, all the sources have been moved to a new monorepo: link:https://github.com/gravitee-io/gravitee-api-management[Gravitee.io API Management]
 
 The new repository will be become the single GitHub repository for everything related to Gravitee.io API Management.
 
